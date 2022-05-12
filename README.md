@@ -8,9 +8,12 @@ Ensure you have pre-requisites installed:
 
 * Python 3.7+
 * Make
+* docker-compose
 
 Run `make setup`. This will create Virtual Environment for project and install required dev. dependencies. Before making
 any commit make use to run make to apply formatter, run linter and update copyright.
+
+Run `make dev-containers` to launch related components e.g. redis, dev mail server etc.
 
 # Credits
 
