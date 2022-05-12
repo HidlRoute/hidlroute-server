@@ -1,0 +1,11 @@
+{
+  "author": "Dmitry Berezovsky, Alexander Cherednichenko",
+  "back": false,
+  "exclude": "",
+  "include": "*.py",
+  "license": "gpl3",
+  "program": "Hidl Route",
+  "short": "Hidl Route - opensource vpn management system",
+  "single": true,
+  "year": "2023"
+}
