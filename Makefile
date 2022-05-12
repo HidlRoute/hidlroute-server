@@ -127,3 +127,10 @@ venv:
 		$(PYTHON) -m venv $(VIRTUAL_ENV_PATH); \
 		source ./venv/bin/activate; \
 	)
+
+dev-containers:
+	@( \
+		echo "Starting docker containers"; \
+		docker-compose -f dev-containers.yaml up -d; \
+		echo "DONE: Docker containers started"; \
+	)
