@@ -12,7 +12,7 @@ PYTHON := python3
 .DEFAULT_GOAL := pre_commit
 
 pre_commit: copyright format lint
-setup: venv deps
+setup: venv deps create-dev-db
 
 copyright:
 	@( \
@@ -126,6 +126,39 @@ venv:
 	@( \
 		$(PYTHON) -m venv $(VIRTUAL_ENV_PATH); \
 		source ./venv/bin/activate; \
+	)
+
+db: create-dev-db
+
+migrate:
+	@( \
+        if [ -z $(SKIP_VENV) ]; then source $(VIRTUAL_ENV_PATH)/bin/activate; fi; \
+        echo "Applying migrations."; \
+        $(PYTHON) src/manage.py migrate; \
+	)
+
+create-superuser:
+	@( \
+        if [ -z $(SKIP_VENV) ]; then source $(VIRTUAL_ENV_PATH)/bin/activate; fi; \
+        echo "Applying migrations..."; \
+        $(PYTHON) src/manage.py migrate; \
+        echo "Creating superuser..."; \
+        DJANGO_SUPERUSER_PASSWORD=demoadmin $(PYTHON) src/manage.py createsuperuser --username=demoadmin --email=admin@demo.com  --no-input; \
+	)
+
+create-dev-db: migrate create-superuser load-dataset
+delete-db:
+	@( \
+        if [ -z $(SKIP_VENV) ]; then source $(VIRTUAL_ENV_PATH)/bin/activate; fi; \
+        echo "Deleting database..."; \
+        if [ -f "./dev-data/db.sqlite3" ]; then rm ./dev-data/db.sqlite3; echo "  DONE"; else echo "  Database doesn't exist"; fi; \
+	)
+
+load-dataset:
+	@( \
+        if [ -z $(SKIP_VENV) ]; then source $(VIRTUAL_ENV_PATH)/bin/activate; fi; \
+        echo "Loading dataset..."; \
+#        $(PYTHON) src/manage.py loaddata <NAME>; \
 	)
 
 dev-containers:

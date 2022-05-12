@@ -21,12 +21,11 @@ https://docs.djangoproject.com/en/4.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.0/ref/settings/
 """
-from django.utils.translation import gettext_lazy as _
 from .helper import *
 from .base import *
 
 # Application definition
-INSTALLED_APPS = BASE_APPS
+INSTALLED_APPS = [] + BASE_APPS + ["social_django"]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -51,6 +50,8 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "social_django.context_processors.backends",
+                "social_django.context_processors.login_redirect",
             ],
         },
     },

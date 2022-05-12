@@ -14,6 +14,12 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# from django.contrib import admin
+from django.utils.translation import gettext_lazy as _
+from django.apps import AppConfig
 
-# Register your models here.
+
+class WebConfig(AppConfig):
+    default_auto_field = "django.db.models.BigAutoField"
+    name = "hidlroute.web"
+    label = "hidl_web"
+    verbose_name = _("Hidl Route Web")
