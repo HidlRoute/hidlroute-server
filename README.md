@@ -14,7 +14,7 @@ any commit make use to run make to apply formatter, run linter and update copyri
 
 # Credits
 
-* Dmitry Berezovsky and Alexander Cherednichenko, original authors
+* Dmitry Berezovsky and Alex Cherednichenko, original authors
 * [CLI Rack](https://github.com/corvis/cli-rack)
 
 # Disclaimer
