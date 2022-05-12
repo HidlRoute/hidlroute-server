@@ -17,7 +17,7 @@ Run `make dev-containers` to launch related components e.g. redis, dev mail serv
 
 # Credits
 
-* Dmitry Berezovsky and Alexander Cherednichenko, original authors
+* Dmitry Berezovsky and Alex Cherednichenko, original authors
 * [CLI Rack](https://github.com/corvis/cli-rack)
 
 # Disclaimer
