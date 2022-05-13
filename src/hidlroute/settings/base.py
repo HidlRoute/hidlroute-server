@@ -171,3 +171,5 @@ LOGGING = {
         },
     }
 }
+
+AUTH_USER_MODEL = 'hidl_core.User'

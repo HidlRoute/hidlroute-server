@@ -11,3 +11,5 @@ social-auth-app-django==5.0.0
 django-jazzmin==2.5.0
 django-two-factor-auth[phonenumbers]==1.13.2
 django-crispy-forms==1.14.0
+django_polymorphic==3.1.0
+django_cidrfield==0.2.0

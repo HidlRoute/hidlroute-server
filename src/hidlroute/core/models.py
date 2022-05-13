@@ -17,3 +17,96 @@
 # from django.db import models
 
 # Create your models here.
+import django.contrib.auth.models
+import polymorphic.models
+from cidrfield.models import IPNetworkField
+from django.conf import settings
+from django.db import models
+from django.contrib.auth.models import AbstractUser as DjangoUser
+
+
+def should_be_single_IP(ip_network):
+    return True
+
+
+class Server(models.Model):
+    interface_name = models.CharField(max_length=16)
+    name = models.CharField(max_length=1024)
+
+
+class Subnet(models.Model):
+    server_group = models.ForeignKey("ServerGroup", on_delete=models.RESTRICT)
+    name = models.CharField(max_length=1024)
+    cidr = IPNetworkField()
+
+
+class Group(models.Model):
+    parent_group = models.ForeignKey("self", on_delete=models.RESTRICT, null=True)
+    servers = models.ManyToManyField(Server, through="ServerGroup")
+
+
+class ServerGroup(models.Model):
+    server = models.ForeignKey(Server, on_delete=models.RESTRICT)
+    group = models.ForeignKey(Group, on_delete=models.RESTRICT)
+    # subnet = models.ForeignKey(Subnet, on_delete=models.RESTRICT)
+
+
+class Member(models.Model):
+    group = models.ForeignKey(Group, on_delete=models.RESTRICT)
+    name = models.CharField(max_length=1024)
+    servers = models.ManyToManyField(Server, through="ServerMember")
+
+
+class ServerMember(polymorphic.models.PolymorphicModel):
+    server_group = models.ForeignKey(ServerGroup, on_delete=models.RESTRICT)
+    server = models.ForeignKey(Server, on_delete=models.RESTRICT)
+    member = models.ForeignKey(Member, on_delete=models.RESTRICT)
+
+
+class Person(ServerMember):
+    name = models.CharField(max_length=1024)
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, null=False, on_delete=models.CASCADE)
+    pass
+
+
+class Host(ServerMember):
+    host_name = models.CharField(max_length=1024)
+    pass
+
+
+class Device(models.Model):
+    server_member = models.ForeignKey(ServerMember, on_delete=models.RESTRICT, null=True)
+    address = IPNetworkField(validators=[should_be_single_IP])
+
+
+class WireguardServer(models.Model):
+    server = models.OneToOneField(Server, on_delete=models.RESTRICT)
+    private_key = models.CharField(max_length=1024)
+
+
+class WireguardPeer(models.Model):
+    device = models.ForeignKey(Device, on_delete=models.RESTRICT)
+    public_key = models.CharField(max_length=1024)
+
+
+class ServerRule(polymorphic.models.PolymorphicModel):
+    server_group = models.ForeignKey(ServerGroup, on_delete=models.RESTRICT)
+    server_member = models.ForeignKey(ServerMember, on_delete=models.RESTRICT)
+
+
+class ServerFirewallRule(ServerRule):
+    action = models.CharField(max_length=16)
+
+
+class ServerRoutingRule(ServerRule):
+    network = IPNetworkField()
+    gateway = IPNetworkField()
+    interface = models.CharField(max_length=16)
+
+
+class ClientConfig(models.Model):
+    DNS = models.CharField(max_length=128)
+
+
+class User(DjangoUser):
+    profile_picture = models.URLField(null=True, blank=True)
