@@ -21,7 +21,6 @@ DEBUG = env.bool("DEBUG", False)
 
 BASE_APPS = filter_none(
     [
-        "django.contrib.admin",
         "django.contrib.auth",
         "django.contrib.contenttypes",
         "django.contrib.sessions",
@@ -37,11 +36,13 @@ BASE_APPS = filter_none(
 # https://docs.djangoproject.com/en/4.0/topics/i18n/
 LANGUAGES = [
     ("en", _("English")),
-    ("ua", _("Ukrainian")),
+    ("uk", _("Ukrainian")),
 ]
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = env.str("TIME_ZONE", "UTC")
 USE_I18N = True
+USE_L10N = True
+LOCALE_DIRS = BASE_DIR / "locale"
 USE_TZ = True
 
 # Password validation
@@ -66,6 +67,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/4.0/howto/static-files/
 
 STATIC_URL = "static/"
+STATIC_ROOT = BASE_DIR / "static-files"
+if not DEBUG:
+    STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
