@@ -116,8 +116,9 @@ SOCIAL_AUTH_PIPELINE = filter_none(
 SOCIAL_AUTH_ADMIN_USER_SEARCH_FIELDS = ["username", "first_name", "last_name", "email"]
 
 # Audit
-DJANGO_EASY_AUDIT_READONLY_EVENTS = False
+DJANGO_EASY_AUDIT_READONLY_EVENTS = True
 DJANGO_EASY_AUDIT_UNREGISTERED_URLS_DEFAULT = [r"^/static/", r"^/favicon.ico$"]
+DJANGO_EASY_AUDIT_UNREGISTERED_CLASSES_EXTRA = ["otp_static.StaticToken", "otp_static.StaticDevice"]
 
 # Logger
 DEFAULT_LOGGING_LEVEL = "INFO" if not env.bool('DEBUG', False) else "DEBUG"

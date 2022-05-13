@@ -111,6 +111,21 @@ JAZZMIN_SETTINGS: Dict[str, Any] = {
     "search_model": "auth.User",
     # Field name on user model that contains avatar ImageField/URLField/Charfield or a callable that receives the user
     "user_avatar": None,
+    # List of apps (and/or models) to base side menu ordering off of (does not need to contain all apps/models)
+    "order_with_respect_to": ["auth", "easyaudit", ],
+    # Hide these apps when generating side menu e.g (auth)
+    "hide_apps": ["django_otp", "two_factor", "otp_static", "otp_totp", "social_django"],
+
+    # Hide these models when generating side menu (e.g auth.user)
+    "hide_models": [],
+    "icons": {
+        "auth": "fas fa-users-cog",
+        "auth.user": "fas fa-user",
+        "auth.Group": "fas fa-users",
+    },
+    # Icons that are used when one is not manually specified
+    "default_icon_parents": "fas fa-chevron-circle-right",
+    "default_icon_children": "fas fa-circle",
     #################
     # Related Modal #
     #################
@@ -174,4 +189,5 @@ JAZZMIN_UI_TWEAKS = {
         "danger": "btn-outline-danger",
         "success": "btn-outline-success",
     },
+    "actions_sticky_top": True,
 }

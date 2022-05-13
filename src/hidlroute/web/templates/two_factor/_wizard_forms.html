@@ -27,7 +27,8 @@
             {% endif %}
         {% endif %}
         <div class="input-group mb-3 has-validation">
-            <input type="text" name="{{ wizard.form.username.html_name }}" class="form-control {% if wizard.form.username.errors %}is-invalid{% endif %}"
+            <input type="text" name="{{ wizard.form.username.html_name }}"
+                   class="form-control {% if wizard.form.username.errors %}is-invalid{% endif %}"
                    placeholder="{{ wizard.form.username.label }}" required>
             <div class="input-group-append">
                 <div class="input-group-text">
