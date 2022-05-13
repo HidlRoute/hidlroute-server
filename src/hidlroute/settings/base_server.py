@@ -108,7 +108,7 @@ JAZZMIN_SETTINGS: Dict[str, Any] = {
     "welcome_sign": _("For demo access use <code>demoadmin</code> : <code>demoadmin</code>"),
     "copyright": "HidlRoute",
     # The model admin to search from the search bar, search bar omitted if excluded
-    "search_model": "auth.User",
+    "search_model": AUTH_USER_MODEL,
     # Field name on user model that contains avatar ImageField/URLField/Charfield or a callable that receives the user
     "user_avatar": None,
     # List of apps (and/or models) to base side menu ordering off of (does not need to contain all apps/models)
@@ -120,7 +120,7 @@ JAZZMIN_SETTINGS: Dict[str, Any] = {
     "hide_models": [],
     "icons": {
         "auth": "fas fa-users-cog",
-        "auth.user": "fas fa-user",
+        AUTH_USER_MODEL: "fas fa-user",
         "auth.Group": "fas fa-users",
     },
     # Icons that are used when one is not manually specified
