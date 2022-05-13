@@ -81,7 +81,7 @@ JAZZMIN_SETTINGS: Dict[str, Any] = {
     "site_brand": "Hidl Route",
 
     # Logo to use for your site, must be present in static files, used for brand on top left
-    "site_logo": "hidlroute/img/logo-color-hor-small.png",
+    "site_logo": "hidlroute/img/logo-color-hor-small.svg",
 
     # Logo to use for your site, must be present in static files, used for login form logo (defaults to site_logo)
     "login_logo": "hidlroute/img/logo-color-white-mid.png",
@@ -93,10 +93,10 @@ JAZZMIN_SETTINGS: Dict[str, Any] = {
     "site_logo_classes": "",
 
     # Relative path to a favicon for your site, will default to site_logo if absent (ideally 32x32 px)
-    "site_icon": None,
+    "site_icon": "hidlroute/img/favicon-32.png",
 
     # Welcome text on the login screen
-    "welcome_sign": _("For demo access use <b>demoadmin:demoadmin</b>"),
+    "welcome_sign": _("For demo access use <code>demoadmin</code> : <code>demoadmin</code>"),
 
     # Copyright on the footer
     "copyright": "HidlRoute",
