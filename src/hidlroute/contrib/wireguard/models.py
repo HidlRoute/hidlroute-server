@@ -17,3 +17,16 @@
 # from django.db import models
 
 # Create your models here.
+from django.db import models
+
+from hidlroute.core.models import Server, Device
+
+
+class WireguardServer(models.Model):
+    server = models.OneToOneField(Server, on_delete=models.RESTRICT)
+    private_key = models.CharField(max_length=1024)
+
+
+class WireguardPeer(models.Model):
+    device = models.ForeignKey(Device, on_delete=models.RESTRICT)
+    public_key = models.CharField(max_length=1024)

@@ -17,12 +17,10 @@
 # from django.db import models
 
 # Create your models here.
-import django.contrib.auth.models
 import polymorphic.models
 from cidrfield.models import IPNetworkField
 from django.conf import settings
 from django.db import models
-from django.contrib.auth.models import AbstractUser as DjangoUser
 
 
 def should_be_single_IP(ip_network):
@@ -64,7 +62,6 @@ class ServerMember(polymorphic.models.PolymorphicModel):
 
 
 class Person(ServerMember):
-    name = models.CharField(max_length=1024)
     user = models.OneToOneField(settings.AUTH_USER_MODEL, null=False, on_delete=models.CASCADE)
     pass
 
@@ -77,16 +74,6 @@ class Host(ServerMember):
 class Device(models.Model):
     server_member = models.ForeignKey(ServerMember, on_delete=models.RESTRICT, null=True)
     address = IPNetworkField(validators=[should_be_single_IP])
-
-
-class WireguardServer(models.Model):
-    server = models.OneToOneField(Server, on_delete=models.RESTRICT)
-    private_key = models.CharField(max_length=1024)
-
-
-class WireguardPeer(models.Model):
-    device = models.ForeignKey(Device, on_delete=models.RESTRICT)
-    public_key = models.CharField(max_length=1024)
 
 
 class ServerRule(polymorphic.models.PolymorphicModel):
@@ -106,7 +93,3 @@ class ServerRoutingRule(ServerRule):
 
 class ClientConfig(models.Model):
     DNS = models.CharField(max_length=128)
-
-
-class User(DjangoUser):
-    profile_picture = models.URLField(null=True, blank=True)

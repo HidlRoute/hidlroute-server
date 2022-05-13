@@ -112,7 +112,7 @@ JAZZMIN_SETTINGS: Dict[str, Any] = {
     # Field name on user model that contains avatar ImageField/URLField/Charfield or a callable that receives the user
     "user_avatar": None,
     # List of apps (and/or models) to base side menu ordering off of (does not need to contain all apps/models)
-    "order_with_respect_to": ["auth", "easyaudit", ],
+    "order_with_respect_to": ["hidl_auth", "easyaudit", ],
     # Hide these apps when generating side menu e.g (auth)
     "hide_apps": ["django_otp", "two_factor", "otp_static", "otp_totp", "social_django"],
 

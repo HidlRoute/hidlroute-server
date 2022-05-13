@@ -33,6 +33,7 @@ BASE_APPS = filter_none(
         'django_otp.plugins.otp_totp',
         'two_factor',
         # HidlRoute
+        "hidlroute.auth",
         "hidlroute.core",
         if_env_set("hidlroute.contrib.wireguard", "ENABLE_WIREGUARD", True),
     ]
@@ -95,6 +96,7 @@ AUTHENTICATION_BACKENDS = filter_none(
         "django.contrib.auth.backends.ModelBackend",
     ]
 )
+AUTH_USER_MODEL = 'hidl_auth.User'
 
 SOCIAL_AUTH_JSONFIELD_ENABLED = False
 SOCIAL_AUTH_URL_NAMESPACE = "social"
@@ -171,5 +173,3 @@ LOGGING = {
         },
     }
 }
-
-AUTH_USER_MODEL = 'hidl_core.User'
