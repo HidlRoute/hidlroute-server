@@ -28,13 +28,14 @@ from .base import *
 
 # Application definition
 INSTALLED_APPS = (
-    [
-        "hidlroute.web",
-        "jazzmin",
-        "django.contrib.admin",
-    ]
-    + BASE_APPS
-    + ["social_django"]
+        [
+            "hidlroute.web",
+            "jazzmin",
+            "django.contrib.admin",
+            "crispy_forms",
+        ]
+        + BASE_APPS
+        + ["social_django"]
 )
 
 MIDDLEWARE = filter_none(
@@ -46,13 +47,24 @@ MIDDLEWARE = filter_none(
         "django.middleware.common.CommonMiddleware",
         "django.middleware.csrf.CsrfViewMiddleware",
         "django.contrib.auth.middleware.AuthenticationMiddleware",
+        'django_otp.middleware.OTPMiddleware',
         "django.contrib.messages.middleware.MessageMiddleware",
         "django.middleware.clickjacking.XFrameOptionsMiddleware",
         "easyaudit.middleware.easyaudit.EasyAuditMiddleware",
+        'two_factor.middleware.threadlocals.ThreadLocals',
     ]
 )
 
 ROOT_URLCONF = "hidlroute.urls"
+
+LOGIN_URL = 'two_factor:login'
+LOGIN_REDIRECT_URL = 'two_factor:profile'
+
+TWO_FACTOR_FORCE = env.bool("TWO_FACTOR_FORCE", False)
+TWO_FACTOR_PATCH_ADMIN = True
+TWO_FACTOR_REMEMBER_COOKIE_PREFIX = "rmb_2fa_"
+TWO_FACTOR_REMEMBER_COOKIE_AGE = 24 * 3600
+TWO_FACTOR_REMEMBER_COOKIE_SAMESITE = 'Strict'
 
 TEMPLATES = [
     {
@@ -72,6 +84,7 @@ TEMPLATES = [
     },
 ]
 
+CRISPY_TEMPLATE_PACK = 'bootstrap4'
 WSGI_APPLICATION = "hidlroute.wsgi.application"
 
 JAZZMIN_SETTINGS: Dict[str, Any] = {
@@ -102,7 +115,15 @@ JAZZMIN_SETTINGS: Dict[str, Any] = {
     # Related Modal #
     #################
     # Activate Bootstrap modal
-    "related_modal_active": False,
+    "related_modal_active": True,
+    #############
+    # User Menu #
+    #############
+
+    # Additional links to include in the user menu on the top right ("app" url type is not allowed)
+    "usermenu_links": [
+        {"name": _("Two-Factor Authentication"), "url": "two_factor:profile", "new_window": False},
+    ],
     #############
     # UI Tweaks #
     #############

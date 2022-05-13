@@ -32,6 +32,9 @@ DATABASES = {
     }
 }
 
+# 2FA
+TWO_FACTOR_SMS_GATEWAY = "two_factor.gateways.fake.Fake"
+
 # Email
 EMAIL_CONFIG = env.email_url_config("smtp://user:password@localhost:1025")
 vars().update(EMAIL_CONFIG)

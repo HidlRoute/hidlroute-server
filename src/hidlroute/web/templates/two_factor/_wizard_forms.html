@@ -1,0 +1,71 @@
+{% load i18n jazzmin crispy_forms_tags %}
+{% get_jazzmin_settings request as jazzmin_settings %}
+{% get_jazzmin_ui_tweaks as jazzmin_ui %}
+
+<div class="mb-3">
+    {{ wizard.management_form }}
+    {% if wizard.steps.current == "auth" %}
+        {% if request.user.is_authenticated %}
+            <p class="errornote">
+            <div class="callout callout-danger">
+                <p>
+                    {% blocktrans trimmed %}
+                        You are authenticated as {{ request.user.username }}, but are not authorized to
+                        access this page. Would you like to login to a different account?
+                    {% endblocktrans %}
+                </p>
+            </div>
+            </p>
+        {% endif %}
+        {% if wizard.form %}
+            {% if wizard.form.non_field_errors %}
+                <div class="callout callout-danger">
+                    {% for error in wizard.form.non_field_errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endif %}
+        <div class="input-group mb-3 has-validation">
+            <input type="text" name="{{ wizard.form.username.html_name }}" class="form-control {% if wizard.form.username.errors %}is-invalid{% endif %}"
+                   placeholder="{{ wizard.form.username.label }}" required>
+            <div class="input-group-append">
+                <div class="input-group-text">
+                    <span class="fas fa-user"></span>
+                </div>
+            </div>
+            {% if wizard.form.password.errors %}
+                <div class="invalid-feedback">
+                    <p>{{ wizard.form.username.errors|join:', ' }}</p>
+                </div>
+            {% endif %}
+        </div>
+        <div class="input-group mb-3 has-validation">
+            <input type="password" name="{{ wizard.form.password.html_name }}"
+                   class="form-control {% if wizard.form.password.errors %}is-invalid{% endif %}"
+                   placeholder="{{ wizard.form.password.label }}" required>
+            <div class="input-group-append">
+                <div class="input-group-text">
+                    <span class="fas fa-lock"></span>
+                </div>
+            </div>
+            {% if wizard.form.password.errors %}
+                <div class="invalid-feedback">
+                    <p>{{ wizard.form.password.errors|join:', ' }}</p>
+                </div>
+            {% endif %}
+        </div>
+        {% url 'admin_password_reset' as password_reset_url %}
+        {% if password_reset_url %}
+            <div class="mb-3">
+                <div class="password-reset-link" style="text-align: center;">
+                    <a href="{{ password_reset_url }}">
+                        {% trans 'Forgotten your password or username?' %}
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    {% else %}
+        {{ wizard.form|crispy }}
+    {% endif %}
+</div>

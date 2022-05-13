@@ -29,16 +29,19 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+from django.conf import settings
 from django.conf.urls import include
-from django.conf.urls.i18n import i18n_patterns
 from django.contrib import admin
 from django.urls import path
+from two_factor.admin import AdminSiteOTPRequired
+from two_factor.urls import urlpatterns as tf_urls
+
+if settings.TWO_FACTOR_FORCE:
+    admin.site.__class__ = AdminSiteOTPRequired
 
 urlpatterns = [
     path("sso-social/", include("social_django.urls", namespace="social")),
     path("i18n/", include("django.conf.urls.i18n")),
-]
-
-urlpatterns += i18n_patterns(
+    path('2fa/', include(tf_urls)),
     path("", admin.site.urls),
-)
+]

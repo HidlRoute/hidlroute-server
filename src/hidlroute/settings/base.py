@@ -26,7 +26,12 @@ BASE_APPS = filter_none(
         "django.contrib.sessions",
         "django.contrib.messages",
         "django.contrib.staticfiles",
+        # 3rd party
         "hidlroute.web.apps.EasyAuditApp",
+        'django_otp',
+        'django_otp.plugins.otp_static',
+        'django_otp.plugins.otp_totp',
+        'two_factor',
         # HidlRoute
         "hidlroute.core",
         if_env_set("hidlroute.contrib.wireguard", "ENABLE_WIREGUARD", True),
@@ -111,6 +116,57 @@ SOCIAL_AUTH_PIPELINE = filter_none(
 SOCIAL_AUTH_ADMIN_USER_SEARCH_FIELDS = ["username", "first_name", "last_name", "email"]
 
 # Audit
-
 DJANGO_EASY_AUDIT_READONLY_EVENTS = False
 DJANGO_EASY_AUDIT_UNREGISTERED_URLS_DEFAULT = [r"^/static/", r"^/favicon.ico$"]
+
+# Logger
+DEFAULT_LOGGING_LEVEL = "INFO" if not env.bool('DEBUG', False) else "DEBUG"
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'filters': {
+        'require_debug_false': {
+            '()': 'django.utils.log.RequireDebugFalse'
+        }
+    },
+    'formatters': {
+        'verbose': {
+            'format': '{name} {levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'standard': {
+            'format': '[{levelname}] {asctime} | {name} : {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '[{levelname}] {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'level': 'INFO',
+            'formatter': 'standard',
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'django.request': {
+            'handlers': ['console'],
+            'level': DEFAULT_LOGGING_LEVEL,
+            'propagate': True,
+        }, 'root': {
+            'level': DEFAULT_LOGGING_LEVEL,
+            'handlers': ['console'],
+        },
+        'two_factor': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        '': {
+            'level': DEFAULT_LOGGING_LEVEL,
+            'handlers': ['console'],
+        },
+    }
+}
