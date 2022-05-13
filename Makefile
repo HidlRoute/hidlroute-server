@@ -128,7 +128,7 @@ venv:
 		source ./venv/bin/activate; \
 	)
 
-db: create-dev-db
+db: delete-db create-dev-db
 
 migrate:
 	@( \

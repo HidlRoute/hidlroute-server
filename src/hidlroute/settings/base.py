@@ -26,6 +26,7 @@ BASE_APPS = filter_none(
         "django.contrib.sessions",
         "django.contrib.messages",
         "django.contrib.staticfiles",
+        "hidlroute.web.apps.EasyAuditApp",
         # HidlRoute
         "hidlroute.core",
         if_env_set("hidlroute.contrib.wireguard", "ENABLE_WIREGUARD", True),
@@ -108,3 +109,8 @@ SOCIAL_AUTH_PIPELINE = filter_none(
 )
 
 SOCIAL_AUTH_ADMIN_USER_SEARCH_FIELDS = ["username", "first_name", "last_name", "email"]
+
+# Audit
+
+DJANGO_EASY_AUDIT_READONLY_EVENTS = False
+DJANGO_EASY_AUDIT_UNREGISTERED_URLS_DEFAULT = [r"^/static/", r"^/favicon.ico$"]

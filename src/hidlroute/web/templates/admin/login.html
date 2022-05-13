@@ -20,6 +20,7 @@
                 </div>
             </p>
         {% endif %}
+        {% block sso_buttons %}{% endblock %}
         {% if form.errors %}
             {% if form.username.errors %}
                 <div class="callout callout-danger">
