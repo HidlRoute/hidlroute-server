@@ -21,6 +21,7 @@ import polymorphic.models
 from cidrfield.models import IPNetworkField
 from django.conf import settings
 from django.db import models
+from treebeard import mp_tree
 
 
 def should_be_single_IP(ip_network):
@@ -38,9 +39,10 @@ class Subnet(models.Model):
     cidr = IPNetworkField()
 
 
-class Group(models.Model):
-    parent_group = models.ForeignKey("self", on_delete=models.RESTRICT, null=True)
+class Group(mp_tree.MP_Node):
+    DEFAULT_GROUP_ID = 1
     servers = models.ManyToManyField(Server, through="ServerGroup")
+    name = models.CharField(max_length=1024)
 
 
 class ServerGroup(models.Model):
@@ -49,36 +51,32 @@ class ServerGroup(models.Model):
     # subnet = models.ForeignKey(Subnet, on_delete=models.RESTRICT)
 
 
-class Member(models.Model):
+class Member(polymorphic.models.PolymorphicModel):
     group = models.ForeignKey(Group, on_delete=models.RESTRICT)
-    name = models.CharField(max_length=1024)
-    servers = models.ManyToManyField(Server, through="ServerMember")
+    servers = models.ManyToManyField(Server, through="ServerToMember")
 
 
-class ServerMember(polymorphic.models.PolymorphicModel):
-    server_group = models.ForeignKey(ServerGroup, on_delete=models.RESTRICT)
+class Person(Member):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, null=False, on_delete=models.CASCADE)
+
+
+class Host(Member):
+    host_name = models.CharField(max_length=1024)
+
+
+class ServerToMember(models.Model):
     server = models.ForeignKey(Server, on_delete=models.RESTRICT)
     member = models.ForeignKey(Member, on_delete=models.RESTRICT)
 
 
-class Person(ServerMember):
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, null=False, on_delete=models.CASCADE)
-    pass
-
-
-class Host(ServerMember):
-    host_name = models.CharField(max_length=1024)
-    pass
-
-
 class Device(models.Model):
-    server_member = models.ForeignKey(ServerMember, on_delete=models.RESTRICT, null=True)
+    server_member = models.ForeignKey(ServerToMember, on_delete=models.RESTRICT, null=True)
     address = IPNetworkField(validators=[should_be_single_IP])
 
 
 class ServerRule(polymorphic.models.PolymorphicModel):
     server_group = models.ForeignKey(ServerGroup, on_delete=models.RESTRICT)
-    server_member = models.ForeignKey(ServerMember, on_delete=models.RESTRICT)
+    server_member = models.ForeignKey(ServerToMember, on_delete=models.RESTRICT)
 
 
 class ServerFirewallRule(ServerRule):

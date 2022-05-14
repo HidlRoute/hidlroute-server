@@ -5,7 +5,7 @@ from django.contrib.auth.models import Group as DjangoGroup
 from django.utils.translation import gettext_lazy as _
 from django.db import models, transaction
 
-from hidlroute.core.models import Person
+from hidlroute.core.models import Person, Group
 
 
 class User(DjangoUser):
@@ -19,8 +19,7 @@ class User(DjangoUser):
         is_insert = self.pk is None
         super().save(*args, **kwargs)
         if is_insert:
-            pass
-            # Person.objects.create(user=self)
+            Person.objects.create(user=self, group_id=Group.DEFAULT_GROUP_ID)
 
 
 class Role(DjangoGroup):
