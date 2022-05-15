@@ -28,14 +28,15 @@ from .base import *
 
 # Application definition
 INSTALLED_APPS = (
-        [
-            "hidlroute.web",
-            "jazzmin",
-            "django.contrib.admin",
-            "crispy_forms",
-        ]
-        + BASE_APPS
-        + ["social_django"]
+    [
+        "hidlroute.web",
+        "jazzmin",
+        "django.contrib.admin",
+        "crispy_forms",
+        "treebeard",
+    ]
+    + BASE_APPS
+    + ["social_django"]
 )
 
 MIDDLEWARE = filter_none(
@@ -47,24 +48,24 @@ MIDDLEWARE = filter_none(
         "django.middleware.common.CommonMiddleware",
         "django.middleware.csrf.CsrfViewMiddleware",
         "django.contrib.auth.middleware.AuthenticationMiddleware",
-        'django_otp.middleware.OTPMiddleware',
+        "django_otp.middleware.OTPMiddleware",
         "django.contrib.messages.middleware.MessageMiddleware",
         "django.middleware.clickjacking.XFrameOptionsMiddleware",
         "easyaudit.middleware.easyaudit.EasyAuditMiddleware",
-        'two_factor.middleware.threadlocals.ThreadLocals',
+        "two_factor.middleware.threadlocals.ThreadLocals",
     ]
 )
 
 ROOT_URLCONF = "hidlroute.urls"
 
-LOGIN_URL = 'two_factor:login'
-LOGIN_REDIRECT_URL = 'two_factor:profile'
+LOGIN_URL = "two_factor:login"
+LOGIN_REDIRECT_URL = "two_factor:profile"
 
 TWO_FACTOR_FORCE = env.bool("TWO_FACTOR_FORCE", False)
 TWO_FACTOR_PATCH_ADMIN = True
 TWO_FACTOR_REMEMBER_COOKIE_PREFIX = "rmb_2fa_"
 TWO_FACTOR_REMEMBER_COOKIE_AGE = 24 * 3600
-TWO_FACTOR_REMEMBER_COOKIE_SAMESITE = 'Strict'
+TWO_FACTOR_REMEMBER_COOKIE_SAMESITE = "Strict"
 
 TEMPLATES = [
     {
@@ -84,7 +85,7 @@ TEMPLATES = [
     },
 ]
 
-CRISPY_TEMPLATE_PACK = 'bootstrap4'
+CRISPY_TEMPLATE_PACK = "bootstrap4"
 WSGI_APPLICATION = "hidlroute.wsgi.application"
 
 JAZZMIN_SETTINGS: Dict[str, Any] = {
@@ -112,10 +113,12 @@ JAZZMIN_SETTINGS: Dict[str, Any] = {
     # Field name on user model that contains avatar ImageField/URLField/Charfield or a callable that receives the user
     "user_avatar": None,
     # List of apps (and/or models) to base side menu ordering off of (does not need to contain all apps/models)
-    "order_with_respect_to": ["hidl_auth", "easyaudit", ],
+    "order_with_respect_to": [
+        "hidl_auth",
+        "easyaudit",
+    ],
     # Hide these apps when generating side menu e.g (auth)
     "hide_apps": ["django_otp", "two_factor", "otp_static", "otp_totp", "social_django"],
-
     # Hide these models when generating side menu (e.g auth.user)
     "hide_models": [],
     "icons": {
@@ -134,7 +137,6 @@ JAZZMIN_SETTINGS: Dict[str, Any] = {
     #############
     # User Menu #
     #############
-
     # Additional links to include in the user menu on the top right ("app" url type is not allowed)
     "usermenu_links": [
         {"name": _("Two-Factor Authentication"), "url": "two_factor:profile", "new_window": False},

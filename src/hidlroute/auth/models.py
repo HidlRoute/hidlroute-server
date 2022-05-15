@@ -1,3 +1,19 @@
+#    Hidl Route - opensource vpn management system
+#    Copyright (C) 2023 Dmitry Berezovsky, Alexander Cherednichenko
+#
+#    Hidl Route is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    Hidl Route is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 from typing import Optional, Iterable
 
 from django.contrib.auth.models import AbstractUser as DjangoUser
@@ -10,7 +26,7 @@ from hidlroute.core.models import Person, Group
 
 class User(DjangoUser):
     class Meta:
-        db_table = 'auth_user'
+        db_table = "auth_user"
 
     profile_picture = models.URLField(null=True, blank=True)
 
@@ -29,8 +45,8 @@ class Role(DjangoGroup):
     """
 
     class Meta:
-        verbose_name = _('role')
-        verbose_name_plural = _('roles')
-        app_label = 'hidl_auth'
-        db_table = 'hidl_auth_role'
+        verbose_name = _("role")
+        verbose_name_plural = _("roles")
+        app_label = "hidl_auth"
+        db_table = "hidl_auth_role"
         proxy = True

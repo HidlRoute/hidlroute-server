@@ -14,4 +14,58 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# from django.contrib import admin
+from django.contrib import admin
+from treebeard.admin import TreeAdmin
+from treebeard.forms import movenodeform_factory
+
+from hidlroute.core import models
+
+
+@admin.register(models.Person)
+class PersonAdmin(admin.ModelAdmin):
+    pass
+
+
+@admin.register(models.Host)
+class HostAdmin(admin.ModelAdmin):
+    pass
+
+
+@admin.register(models.Device)
+class DeviceAdmin(admin.ModelAdmin):
+    pass
+
+
+@admin.register(models.Server)
+class ServerAdmin(admin.ModelAdmin):
+    pass
+
+
+@admin.register(models.ServerToMember)
+class ServerToMemberAdmin(admin.ModelAdmin):
+    pass
+
+
+@admin.register(models.ServerGroup)
+class ServerToGroupAdmin(admin.ModelAdmin):
+    pass
+
+
+@admin.register(models.Group)
+class GroupAdmin(TreeAdmin):
+    form = movenodeform_factory(models.Group)
+
+
+@admin.register(models.ServerFirewallRule)
+class ServerFirewallRuleAdmin(admin.ModelAdmin):
+    pass
+
+
+@admin.register(models.ServerRoutingRule)
+class ServerRoutingRuleAdmin(admin.ModelAdmin):
+    pass
+
+
+@admin.register(models.Subnet)
+class SubnetAdmin(admin.ModelAdmin):
+    pass

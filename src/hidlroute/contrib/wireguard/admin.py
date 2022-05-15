@@ -14,6 +14,17 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# from django.contrib import admin
+from django.contrib import admin
 
 # Register your models here.
+from hidlroute.contrib.wireguard import models
+
+
+@admin.register(models.WireguardPeer)
+class WireguardPeerAdmin(admin.ModelAdmin):
+    pass
+
+
+@admin.register(models.WireguardServer)
+class WireguardServerAdmin(admin.ModelAdmin):
+    pass

@@ -44,6 +44,9 @@ class Group(mp_tree.MP_Node):
     servers = models.ManyToManyField(Server, through="ServerGroup")
     name = models.CharField(max_length=1024)
 
+    def __str__(self):
+        return f"G: {self.name}"
+
 
 class ServerGroup(models.Model):
     server = models.ForeignKey(Server, on_delete=models.RESTRICT)
@@ -58,6 +61,9 @@ class Member(polymorphic.models.PolymorphicModel):
 
 class Person(Member):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, null=False, on_delete=models.CASCADE)
+
+    def __str__(self) -> str:
+        return f"P: {self.user.username}"
 
 
 class Host(Member):

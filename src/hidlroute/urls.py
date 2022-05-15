@@ -42,6 +42,6 @@ if settings.TWO_FACTOR_FORCE:
 urlpatterns = [
     path("sso-social/", include("social_django.urls", namespace="social")),
     path("i18n/", include("django.conf.urls.i18n")),
-    path('2fa/', include(tf_urls)),
+    path("2fa/", include(tf_urls)),
     path("", admin.site.urls),
 ]

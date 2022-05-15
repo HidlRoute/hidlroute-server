@@ -28,10 +28,10 @@ BASE_APPS = filter_none(
         "django.contrib.staticfiles",
         # 3rd party
         "hidlroute.web.apps.EasyAuditApp",
-        'django_otp',
-        'django_otp.plugins.otp_static',
-        'django_otp.plugins.otp_totp',
-        'two_factor',
+        "django_otp",
+        "django_otp.plugins.otp_static",
+        "django_otp.plugins.otp_totp",
+        "two_factor",
         # HidlRoute
         "hidlroute.auth",
         "hidlroute.core",
@@ -96,7 +96,7 @@ AUTHENTICATION_BACKENDS = filter_none(
         "django.contrib.auth.backends.ModelBackend",
     ]
 )
-AUTH_USER_MODEL = 'hidl_auth.User'
+AUTH_USER_MODEL = "hidl_auth.User"
 
 SOCIAL_AUTH_JSONFIELD_ENABLED = False
 SOCIAL_AUTH_URL_NAMESPACE = "social"
@@ -123,53 +123,50 @@ DJANGO_EASY_AUDIT_UNREGISTERED_URLS_DEFAULT = [r"^/static/", r"^/favicon.ico$"]
 DJANGO_EASY_AUDIT_UNREGISTERED_CLASSES_EXTRA = ["otp_static.StaticToken", "otp_static.StaticDevice"]
 
 # Logger
-DEFAULT_LOGGING_LEVEL = "INFO" if not env.bool('DEBUG', False) else "DEBUG"
+DEFAULT_LOGGING_LEVEL = "INFO" if not env.bool("DEBUG", False) else "DEBUG"
 LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'filters': {
-        'require_debug_false': {
-            '()': 'django.utils.log.RequireDebugFalse'
-        }
-    },
-    'formatters': {
-        'verbose': {
-            'format': '{name} {levelname} {asctime} {module} {process:d} {thread:d} {message}',
-            'style': '{',
+    "version": 1,
+    "disable_existing_loggers": False,
+    "filters": {"require_debug_false": {"()": "django.utils.log.RequireDebugFalse"}},
+    "formatters": {
+        "verbose": {
+            "format": "{name} {levelname} {asctime} {module} {process:d} {thread:d} {message}",
+            "style": "{",
         },
-        'standard': {
-            'format': '[{levelname}] {asctime} | {name} : {message}',
-            'style': '{',
+        "standard": {
+            "format": "[{levelname}] {asctime} | {name} : {message}",
+            "style": "{",
         },
-        'simple': {
-            'format': '[{levelname}] {message}',
-            'style': '{',
+        "simple": {
+            "format": "[{levelname}] {message}",
+            "style": "{",
         },
     },
-    'handlers': {
-        'console': {
-            'level': 'INFO',
-            'formatter': 'standard',
-            'class': 'logging.StreamHandler',
+    "handlers": {
+        "console": {
+            "level": "INFO",
+            "formatter": "standard",
+            "class": "logging.StreamHandler",
         },
     },
-    'loggers': {
-        'django.request': {
-            'handlers': ['console'],
-            'level': DEFAULT_LOGGING_LEVEL,
-            'propagate': True,
-        }, 'root': {
-            'level': DEFAULT_LOGGING_LEVEL,
-            'handlers': ['console'],
+    "loggers": {
+        "django.request": {
+            "handlers": ["console"],
+            "level": DEFAULT_LOGGING_LEVEL,
+            "propagate": True,
         },
-        'two_factor': {
-            'handlers': ['console'],
-            'level': 'INFO',
-            'propagate': False,
+        "root": {
+            "level": DEFAULT_LOGGING_LEVEL,
+            "handlers": ["console"],
         },
-        '': {
-            'level': DEFAULT_LOGGING_LEVEL,
-            'handlers': ['console'],
+        "two_factor": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
         },
-    }
+        "": {
+            "level": DEFAULT_LOGGING_LEVEL,
+            "handlers": ["console"],
+        },
+    },
 }
