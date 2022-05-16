@@ -28,13 +28,7 @@ from .base import *
 
 # Application definition
 INSTALLED_APPS = (
-    [
-        "hidlroute.web",
-        "jazzmin",
-        "django.contrib.admin",
-        "crispy_forms",
-        "treebeard",
-    ]
+    ["hidlroute.web", "jazzmin", "django.contrib.admin", "crispy_forms", "treebeard", "adminsortable2"]
     + BASE_APPS
     + ["social_django"]
 )

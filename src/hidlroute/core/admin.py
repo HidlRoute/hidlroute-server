@@ -14,6 +14,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from adminsortable2.admin import SortableAdminMixin
 from django.contrib import admin
 from treebeard.admin import TreeAdmin
 from treebeard.forms import movenodeform_factory
@@ -36,13 +37,14 @@ class DeviceAdmin(admin.ModelAdmin):
     pass
 
 
+class ServerToMemberAdmin(admin.TabularInline):
+    model = models.ServerToMember
+    extra = 0
+
+
 @admin.register(models.Server)
 class ServerAdmin(admin.ModelAdmin):
-    pass
-
-
-@admin.register(models.ServerToMember)
-class ServerToMemberAdmin(admin.ModelAdmin):
+    inlines = [ServerToMemberAdmin]
     pass
 
 
@@ -57,8 +59,9 @@ class GroupAdmin(TreeAdmin):
 
 
 @admin.register(models.ServerFirewallRule)
-class ServerFirewallRuleAdmin(admin.ModelAdmin):
-    pass
+class ServerFirewallRuleAdmin(SortableAdminMixin, admin.ModelAdmin):
+    ordering = ["order"]
+    list_display = ["order", "__str__"]
 
 
 @admin.register(models.ServerRoutingRule)

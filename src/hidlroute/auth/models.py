@@ -14,8 +14,6 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Optional, Iterable
-
 from django.contrib.auth.models import AbstractUser as DjangoUser
 from django.contrib.auth.models import Group as DjangoGroup
 from django.utils.translation import gettext_lazy as _

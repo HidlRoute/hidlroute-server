@@ -16,14 +16,15 @@
 
 # from django.db import models
 
-# Create your models here.
-from polymorphic import models as polymorphic_models
 from cidrfield.models import IPNetworkField
 from django.conf import settings
 from django.db import models
+
+# Create your models here.
+from polymorphic import models as polymorphic_models
 from treebeard import mp_tree
 
-from hidlroute.core.base_models import Nameable, WithComment
+from hidlroute.core.base_models import Nameable, WithComment, Sortable
 
 
 def should_be_single_IP(ip_network):
@@ -32,6 +33,9 @@ def should_be_single_IP(ip_network):
 
 class Server(Nameable, WithComment, models.Model):
     interface_name = models.CharField(max_length=16)
+
+    def __str__(self):
+        return f"S: {self.name}"
 
 
 class Subnet(Nameable, WithComment, models.Model):
@@ -71,10 +75,16 @@ class Person(Member):
 class Host(Member):
     host_name = models.SlugField(max_length=100)
 
+    def __str__(self):
+        return f"H: {self.host_name}"
+
 
 class ServerToMember(models.Model):
     server = models.ForeignKey(Server, on_delete=models.RESTRICT)
     member = models.ForeignKey(Member, on_delete=models.RESTRICT)
+
+    class Meta:
+        unique_together = [("server", "member")]
 
 
 class Device(WithComment, models.Model):
@@ -83,12 +93,24 @@ class Device(WithComment, models.Model):
 
 
 class ServerRule(WithComment, polymorphic_models.PolymorphicModel):
-    server_group = models.ForeignKey(ServerGroup, on_delete=models.RESTRICT)
-    server_member = models.ForeignKey(ServerToMember, on_delete=models.RESTRICT)
+    server_group = models.ForeignKey(ServerGroup, on_delete=models.RESTRICT, null=True, blank=True)
+    server_member = models.ForeignKey(ServerToMember, on_delete=models.RESTRICT, null=True, blank=True)
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(server_group__isnull=True, server_member__isnull=False)
+                | models.Q(server_group__isnull=False, server_member__isnull=True),
+                name="check_serverrule_for_member_xor_group",
+            ),
+        ]
 
 
-class ServerFirewallRule(ServerRule):
+class ServerFirewallRule(Sortable, ServerRule):
     action = models.CharField(max_length=16)
+
+    def __str__(self):
+        return f"{self.action} {self.comment}"
 
 
 class ServerRoutingRule(ServerRule):
