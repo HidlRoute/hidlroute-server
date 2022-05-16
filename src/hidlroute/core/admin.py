@@ -18,7 +18,6 @@ from typing import Optional, Any
 
 from adminsortable2.admin import SortableAdminMixin
 from django.contrib import admin
-from django.contrib.admin import AdminSite
 from polymorphic.admin import PolymorphicParentModelAdmin, PolymorphicChildModelAdmin, PolymorphicChildModelFilter
 from treebeard.admin import TreeAdmin
 from treebeard.forms import movenodeform_factory
@@ -59,14 +58,21 @@ class ServerToMemberAdmin(admin.TabularInline):
     extra = 0
 
 
+class ServerToGroupAdmin(GroupSelectAdminMixin, admin.TabularInline):
+    model = models.ServerToGroup
+    extra = 0
+
+
 @admin.register(models.Server)
 class ServerAdmin(HidlBaseModelAdmin):
-    inlines = [ServerToMemberAdmin]
+    inlines = [ServerToMemberAdmin, ServerToGroupAdmin]
 
-
-@admin.register(models.ServerGroup)
-class ServerToGroupAdmin(HidlBaseModelAdmin):
-    pass
+    @classmethod
+    def register_implementation(cls, *args):
+        def _wrap(impl_admin_cls):
+            cls.inlines += [impl_admin_cls]
+            return impl_admin_cls
+        return _wrap
 
 
 @admin.register(models.Group)

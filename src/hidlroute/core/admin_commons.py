@@ -16,6 +16,7 @@
 
 from typing import Optional, Any
 
+from django.contrib.admin.options import BaseModelAdmin
 from django.db.models import ForeignKey
 from django.forms import ModelChoiceField
 from django.http import HttpRequest
@@ -24,7 +25,7 @@ from django.contrib import admin
 from hidlroute.core import models as core_models
 
 
-class GroupSelectAdminMixin(admin.ModelAdmin):
+class GroupSelectAdminMixin(BaseModelAdmin):
     def formfield_for_foreignkey(
             self, db_field: ForeignKey, request: Optional[HttpRequest], **kwargs: Any
     ) -> Optional[ModelChoiceField]:

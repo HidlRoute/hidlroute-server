@@ -16,11 +16,11 @@
 
 # from django.db import models
 
+from django.utils.translation import gettext_lazy as _
 from cidrfield.models import IPNetworkField
 from django.conf import settings
 from django.db import models
 
-# Create your models here.
 from polymorphic import models as polymorphic_models
 from treebeard import mp_tree
 
@@ -39,13 +39,13 @@ class Server(Nameable, WithComment, models.Model):
 
 
 class Subnet(Nameable, WithComment, models.Model):
-    server_group = models.ForeignKey("ServerGroup", on_delete=models.RESTRICT)
+    server_group = models.ForeignKey("ServerToGroup", on_delete=models.RESTRICT)
     cidr = IPNetworkField()
 
 
 class Group(Nameable, WithComment, mp_tree.MP_Node):
     DEFAULT_GROUP_SLUG = "x-default"
-    servers = models.ManyToManyField(Server, through="ServerGroup")
+    servers = models.ManyToManyField(Server, through="ServerToGroup")
 
     def __str__(self):
         return f"G: {self.name}"
@@ -55,7 +55,12 @@ class Group(Nameable, WithComment, mp_tree.MP_Node):
         return cls.objects.get(slug=cls.DEFAULT_GROUP_SLUG)
 
 
-class ServerGroup(WithComment, models.Model):
+class ServerToGroup(models.Model):
+    class Meta:
+        verbose_name = _("Group")
+        verbose_name_plural = _("Groups")
+        unique_together = [("server", "group")]
+
     server = models.ForeignKey(Server, on_delete=models.RESTRICT)
     group = models.ForeignKey(Group, on_delete=models.RESTRICT)
 
@@ -83,11 +88,13 @@ class Host(Member):
 
 
 class ServerToMember(models.Model):
+    class Meta:
+        verbose_name = _("Member")
+        verbose_name_plural = _("Members")
+        unique_together = [("server", "member")]
+
     server = models.ForeignKey(Server, on_delete=models.RESTRICT)
     member = models.ForeignKey(Member, on_delete=models.RESTRICT)
-
-    class Meta:
-        unique_together = [("server", "member")]
 
 
 class Device(WithComment, models.Model):
@@ -96,7 +103,7 @@ class Device(WithComment, models.Model):
 
 
 class ServerRule(WithComment, polymorphic_models.PolymorphicModel):
-    server_group = models.ForeignKey(ServerGroup, on_delete=models.RESTRICT, null=True, blank=True)
+    server_group = models.ForeignKey(ServerToGroup, on_delete=models.RESTRICT, null=True, blank=True)
     server_member = models.ForeignKey(ServerToMember, on_delete=models.RESTRICT, null=True, blank=True)
 
     class Meta:

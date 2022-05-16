@@ -15,9 +15,14 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from django.contrib import admin
-
-# Register your models here.
+from django.utils.translation import gettext_lazy as _
 from hidlroute.contrib.wireguard import models
+from hidlroute.core import models as core_models
+from hidlroute.core.admin import ServerAdmin
+
+
+class ServerInlineAdmin(admin.TabularInline):
+    model = core_models.Server
 
 
 @admin.register(models.WireguardPeer)
@@ -28,3 +33,10 @@ class WireguardPeerAdmin(admin.ModelAdmin):
 @admin.register(models.WireguardServer)
 class WireguardServerAdmin(admin.ModelAdmin):
     pass
+
+
+@ServerAdmin.register_implementation()
+class WireguardServerInline(admin.StackedInline):
+    model = models.WireguardServer
+    verbose_name = _("Wireguard Config")
+    verbose_name_plural = verbose_name
