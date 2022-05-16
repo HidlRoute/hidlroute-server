@@ -19,22 +19,34 @@ from typing import Optional, Any
 from adminsortable2.admin import SortableAdminMixin
 from django.contrib import admin
 from django.contrib.admin import AdminSite
+from polymorphic.admin import PolymorphicParentModelAdmin, PolymorphicChildModelAdmin, PolymorphicChildModelFilter
 from treebeard.admin import TreeAdmin
 from treebeard.forms import movenodeform_factory
 
 from hidlroute.core import models
-from hidlroute.core.admin_commons import GroupSelectAdminMixin, HidlBaseModelAdmin
+from hidlroute.core.admin_commons import HidlBaseModelAdmin, GroupSelectAdminMixin
+
+
+@admin.register(models.Member)
+class MemberAdmin(GroupSelectAdminMixin, PolymorphicParentModelAdmin):
+    base_model = models.Member
+    child_models = (models.Person, models.Host,)
+    list_filter = (PolymorphicChildModelFilter,)
+
+    def get_child_type_choices(self, request, action):
+        return [(k, v.capitalize()) for k, v, in super().get_child_type_choices(request, action)]
 
 
 @admin.register(models.Person)
-class PersonAdmin(admin.ModelAdmin):
-    pass
+class PersonAdmin(GroupSelectAdminMixin, PolymorphicChildModelAdmin):
+    base_model = models.Person
+    show_in_index = False
 
 
 @admin.register(models.Host)
-class HostAdmin(HidlBaseModelAdmin):
-    def __init__(self, model: Any, admin_site: Optional[AdminSite]) -> None:
-        super().__init__(model, admin_site)
+class HostAdmin(GroupSelectAdminMixin, PolymorphicChildModelAdmin):
+    base_model = models.Host
+    show_in_index = False
 
 
 @admin.register(models.Device)

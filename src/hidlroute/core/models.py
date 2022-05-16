@@ -64,6 +64,9 @@ class Member(WithComment, polymorphic_models.PolymorphicModel):
     group = models.ForeignKey(Group, on_delete=models.RESTRICT)
     servers = models.ManyToManyField(Server, through="ServerToMember")
 
+    def __str__(self) -> str:
+        return str(self.get_real_instance())
+
 
 class Person(Member):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, null=False, on_delete=models.CASCADE)
@@ -100,7 +103,7 @@ class ServerRule(WithComment, polymorphic_models.PolymorphicModel):
         constraints = [
             models.CheckConstraint(
                 check=models.Q(server_group__isnull=True, server_member__isnull=False)
-                | models.Q(server_group__isnull=False, server_member__isnull=True),
+                      | models.Q(server_group__isnull=False, server_member__isnull=True),
                 name="check_serverrule_for_member_xor_group",
             ),
         ]

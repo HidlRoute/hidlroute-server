@@ -32,6 +32,7 @@ BASE_APPS = filter_none(
         "django_otp.plugins.otp_static",
         "django_otp.plugins.otp_totp",
         "two_factor",
+        "polymorphic",
         # HidlRoute
         "hidlroute.auth",
         "hidlroute.core",

@@ -24,7 +24,7 @@ from django.contrib import admin
 from hidlroute.core import models as core_models
 
 
-class GroupSelectAdminMixin(object):
+class GroupSelectAdminMixin(admin.ModelAdmin):
     def formfield_for_foreignkey(
             self, db_field: ForeignKey, request: Optional[HttpRequest], **kwargs: Any
     ) -> Optional[ModelChoiceField]:
