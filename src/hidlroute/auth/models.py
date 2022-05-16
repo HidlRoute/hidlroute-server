@@ -35,7 +35,7 @@ class User(DjangoUser):
         is_insert = self.pk is None
         super().save(*args, **kwargs)
         if is_insert:
-            Person.objects.create(user=self, group_id=Group.DEFAULT_GROUP_ID)
+            Person.objects.create(user=self, group=Group.get_default_group())
 
 
 class Role(DjangoGroup):
