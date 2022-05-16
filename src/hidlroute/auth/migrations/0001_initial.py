@@ -23,7 +23,6 @@ import django.utils.timezone
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
     dependencies = [
@@ -122,5 +121,17 @@ class Migration(migrations.Migration):
             managers=[
                 ("objects", django.contrib.auth.models.UserManager()),
             ],
+        ),
+        migrations.AddField(
+            model_name='user',
+            name='comment',
+            field=models.TextField(blank=True),
+        ),
+        migrations.AddField(
+            model_name='user',
+            name='external_id',
+            field=models.CharField(blank=True,
+                                   help_text='Identifier in the external system. Might be useful for synchronization purposes',
+                                   max_length=512, null=True),
         ),
     ]

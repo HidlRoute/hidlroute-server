@@ -19,14 +19,18 @@ from django.contrib.auth.models import Group as DjangoGroup
 from django.utils.translation import gettext_lazy as _
 from django.db import models, transaction
 
+from hidlroute.core.base_models import WithComment
 from hidlroute.core.models import Person, Group
 
 
-class User(DjangoUser):
+class User(WithComment, DjangoUser):
     class Meta:
         db_table = "auth_user"
 
     profile_picture = models.URLField(null=True, blank=True)
+    external_id = models.CharField(max_length=512, null=True, blank=True,
+                                   help_text=_("Identifier in the external system. "
+                                               "Might be useful for synchronization purposes"))
 
     @transaction.atomic
     def save(self, *args, **kwargs) -> None:

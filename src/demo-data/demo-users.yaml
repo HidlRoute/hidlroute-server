@@ -1,0 +1,227 @@
+# ===========================
+# | USERS                   |
+# ===========================
+- model: auth.group
+  pk: 1
+  fields:
+    name: Users
+
+# ===========================
+# | USERS                   |
+# ===========================
+- model: hidl_auth.user
+  pk: 2
+  fields:
+    password: pbkdf2_sha256$320000$axBEW8v4CoVdC74Biq9F1W$PFhoV9pr4ryiBfAlzVY84My7FTnp2/lZujH6AhAXH3U=
+    last_login: 2022-05-16 15:34:02+00:00
+    is_superuser: false
+    username: silverfrog711
+    first_name: James
+    last_name: Gregory
+    email: james.gregory@demo-company.com
+    is_staff: true
+    is_active: true
+    date_joined: 2003-04-05 15:10:04+00:00
+    comment: "Password is: physics\r\n\r\n2FA Enabled:\r\n2FA via SMS: +13804272779\r\nBackup
+      codes: pbgzgaf5 26dlwfln afikm4mk upqh5xxi hnkhg7sn zjavb3wr tqmdc3s2 xcj3pekt
+      lhqwzizz xexwtl3j"
+    profile_picture: https://randomuser.me/api/portraits/men/39.jpg
+    external_id: c12c3921-3ed8-4cd5-914b-fdbf5f7601d3
+    groups:
+    - 1
+    user_permissions: []
+- model: hidl_auth.user
+  pk: 3
+  fields:
+    password: pbkdf2_sha256$320000$8oqywIWKNGJReARtxwxB4E$+vrszspVQxQdWbEbPR6defwWBi1ffOM4xyv0NyrGX0I=
+    last_login: 2022-05-11 15:23:59+00:00
+    is_superuser: false
+    username: greenostrich433
+    first_name: Beatriz
+    last_name: Garcia
+    email: beatriz.garcia@demo-company.com
+    is_staff: true
+    is_active: true
+    date_joined: 2004-07-21 15:23:15+00:00
+    comment: 'Password is: miller'
+    profile_picture: https://randomuser.me/api/portraits/women/8.jpg
+    external_id: 252e410a-576e-4f49-bf95-a5721ad463dc
+    groups: []
+    user_permissions: []
+- model: hidl_auth.user
+  pk: 4
+  fields:
+    password: pbkdf2_sha256$320000$zifZD6ek2RpPIy1UuKwXCD$ac9jkkXiwDjAf3WoAWPpAOPlv6urgKH8zUOGjp2xXiA=
+    last_login: null
+    is_superuser: false
+    username: sadgoose848
+    first_name: Catherine
+    last_name: Knight
+    email: catherine.knight@demo-company.com
+    is_staff: true
+    is_active: true
+    date_joined: 2006-06-14 15:24:56+00:00
+    comment: 'Password is: honeys'
+    profile_picture: https://randomuser.me/api/portraits/women/86.jpg
+    external_id: 38fc0b8e-5b79-49df-a27b-5d83e9f4a93c
+    groups:
+    - 1
+    user_permissions: []
+- model: hidl_auth.user
+  pk: 5
+  fields:
+    password: pbkdf2_sha256$320000$lTON9PlMdmOJ5vY7hEGub5$88f9CCD4hz/f+PntO0/XZZbZIHXmcjsJzw+2JKrTbVk=
+    last_login: null
+    is_superuser: false
+    username: orangebear810
+    first_name: Leo
+    last_name: Stone
+    email: leo.stone@demo-company.com
+    is_staff: true
+    is_active: true
+    date_joined: 2008-04-07 15:26:49+00:00
+    comment: 'Password is: farm'
+    profile_picture: https://randomuser.me/api/portraits/men/47.jpg
+    external_id: 9e4157cd-7cf1-4fde-a580-c75795130e04
+    groups:
+    - 1
+    user_permissions: []
+- model: hidl_auth.user
+  pk: 6
+  fields:
+    password: pbkdf2_sha256$320000$UOWq6QUBOCreltuSZ8Jy22$TFHYUWKBjuC38GaQu7lHOGkj23wOrLlR8eF5Ru+9i+E=
+    last_login: null
+    is_superuser: false
+    username: orangecat898
+    first_name: Jared
+    last_name: Newman
+    email: jared.newman@demo-company.com
+    is_staff: true
+    is_active: true
+    date_joined: 2022-05-16 15:29:47+00:00
+    comment: 'Password is: soft'
+    profile_picture: https://randomuser.me/api/portraits/men/78.jpg
+    external_id: 7a95b39a-9abf-4b1e-ad81-e3fc3a960c0f
+    groups:
+    - 1
+    user_permissions: []
+- model: hidl_auth.user
+  pk: 7
+  fields:
+    password: pbkdf2_sha256$320000$Qe1W0UC1pisE3jBy7r2PNt$06Ydk6+QRBOvQSFCEV/djMTRZA74PeG3sn1PHxUZPEg=
+    last_login: null
+    is_superuser: false
+    username: happyfish387
+    first_name: Annette
+    last_name: Dumont
+    email: annette.dumont@demo-company.com
+    is_staff: true
+    is_active: true
+    date_joined: 2022-05-16 15:32:31+00:00
+    comment: 'Password is: boater'
+    profile_picture: https://randomuser.me/api/portraits/women/72.jpg
+    external_id: null
+    groups:
+    - 1
+    user_permissions: []
+
+# ===========================
+# | PERSONS                 |
+# ===========================
+- model: hidl_core.person
+  pk: 2
+  fields:
+    user: 2
+- model: hidl_core.person
+  pk: 3
+  fields:
+    user: 3
+- model: hidl_core.person
+  pk: 4
+  fields:
+    user: 4
+- model: hidl_core.person
+  pk: 5
+  fields:
+    user: 5
+- model: hidl_core.person
+  pk: 6
+  fields:
+    user: 6
+- model: hidl_core.person
+  pk: 7
+  fields:
+    user: 7
+
+# ===========================
+# | 2FA                     |
+# ===========================
+- model: otp_static.staticdevice
+  pk: 1
+  fields:
+    user: 2
+    name: backup
+    confirmed: true
+    throttling_failure_timestamp: null
+    throttling_failure_count: 0
+- model: otp_static.statictoken
+  pk: 1
+  fields:
+    device: 1
+    token: pbgzgaf5
+- model: otp_static.statictoken
+  pk: 2
+  fields:
+    device: 1
+    token: 26dlwfln
+- model: otp_static.statictoken
+  pk: 3
+  fields:
+    device: 1
+    token: afikm4mk
+- model: otp_static.statictoken
+  pk: 4
+  fields:
+    device: 1
+    token: upqh5xxi
+- model: otp_static.statictoken
+  pk: 5
+  fields:
+    device: 1
+    token: hnkhg7sn
+- model: otp_static.statictoken
+  pk: 6
+  fields:
+    device: 1
+    token: zjavb3wr
+- model: otp_static.statictoken
+  pk: 7
+  fields:
+    device: 1
+    token: tqmdc3s2
+- model: otp_static.statictoken
+  pk: 8
+  fields:
+    device: 1
+    token: xcj3pekt
+- model: otp_static.statictoken
+  pk: 9
+  fields:
+    device: 1
+    token: lhqwzizz
+- model: otp_static.statictoken
+  pk: 10
+  fields:
+    device: 1
+    token: xexwtl3j
+- model: two_factor.phonedevice
+  pk: 1
+  fields:
+    user: 2
+    name: default
+    confirmed: true
+    throttling_failure_timestamp: null
+    throttling_failure_count: 0
+    number: '+13804272779'
+    key: 53842ffdb65c5e87fb13d9827603bc8b779d1a5c
+    method: sms

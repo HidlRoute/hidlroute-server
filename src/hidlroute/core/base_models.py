@@ -24,7 +24,7 @@ class Nameable(models.Model):
 
     name = models.CharField(max_length=1024, null=False, blank=False)
     slug = AutoSlugField(
-        populate_from="name", max_length=20, editable=True, null=False, blank=False, db_index=True, unique=True
+        populate_from="name", max_length=20, editable=True, null=False, blank=True, db_index=True, unique=True
     )
 
 

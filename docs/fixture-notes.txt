@@ -1,0 +1,1 @@
+python src/manage.py dumpdata --format=yaml -e admin.logentry -e auth.permission -e contenttypes -e sessions -e easyaudit > test.yaml

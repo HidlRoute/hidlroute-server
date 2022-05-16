@@ -1,0 +1,111 @@
+# ===================================
+# | ORGANIZATION STRUCTURE (Groups) |
+# ===================================
+- model: hidl_core.group
+  pk: 1
+  fields:
+    name: Demo Company
+    slug: x-default
+    comment: ''
+    path: '0001'
+    depth: 1
+    numchild: 3
+- model: hidl_core.group
+  pk: 2
+  fields:
+    name: Employees
+    slug: employees
+    comment: ''
+    path: '00010004'
+    depth: 2
+    numchild: 1
+- model: hidl_core.group
+  pk: 3
+  fields:
+    name: Contractors
+    slug: contractors
+    comment: ''
+    path: '00010003'
+    depth: 2
+    numchild: 0
+- model: hidl_core.group
+  pk: 4
+  fields:
+    name: Clients
+    slug: clients
+    comment: ''
+    path: '00010001'
+    depth: 2
+    numchild: 2
+- model: hidl_core.group
+  pk: 5
+  fields:
+    name: Acme Inc
+    slug: acme-inc
+    comment: ''
+    path: '000100010002'
+    depth: 3
+    numchild: 0
+- model: hidl_core.group
+  pk: 6
+  fields:
+    name: Contoso
+    slug: contoso
+    comment: ''
+    path: '000100010001'
+    depth: 3
+    numchild: 0
+- model: hidl_core.group
+  pk: 7
+  fields:
+    name: Remote
+    slug: remote
+    comment: ''
+    path: '000100040001'
+    depth: 3
+    numchild: 0
+# =======================================
+# | ORGANIZATION STRUCTURE (Membership) |
+# =======================================
+- model: hidl_core.member
+  pk: 1
+  fields:
+    comment: ''
+    polymorphic_ctype: 22
+    group: 1
+- model: hidl_core.member
+  pk: 2
+  fields:
+    comment: ''
+    polymorphic_ctype: 22
+    group: 1
+- model: hidl_core.member
+  pk: 3
+  fields:
+    comment: ''
+    polymorphic_ctype: 22
+    group: 1
+- model: hidl_core.member
+  pk: 4
+  fields:
+    comment: ''
+    polymorphic_ctype: 22
+    group: 1
+- model: hidl_core.member
+  pk: 5
+  fields:
+    comment: ''
+    polymorphic_ctype: 22
+    group: 1
+- model: hidl_core.member
+  pk: 6
+  fields:
+    comment: ''
+    polymorphic_ctype: 22
+    group: 1
+- model: hidl_core.member
+  pk: 7
+  fields:
+    comment: ''
+    polymorphic_ctype: 22
+    group: 1

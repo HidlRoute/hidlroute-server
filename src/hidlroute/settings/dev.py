@@ -22,6 +22,7 @@ from .base_server import *
 SECRET_KEY = "django-insecure-56=tojj)c&&vurqvd=afvhqzxc095cub@hxf7dd$^iqpm=h$_k"
 DEBUG = True
 ALLOWED_HOSTS = ["*"]
+AUTH_PASSWORD_VALIDATORS = []
 
 # Database
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases

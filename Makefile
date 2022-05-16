@@ -153,7 +153,7 @@ create-superuser:
         DJANGO_SUPERUSER_PASSWORD=demoadmin $(PYTHON) src/manage.py createsuperuser --username=demoadmin --email=admin@demo.com  --no-input; \
 	)
 
-create-dev-db: migrate create-superuser load-dataset
+create-dev-db: migrate create-superuser load-demo-dataset
 delete-db:
 	@( \
         if [ -z $(SKIP_VENV) ]; then source $(VIRTUAL_ENV_PATH)/bin/activate; fi; \
@@ -161,11 +161,11 @@ delete-db:
         if [ -f "./dev-data/db.sqlite3" ]; then rm ./dev-data/db.sqlite3; echo "  DONE"; else echo "  Database doesn't exist"; fi; \
 	)
 
-load-dataset:
+load-demo-dataset:
 	@( \
         if [ -z $(SKIP_VENV) ]; then source $(VIRTUAL_ENV_PATH)/bin/activate; fi; \
-        echo "Loading dataset..."; \
-#        $(PYTHON) src/manage.py loaddata <NAME>; \
+        echo "Loading demo dataset..."; \
+        $(PYTHON) src/manage.py loaddata demo-users demo-org; \
 	)
 
 dev-containers:
