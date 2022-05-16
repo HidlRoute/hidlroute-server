@@ -27,7 +27,7 @@ from hidlroute.core import models as core_models
 
 class GroupSelectAdminMixin(BaseModelAdmin):
     def formfield_for_foreignkey(
-            self, db_field: ForeignKey, request: Optional[HttpRequest], **kwargs: Any
+        self, db_field: ForeignKey, request: Optional[HttpRequest], **kwargs: Any
     ) -> Optional[ModelChoiceField]:
         form_field: ModelChoiceField = super().formfield_for_foreignkey(db_field, request, **kwargs)
         if db_field.related_model == core_models.Group:

@@ -14,8 +14,6 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Optional, Any
-
 from adminsortable2.admin import SortableAdminMixin
 from django.contrib import admin
 from polymorphic.admin import PolymorphicParentModelAdmin, PolymorphicChildModelAdmin, PolymorphicChildModelFilter
@@ -29,7 +27,10 @@ from hidlroute.core.admin_commons import HidlBaseModelAdmin, GroupSelectAdminMix
 @admin.register(models.Member)
 class MemberAdmin(GroupSelectAdminMixin, PolymorphicParentModelAdmin):
     base_model = models.Member
-    child_models = (models.Person, models.Host,)
+    child_models = (
+        models.Person,
+        models.Host,
+    )
     list_filter = (PolymorphicChildModelFilter,)
 
     def get_child_type_choices(self, request, action):
@@ -72,6 +73,7 @@ class ServerAdmin(HidlBaseModelAdmin):
         def _wrap(impl_admin_cls):
             cls.inlines += [impl_admin_cls]
             return impl_admin_cls
+
         return _wrap
 
 

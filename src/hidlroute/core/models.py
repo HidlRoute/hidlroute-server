@@ -110,7 +110,7 @@ class ServerRule(WithComment, polymorphic_models.PolymorphicModel):
         constraints = [
             models.CheckConstraint(
                 check=models.Q(server_group__isnull=True, server_member__isnull=False)
-                      | models.Q(server_group__isnull=False, server_member__isnull=True),
+                | models.Q(server_group__isnull=False, server_member__isnull=True),
                 name="check_serverrule_for_member_xor_group",
             ),
         ]
