@@ -57,7 +57,9 @@ class Migration(migrations.Migration):
                 ("name", models.CharField(max_length=1024)),
                 (
                     "slug",
-                    autoslug.fields.AutoSlugField(blank=True, editable=True, max_length=20, populate_from="name", unique=True),
+                    autoslug.fields.AutoSlugField(
+                        blank=True, editable=True, max_length=20, populate_from="name", unique=True
+                    ),
                 ),
                 ("comment", models.TextField(blank=True)),
             ],
@@ -93,7 +95,9 @@ class Migration(migrations.Migration):
                 ("name", models.CharField(max_length=1024)),
                 (
                     "slug",
-                    autoslug.fields.AutoSlugField(blank=True, editable=True, max_length=20, populate_from="name", unique=True),
+                    autoslug.fields.AutoSlugField(
+                        blank=True, editable=True, max_length=20, populate_from="name", unique=True
+                    ),
                 ),
                 ("comment", models.TextField(blank=True)),
                 ("interface_name", models.CharField(max_length=16)),
@@ -230,7 +234,9 @@ class Migration(migrations.Migration):
                 ("name", models.CharField(max_length=1024)),
                 (
                     "slug",
-                    autoslug.fields.AutoSlugField(blank=True, editable=True, max_length=20, populate_from="name", unique=True),
+                    autoslug.fields.AutoSlugField(
+                        blank=True, editable=True, max_length=20, populate_from="name", unique=True
+                    ),
                 ),
                 ("comment", models.TextField(blank=True)),
                 ("cidr", cidrfield.models.IPNetworkField()),

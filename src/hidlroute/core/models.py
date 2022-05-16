@@ -43,7 +43,7 @@ class Subnet(Nameable, WithComment, models.Model):
     cidr = IPNetworkField()
 
 
-class Group(mp_tree.MP_Node, Nameable, WithComment, models.Model):
+class Group(Nameable, WithComment, mp_tree.MP_Node):
     DEFAULT_GROUP_SLUG = "x-default"
     servers = models.ManyToManyField(Server, through="ServerGroup")
 

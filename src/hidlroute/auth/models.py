@@ -28,9 +28,12 @@ class User(WithComment, DjangoUser):
         db_table = "auth_user"
 
     profile_picture = models.URLField(null=True, blank=True)
-    external_id = models.CharField(max_length=512, null=True, blank=True,
-                                   help_text=_("Identifier in the external system. "
-                                               "Might be useful for synchronization purposes"))
+    external_id = models.CharField(
+        max_length=512,
+        null=True,
+        blank=True,
+        help_text=_("Identifier in the external system. " "Might be useful for synchronization purposes"),
+    )
 
     @transaction.atomic
     def save(self, *args, **kwargs) -> None:

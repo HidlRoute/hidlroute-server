@@ -14,12 +14,16 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from typing import Optional, Any
+
 from adminsortable2.admin import SortableAdminMixin
 from django.contrib import admin
+from django.contrib.admin import AdminSite
 from treebeard.admin import TreeAdmin
 from treebeard.forms import movenodeform_factory
 
 from hidlroute.core import models
+from hidlroute.core.admin_commons import GroupSelectAdminMixin, HidlBaseModelAdmin
 
 
 @admin.register(models.Person)
@@ -28,12 +32,13 @@ class PersonAdmin(admin.ModelAdmin):
 
 
 @admin.register(models.Host)
-class HostAdmin(admin.ModelAdmin):
-    pass
+class HostAdmin(HidlBaseModelAdmin):
+    def __init__(self, model: Any, admin_site: Optional[AdminSite]) -> None:
+        super().__init__(model, admin_site)
 
 
 @admin.register(models.Device)
-class DeviceAdmin(admin.ModelAdmin):
+class DeviceAdmin(HidlBaseModelAdmin):
     pass
 
 
@@ -43,13 +48,12 @@ class ServerToMemberAdmin(admin.TabularInline):
 
 
 @admin.register(models.Server)
-class ServerAdmin(admin.ModelAdmin):
+class ServerAdmin(HidlBaseModelAdmin):
     inlines = [ServerToMemberAdmin]
-    pass
 
 
 @admin.register(models.ServerGroup)
-class ServerToGroupAdmin(admin.ModelAdmin):
+class ServerToGroupAdmin(HidlBaseModelAdmin):
     pass
 
 
@@ -59,16 +63,16 @@ class GroupAdmin(TreeAdmin):
 
 
 @admin.register(models.ServerFirewallRule)
-class ServerFirewallRuleAdmin(SortableAdminMixin, admin.ModelAdmin):
+class ServerFirewallRuleAdmin(SortableAdminMixin, HidlBaseModelAdmin):
     ordering = ["order"]
     list_display = ["order", "__str__"]
 
 
 @admin.register(models.ServerRoutingRule)
-class ServerRoutingRuleAdmin(admin.ModelAdmin):
+class ServerRoutingRuleAdmin(HidlBaseModelAdmin):
     pass
 
 
 @admin.register(models.Subnet)
-class SubnetAdmin(admin.ModelAdmin):
+class SubnetAdmin(HidlBaseModelAdmin):
     pass

@@ -41,7 +41,6 @@ class UserAdmin(DjangoUserAdmin):
                 "fields": (
                     "is_active",
                     "is_staff",
-
                     "is_superuser",
                     "groups",
                     "user_permissions",
@@ -49,5 +48,13 @@ class UserAdmin(DjangoUserAdmin):
             },
         ),
         (_("Important dates"), {"fields": ("last_login", "date_joined")}),
-        (_("Other"), {"fields": ("external_id", "comment",)}),
+        (
+            _("Other"),
+            {
+                "fields": (
+                    "external_id",
+                    "comment",
+                )
+            },
+        ),
     )
