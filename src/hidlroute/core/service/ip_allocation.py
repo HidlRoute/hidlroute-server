@@ -15,8 +15,11 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
+
+from django.db import transaction
+
 from hidlroute.core import models
-from hidlroute.core.models import Device
+from hidlroute.core.types import IpAddress
 
 LOGGER = logging.getLogger("hidl_core.service.ip_allocation")
 
@@ -25,8 +28,12 @@ class IpAddressUnavailable(Exception):
     pass
 
 
-def pick_ip_from_subnet(server: models.Server, subnet: models.Subnet) -> str:
-    Device.objects.filter(server_member__server=server)
+@transaction.atomic
+def pick_ip_from_subnet(server: models.Server, subnet: models.Subnet) -> IpAddress:
+    # Device.objects.filter(server_member__server=server, ip_address__net_contained=subnet.cidr).order('address')
+    ip_allocation = models.IpAllocation.objects.get_or_create(server=server, subnet=subnet)
+    # candidate = ip_allocation.last_allocated_ip
+    pass
 
 
 def allocate_ip(server: models.Server, member: models.Member) -> str:

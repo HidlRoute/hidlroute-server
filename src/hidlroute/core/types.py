@@ -14,15 +14,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from django.utils.translation import gettext_lazy as _
-from django.apps import AppConfig
+import ipaddress
+from types import Union
 
-
-class CoreConfig(AppConfig):
-    default_auto_field = "django.db.models.BigAutoField"
-    name = "hidlroute.core"
-    label = "hidl_core"
-    verbose_name = _("Hidl Route Core")
-
-    def ready(self):
-        from . import signals  # noqa: F401
+IpAddress = Union[ipaddress.IPv4Address, ipaddress.IPv6Address]

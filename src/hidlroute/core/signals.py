@@ -13,16 +13,9 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
-from django.utils.translation import gettext_lazy as _
-from django.apps import AppConfig
 
-
-class CoreConfig(AppConfig):
-    default_auto_field = "django.db.models.BigAutoField"
-    name = "hidlroute.core"
-    label = "hidl_core"
-    verbose_name = _("Hidl Route Core")
-
-    def ready(self):
-        from . import signals  # noqa: F401
+# @receiver(post_save)
+# def on_model_save()

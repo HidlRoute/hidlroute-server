@@ -14,6 +14,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from django.contrib.postgres.indexes import GistIndex
 from django.utils.translation import gettext_lazy as _
 from django.conf import settings
 from django.db import models
@@ -46,6 +47,15 @@ class Server(Nameable, WithComment, polymorphic_models.PolymorphicModel):
 
     # def allocate_ip_for_member(self, member: 'Member') -> str:
     #     ip_allocation.allocate_ip(self, member)
+
+
+class IpAllocation(models.Model):
+    server = models.ForeignKey(Server, on_delete=models.CASCADE)
+    subnet = models.ForeignKey(Subnet, on_delete=models.RESTRICT)
+    last_allocated_ip = netfields.InetAddressField(null=True, blank=True)
+
+    class Meta:
+        unique_together = [("server", "subnet")]
 
 
 class Group(Nameable, WithComment, mp_tree.MP_Node):
@@ -109,8 +119,11 @@ class ServerToMember(models.Model):
 
 class Device(WithComment, polymorphic_models.PolymorphicModel):
     server_member = models.ForeignKey(ServerToMember, on_delete=models.RESTRICT, null=False, blank=True)
-    address = netfields.InetAddressField(null=False, blank=True)
+    ip_address = netfields.InetAddressField(null=False, blank=True)
     mac_address = netfields.MACAddressField(null=True, blank=True)
+
+    class Meta:
+        indexes = (GistIndex(fields=("ip_address",), opclasses=("inet_ops",), name="hidl_device_ipaddress_idx"),)
 
 
 class ServerRule(WithComment, polymorphic_models.PolymorphicModel):
