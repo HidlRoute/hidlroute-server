@@ -26,29 +26,29 @@ from hidlroute.core.admin_commons import HidlBaseModelAdmin, GroupSelectAdminMix
 from hidlroute.core.forms import ServerTypeSelectForm
 
 
-@admin.register(models.Member)
-class MemberAdmin(GroupSelectAdminMixin, PolymorphicParentModelAdmin):
-    base_model = models.Member
-    child_models = (
-        models.Person,
-        models.Host,
-    )
-    list_filter = (PolymorphicChildModelFilter,)
-
-    def get_child_type_choices(self, request, action):
-        return [(k, v.capitalize()) for k, v, in super().get_child_type_choices(request, action)]
-
-
-@admin.register(models.Person)
-class PersonAdmin(GroupSelectAdminMixin, PolymorphicChildModelAdmin):
-    base_model = models.Person
-    show_in_index = False
+# @admin.register(models.Member)
+# class MemberAdmin(GroupSelectAdminMixin, PolymorphicParentModelAdmin):
+#     base_model = models.Member
+#     child_models = (
+#         models.Person,
+#         models.Host,
+#     )
+#     list_filter = (PolymorphicChildModelFilter,)
+#
+#     def get_child_type_choices(self, request, action):
+#         return [(k, v.capitalize()) for k, v, in super().get_child_type_choices(request, action)]
+#
+#
+# @admin.register(models.Person)
+# class PersonAdmin(GroupSelectAdminMixin, PolymorphicChildModelAdmin):
+#     base_model = models.Person
+#     show_in_index = False
 
 
 @admin.register(models.Host)
-class HostAdmin(GroupSelectAdminMixin, PolymorphicChildModelAdmin):
+class HostAdmin(HidlBaseModelAdmin):
     base_model = models.Host
-    show_in_index = False
+    show_in_index = True
 
 
 @admin.register(models.Device)
