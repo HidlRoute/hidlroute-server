@@ -8,6 +8,7 @@ PYPI_REPOSITORY_URL :=
 ALPHA_VERSION :=
 SRC_ROOT := ./src/hidlroute
 PYTHON := python3
+RUN_PSQL := docker-compose -f dev-containers.yaml exec db psql -U hidl fake
 
 .DEFAULT_GOAL := pre_commit
 
@@ -128,7 +129,7 @@ venv:
 		source ./venv/bin/activate; \
 	)
 
-db: delete-db create-dev-db
+db: dev-containers delete-db create-dev-db
 
 migrate:
 	@( \
@@ -158,7 +159,10 @@ delete-db:
 	@( \
         if [ -z $(SKIP_VENV) ]; then source $(VIRTUAL_ENV_PATH)/bin/activate; fi; \
         echo "Deleting database..."; \
-        if [ -f "./dev-data/db.sqlite3" ]; then rm ./dev-data/db.sqlite3; echo "  DONE"; else echo "  Database doesn't exist"; fi; \
+        #if [ -f "./dev-data/db.sqlite3" ]; then rm ./dev-data/db.sqlite3; echo "  DONE"; else echo "  Database doesn't exist"; fi; \
+        $(RUN_PSQL) -c "DROP DATABASE hidl;"; \
+        $(RUN_PSQL) -c "CREATE DATABASE hidl;"; \
+        echo "  DONE"; \
 	)
 
 load-demo-dataset:

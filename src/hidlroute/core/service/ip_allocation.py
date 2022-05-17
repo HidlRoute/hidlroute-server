@@ -14,9 +14,20 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from django.contrib.admin.widgets import AdminRadioSelect
+import logging
+from hidlroute.core import models
+from hidlroute.core.models import Device
+
+LOGGER = logging.getLogger("hidl_core.service.ip_allocation")
 
 
-class ServerRadioSelect(AdminRadioSelect):
-    template_name = "admin/widgets/server-type-select.html"
-    option_template_name = "admin/widgets/server-type-select-option.html"
+class IpAddressUnavailable(Exception):
+    pass
+
+
+def pick_ip_from_subnet(server: models.Server, subnet: models.Subnet) -> str:
+    Device.objects.filter(server_member__server=server)
+
+
+def allocate_ip(server: models.Server, member: models.Member) -> str:
+    pass

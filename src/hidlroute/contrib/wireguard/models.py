@@ -14,9 +14,6 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# from django.db import models
-
-# Create your models here.
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
@@ -28,8 +25,9 @@ class WireguardServer(models_core.Server):
         verbose_name = _("Wireguard Server")
 
     private_key = models.CharField(max_length=1024)
+    listen_port = models.IntegerField(null=False, default=5762)
 
 
-class WireguardPeer(models.Model):
-    device = models.ForeignKey(models_core.Device, on_delete=models.RESTRICT)
+class WireguardPeer(models_core.Device):
     public_key = models.CharField(max_length=1024)
+    preshared_key = models.CharField(max_length=1024, blank=True, null=True)

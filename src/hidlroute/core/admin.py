@@ -17,12 +17,12 @@
 from adminsortable2.admin import SortableAdminMixin
 from django.contrib import admin
 from django.contrib.contenttypes.models import ContentType
-from polymorphic.admin import PolymorphicParentModelAdmin, PolymorphicChildModelAdmin, PolymorphicChildModelFilter
+from polymorphic.admin import PolymorphicChildModelAdmin
 from treebeard.admin import TreeAdmin
 from treebeard.forms import movenodeform_factory
 
 from hidlroute.core import models
-from hidlroute.core.admin_commons import HidlBaseModelAdmin, GroupSelectAdminMixin
+from hidlroute.core.admin_commons import HidlBaseModelAdmin, GroupSelectAdminMixin, HidlePolymorphicParentAdmin
 from hidlroute.core.forms import ServerTypeSelectForm
 
 
@@ -52,8 +52,9 @@ class HostAdmin(HidlBaseModelAdmin):
 
 
 @admin.register(models.Device)
-class DeviceAdmin(HidlBaseModelAdmin):
-    pass
+class DeviceAdmin(HidlBaseModelAdmin, HidlePolymorphicParentAdmin):
+    base_model = models.Device
+    child_models = []
 
 
 class ServerToMemberAdmin(admin.TabularInline):
@@ -68,6 +69,19 @@ class ServerToGroupAdmin(GroupSelectAdminMixin, admin.TabularInline):
 
 class BaseServerAdminImpl(PolymorphicChildModelAdmin):
     ICON = "images/server/no-icon.png"
+    fieldsets = [
+        (
+            None,
+            {
+                "fields": HidlBaseModelAdmin.nameable_fields
+                + [
+                    "interface_name",
+                    ("subnet", "ip_address"),
+                    "comment",
+                ]
+            },
+        ),
+    ]
     inlines = [ServerToGroupAdmin, ServerToMemberAdmin]
 
     @classmethod
@@ -76,7 +90,7 @@ class BaseServerAdminImpl(PolymorphicChildModelAdmin):
 
 
 @admin.register(models.Server)
-class ServerAdmin(HidlBaseModelAdmin, PolymorphicParentModelAdmin):
+class ServerAdmin(HidlBaseModelAdmin, HidlePolymorphicParentAdmin):
     Impl = BaseServerAdminImpl
     base_model = models.Server
     child_models = []
@@ -88,9 +102,7 @@ class ServerAdmin(HidlBaseModelAdmin, PolymorphicParentModelAdmin):
         """
         self._lazy_setup()
         choices = []
-        content_types = ContentType.objects.get_for_models(
-            *self.get_child_models(), for_concrete_models=False
-        )
+        content_types = ContentType.objects.get_for_models(*self.get_child_models(), for_concrete_models=False)
 
         for model, ct in content_types.items():
             perm_function_name = f"has_{action}_permission"
@@ -100,17 +112,6 @@ class ServerAdmin(HidlBaseModelAdmin, PolymorphicParentModelAdmin):
                 continue
             choices.append((ct.id, dict(name=model._meta.verbose_name, image=model_admin.get_icon())))
         return choices
-
-    @classmethod
-    def register_implementation(cls, *args):
-        def _wrap(impl_admin_cls):
-            if impl_admin_cls.base_model not in cls.child_models:
-                cls.child_models.append(impl_admin_cls.base_model)
-            if not admin.site.is_registered(impl_admin_cls.base_model):
-                admin.site.register(impl_admin_cls.base_model, impl_admin_cls)
-            return impl_admin_cls
-
-        return _wrap
 
 
 @admin.register(models.Group)
@@ -131,4 +132,7 @@ class ServerRoutingRuleAdmin(HidlBaseModelAdmin):
 
 @admin.register(models.Subnet)
 class SubnetAdmin(HidlBaseModelAdmin):
-    pass
+    fieldsets = (
+        (None, {"fields": HidlBaseModelAdmin.nameable_fields + ["cidr"]}),
+        HidlBaseModelAdmin.with_comment_fieldset,
+    )

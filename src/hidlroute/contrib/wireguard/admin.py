@@ -19,21 +19,24 @@ from django.utils.translation import gettext_lazy as _
 
 from hidlroute.contrib.wireguard import models
 from hidlroute.core import models as core_models
-from hidlroute.core.admin import ServerAdmin
+from hidlroute.core.admin import ServerAdmin, DeviceAdmin
 
 
 class ServerInlineAdmin(admin.TabularInline):
     model = core_models.Server
 
 
-@admin.register(models.WireguardPeer)
+@DeviceAdmin.register_implementation()
 class WireguardPeerAdmin(admin.ModelAdmin):
-    pass
+    base_model = models.WireguardPeer
+    verbose_name = _("Wireguard Peer")
 
 
 @ServerAdmin.register_implementation()
 class WireguardServerAdmin(ServerAdmin.Impl):
     ICON = "images/server/wireguard.png"
+
     base_model = models.WireguardServer
     verbose_name = _("Wireguard Config")
     verbose_name_plural = verbose_name
+    fieldsets = ServerAdmin.Impl.fieldsets + [(_("Wireguard"), {"fields": ["listen_port", "private_key"]})]

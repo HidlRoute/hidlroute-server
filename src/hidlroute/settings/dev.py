@@ -27,12 +27,14 @@ AUTH_PASSWORD_VALIDATORS = []
 
 # Database
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR.parent / "dev-data" / "db.sqlite3",
-    }
-}
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.sqlite3",
+#         "NAME": BASE_DIR.parent / "dev-data" / "db.sqlite3",
+#     }
+# }
+
+DATABASES = {"default": env.db_url_config("postgres://hidl:hidl@127.0.0.1:5432/hidl")}
 
 # 2FA
 TWO_FACTOR_SMS_GATEWAY = "two_factor.gateways.fake.Fake"

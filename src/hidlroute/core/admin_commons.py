@@ -17,10 +17,12 @@
 from typing import Optional, Any
 
 from django.contrib.admin.options import BaseModelAdmin
+from django.utils.translation import gettext_lazy as _
 from django.db.models import ForeignKey
 from django.forms import ModelChoiceField
 from django.http import HttpRequest
 from django.contrib import admin
+from polymorphic.admin import PolymorphicParentModelAdmin
 
 from hidlroute.core import models as core_models
 
@@ -37,4 +39,20 @@ class GroupSelectAdminMixin(BaseModelAdmin):
 
 
 class HidlBaseModelAdmin(GroupSelectAdminMixin, admin.ModelAdmin):
-    pass
+    with_comment_fieldset = (_("Notes"), {"fields": ("comment",)})
+    nameable_fields = [
+        ("name", "slug"),
+    ]
+
+
+class HidlePolymorphicParentAdmin(PolymorphicParentModelAdmin):
+    @classmethod
+    def register_implementation(cls, *args):
+        def _wrap(impl_admin_cls):
+            if impl_admin_cls.base_model not in cls.child_models:
+                cls.child_models.append(impl_admin_cls.base_model)
+            if not admin.site.is_registered(impl_admin_cls.base_model):
+                admin.site.register(impl_admin_cls.base_model, impl_admin_cls)
+            return impl_admin_cls
+
+        return _wrap

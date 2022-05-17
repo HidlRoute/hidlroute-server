@@ -15,9 +15,9 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from django.utils.translation import gettext_lazy as _
-from cidrfield.models import IPNetworkField
 from django.conf import settings
 from django.db import models
+import netfields
 
 from polymorphic import models as polymorphic_models
 from treebeard import mp_tree
@@ -29,16 +29,23 @@ def should_be_single_IP(ip_network):
     return True
 
 
+class Subnet(Nameable, WithComment, models.Model):
+    cidr = netfields.CidrAddressField()
+
+    def __str__(self) -> str:
+        return f"{self.name} ({self.cidr})"
+
+
 class Server(Nameable, WithComment, polymorphic_models.PolymorphicModel):
     interface_name = models.CharField(max_length=16)
+    ip_address = models.GenericIPAddressField(null=False, blank=False)
+    subnet = models.ForeignKey(Subnet, on_delete=models.RESTRICT)
 
     def __str__(self):
         return f"S: {self.name}"
 
-
-class Subnet(Nameable, WithComment, models.Model):
-    server_group = models.ForeignKey("ServerToGroup", on_delete=models.RESTRICT)
-    cidr = IPNetworkField()
+    # def allocate_ip_for_member(self, member: 'Member') -> str:
+    #     ip_allocation.allocate_ip(self, member)
 
 
 class Group(Nameable, WithComment, mp_tree.MP_Node):
@@ -61,6 +68,7 @@ class ServerToGroup(models.Model):
 
     server = models.ForeignKey(Server, on_delete=models.RESTRICT)
     group = models.ForeignKey(Group, on_delete=models.RESTRICT)
+    subnet = models.ForeignKey(Subnet, on_delete=models.RESTRICT, null=True, blank=True)
 
 
 class Member(WithComment, polymorphic_models.PolymorphicModel):
@@ -93,11 +101,16 @@ class ServerToMember(models.Model):
 
     server = models.ForeignKey(Server, on_delete=models.RESTRICT)
     member = models.ForeignKey(Member, on_delete=models.RESTRICT)
+    subnet = models.ForeignKey(Subnet, on_delete=models.RESTRICT, null=True, blank=True)
+
+    def __str__(self) -> str:
+        return "S2M: " + str(self.member)
 
 
-class Device(WithComment, models.Model):
-    server_member = models.ForeignKey(ServerToMember, on_delete=models.RESTRICT, null=True)
-    address = IPNetworkField(validators=[should_be_single_IP])
+class Device(WithComment, polymorphic_models.PolymorphicModel):
+    server_member = models.ForeignKey(ServerToMember, on_delete=models.RESTRICT, null=False, blank=True)
+    address = netfields.InetAddressField(null=False, blank=True)
+    mac_address = netfields.MACAddressField(null=True, blank=True)
 
 
 class ServerRule(WithComment, polymorphic_models.PolymorphicModel):
@@ -122,8 +135,8 @@ class ServerFirewallRule(Sortable, ServerRule):
 
 
 class ServerRoutingRule(ServerRule):
-    network = IPNetworkField()
-    gateway = IPNetworkField()
+    network = netfields.CidrAddressField()
+    gateway = netfields.InetAddressField()
     interface = models.CharField(max_length=16)
 
 
