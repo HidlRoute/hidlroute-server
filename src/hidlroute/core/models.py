@@ -14,8 +14,6 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# from django.db import models
-
 from django.utils.translation import gettext_lazy as _
 from cidrfield.models import IPNetworkField
 from django.conf import settings
@@ -31,7 +29,7 @@ def should_be_single_IP(ip_network):
     return True
 
 
-class Server(Nameable, WithComment, models.Model):
+class Server(Nameable, WithComment, polymorphic_models.PolymorphicModel):
     interface_name = models.CharField(max_length=16)
 
     def __str__(self):

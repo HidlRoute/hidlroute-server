@@ -64,14 +64,26 @@ class ServerToGroupAdmin(GroupSelectAdminMixin, admin.TabularInline):
     extra = 0
 
 
+class BaseServerAdminImpl(PolymorphicChildModelAdmin):
+    inlines = [ServerToGroupAdmin, ServerToMemberAdmin]
+
+
 @admin.register(models.Server)
-class ServerAdmin(HidlBaseModelAdmin):
-    inlines = [ServerToMemberAdmin, ServerToGroupAdmin]
+class ServerAdmin(HidlBaseModelAdmin, PolymorphicParentModelAdmin):
+    Impl = BaseServerAdminImpl
+    base_model = models.Server
+    child_models = []
+
+    def get_child_type_choices(self, request, action):
+        return [(k, v[0].upper() + v[1:]) for k, v, in super().get_child_type_choices(request, action)]
 
     @classmethod
     def register_implementation(cls, *args):
         def _wrap(impl_admin_cls):
-            cls.inlines += [impl_admin_cls]
+            if impl_admin_cls.base_model not in cls.child_models:
+                cls.child_models.append(impl_admin_cls.base_model)
+            if not admin.site.is_registered(impl_admin_cls.base_model):
+                admin.site.register(impl_admin_cls.base_model, impl_admin_cls)
             return impl_admin_cls
 
         return _wrap

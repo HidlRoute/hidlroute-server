@@ -14,29 +14,15 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
+from django.db import models
+from django.utils.translation import gettext_lazy as _
 
-os.environ.setdefault("DEBUG", "True")
-from .base_server import *
+from hidlroute.core import models as models_core
 
-SECRET_KEY = "django-insecure-56=tojj)c&&vurqvd=afvhqzxc095cub@hxf7dd$^iqpm=h$_k"
-DEBUG = True
-ALLOWED_HOSTS = ["*"]
-X_FRAME_OPTIONS = "ALLOW-FROM " + " ".join(ALLOWED_HOSTS)
-AUTH_PASSWORD_VALIDATORS = []
 
-# Database
-# https://docs.djangoproject.com/en/4.0/ref/settings/#databases
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR.parent / "dev-data" / "db.sqlite3",
-    }
-}
+class OpenVPNServer(models_core.Server):
+    class Meta:
+        verbose_name = _("OpenVPN Server")
 
-# 2FA
-TWO_FACTOR_SMS_GATEWAY = "two_factor.gateways.fake.Fake"
-
-# Email
-EMAIL_CONFIG = env.email_url_config("smtp://user:password@localhost:1025")
-vars().update(EMAIL_CONFIG)
+    cert_storage_dir = models.CharField(max_length=1024, null=False, blank=True)
+    extra_config = models.TextField(null=False, blank=True)

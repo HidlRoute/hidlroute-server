@@ -18,15 +18,18 @@
 
 # Create your models here.
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
-from hidlroute.core.models import Server, Device
+from hidlroute.core import models as models_core
 
 
-class WireguardServer(models.Model):
-    server = models.OneToOneField(Server, on_delete=models.RESTRICT)
+class WireguardServer(models_core.Server):
+    class Meta:
+        verbose_name = _("Wireguard Server")
+
     private_key = models.CharField(max_length=1024)
 
 
 class WireguardPeer(models.Model):
-    device = models.ForeignKey(Device, on_delete=models.RESTRICT)
+    device = models.ForeignKey(models_core.Device, on_delete=models.RESTRICT)
     public_key = models.CharField(max_length=1024)

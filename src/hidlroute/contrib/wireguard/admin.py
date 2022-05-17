@@ -16,6 +16,7 @@
 
 from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
+
 from hidlroute.contrib.wireguard import models
 from hidlroute.core import models as core_models
 from hidlroute.core.admin import ServerAdmin
@@ -30,13 +31,8 @@ class WireguardPeerAdmin(admin.ModelAdmin):
     pass
 
 
-@admin.register(models.WireguardServer)
-class WireguardServerAdmin(admin.ModelAdmin):
-    pass
-
-
 @ServerAdmin.register_implementation()
-class WireguardServerInline(admin.StackedInline):
-    model = models.WireguardServer
+class WireguardServerAdmin(ServerAdmin.Impl):
+    base_model = models.WireguardServer
     verbose_name = _("Wireguard Config")
     verbose_name_plural = verbose_name
