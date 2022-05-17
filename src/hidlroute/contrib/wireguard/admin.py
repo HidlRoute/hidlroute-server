@@ -33,6 +33,7 @@ class WireguardPeerAdmin(admin.ModelAdmin):
 
 @ServerAdmin.register_implementation()
 class WireguardServerAdmin(ServerAdmin.Impl):
+    ICON = "images/server/wireguard.png"
     base_model = models.WireguardServer
     verbose_name = _("Wireguard Config")
     verbose_name_plural = verbose_name

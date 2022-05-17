@@ -16,12 +16,14 @@
 
 from adminsortable2.admin import SortableAdminMixin
 from django.contrib import admin
+from django.contrib.contenttypes.models import ContentType
 from polymorphic.admin import PolymorphicParentModelAdmin, PolymorphicChildModelAdmin, PolymorphicChildModelFilter
 from treebeard.admin import TreeAdmin
 from treebeard.forms import movenodeform_factory
 
 from hidlroute.core import models
 from hidlroute.core.admin_commons import HidlBaseModelAdmin, GroupSelectAdminMixin
+from hidlroute.core.forms import ServerTypeSelectForm
 
 
 @admin.register(models.Member)
@@ -65,7 +67,12 @@ class ServerToGroupAdmin(GroupSelectAdminMixin, admin.TabularInline):
 
 
 class BaseServerAdminImpl(PolymorphicChildModelAdmin):
+    ICON = "images/server/no-icon.png"
     inlines = [ServerToGroupAdmin, ServerToMemberAdmin]
+
+    @classmethod
+    def get_icon(cls) -> str:
+        return cls.ICON
 
 
 @admin.register(models.Server)
@@ -73,9 +80,26 @@ class ServerAdmin(HidlBaseModelAdmin, PolymorphicParentModelAdmin):
     Impl = BaseServerAdminImpl
     base_model = models.Server
     child_models = []
+    add_type_form = ServerTypeSelectForm
 
     def get_child_type_choices(self, request, action):
-        return [(k, v[0].upper() + v[1:]) for k, v, in super().get_child_type_choices(request, action)]
+        """
+        Return a list of polymorphic types for which the user has the permission to perform the given action.
+        """
+        self._lazy_setup()
+        choices = []
+        content_types = ContentType.objects.get_for_models(
+            *self.get_child_models(), for_concrete_models=False
+        )
+
+        for model, ct in content_types.items():
+            perm_function_name = f"has_{action}_permission"
+            model_admin = self._get_real_admin_by_model(model)
+            perm_function = getattr(model_admin, perm_function_name)
+            if not perm_function(request):
+                continue
+            choices.append((ct.id, dict(name=model._meta.verbose_name, image=model_admin.get_icon())))
+        return choices
 
     @classmethod
     def register_implementation(cls, *args):

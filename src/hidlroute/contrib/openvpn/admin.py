@@ -24,6 +24,7 @@ from hidlroute.contrib.openvpn import models
 
 @ServerAdmin.register_implementation()
 class WireguardServerAdmin(ServerAdmin.Impl):
+    ICON = "images/server/openvpn.png"
     base_model = models.OpenVPNServer
     verbose_name = _("OpenVPN Config")
     verbose_name_plural = verbose_name

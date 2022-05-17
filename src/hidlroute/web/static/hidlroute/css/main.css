@@ -10,3 +10,30 @@
 .sidebar-logo {
     width: 100%;
 }
+
+/* ======================= SERVER ADMIN ========================= */
+.server-type-select {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.server-type-select .server-type-option {
+    max-width: 200px;
+    margin: 0 15px;
+    text-align: center;
+}
+.server-type-select .server-type-option .icon-wrapper {
+    padding: 10px;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    box-shadow: rgba(0, 0, 0, 0.12) 0px 1px 3px, rgba(0, 0, 0, 0.24) 0px 1px 2px;
+}
+.server-type-select .server-type-option input {
+    display: inline;
+}
+.server-type-select .server-type-option img {
+    width: 99%;
+}
+/* ======================= END SERVER ADMIN ========================= */

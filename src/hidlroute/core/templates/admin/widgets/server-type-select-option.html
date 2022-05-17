@@ -1,0 +1,14 @@
+{% load static %}
+{% if widget.wrap_label %}
+    <label{% if widget.attrs.id %}
+        for="{{ widget.attrs.id }}"{% endif %}>
+    <div class="icon-wrapper"><img src="{% static widget.label.image %}" class="server-type-icon"/></div>
+{% endif %}
+<input type="{{ widget.type }}" name="{{ widget.name }}"
+        {% if widget.value != None %} value="{{ widget.value|stringformat:'s' }}"{% endif %}
+        {% include "django/forms/widgets/attrs.html" %}>
+{% if widget.wrap_label %} &nbsp;
+
+    {{ widget.label.name }}
+    </label>
+{% endif %}
