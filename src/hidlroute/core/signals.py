@@ -13,8 +13,9 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from django.db.models.signals import post_save
-from django.dispatch import receiver
+
+# from django.db.models.signals import post_save
+# from django.dispatch import receiver
 
 
 # @receiver(post_save)

@@ -24,6 +24,7 @@ from polymorphic import models as polymorphic_models
 from treebeard import mp_tree
 
 from hidlroute.core.base_models import Nameable, WithComment, Sortable
+from hidlroute.core.factory import service_factory
 
 
 def should_be_single_IP(ip_network):
@@ -45,8 +46,8 @@ class Server(Nameable, WithComment, polymorphic_models.PolymorphicModel):
     def __str__(self):
         return f"S: {self.name}"
 
-    # def allocate_ip_for_member(self, member: 'Member') -> str:
-    #     ip_allocation.allocate_ip(self, member)
+    def allocate_ip_for_member(self, member: "Member") -> str:
+        service_factory.ip_allocation_service.allocate_ip(self, member)
 
 
 class IpAllocation(models.Model):

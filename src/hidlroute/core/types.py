@@ -15,6 +15,6 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import ipaddress
-from types import Union
+from typing import Union
 
 IpAddress = Union[ipaddress.IPv4Address, ipaddress.IPv6Address]

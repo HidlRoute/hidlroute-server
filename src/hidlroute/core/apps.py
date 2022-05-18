@@ -17,6 +17,8 @@
 from django.utils.translation import gettext_lazy as _
 from django.apps import AppConfig
 
+from hidlroute.core.factory import service_factory
+
 
 class CoreConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
@@ -26,3 +28,5 @@ class CoreConfig(AppConfig):
 
     def ready(self):
         from . import signals  # noqa: F401
+
+        service_factory.bootstrap()

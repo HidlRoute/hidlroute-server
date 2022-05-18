@@ -14,23 +14,6 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import logging
 
-from django.db import transaction
-
-from hidlroute.core import models
-from hidlroute.core.types import IpAddress
-
-LOGGER = logging.getLogger("hidl_core.service.ip_allocation")
-
-
-class IPAllocationService(object):
-    @transaction.atomic
-    def pick_ip_from_subnet(self, server: models.Server, subnet: models.Subnet) -> IpAddress:
-        # Device.objects.filter(server_member__server=server, ip_address__net_contained=subnet.cidr).order('address')
-        # ip_allocation = models.IpAllocation.objects.get_or_create(server=server, subnet=subnet)
-        # candidate = ip_allocation.last_allocated_ip
-        pass
-
-    def allocate_ip(self, server: models.Server, member: models.Member) -> str:
-        pass
+class IpAddressUnavailable(Exception):
+    pass
