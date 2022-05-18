@@ -15,22 +15,55 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
+from typing import Optional, Union
 
 from django.db import transaction
 
 from hidlroute.core import models
+from hidlroute.core.errors import IpAddressUnavailable
 from hidlroute.core.types import IpAddress
 
 LOGGER = logging.getLogger("hidl_core.service.ip_allocation")
 
 
 class IPAllocationService(object):
-    @transaction.atomic
-    def pick_ip_from_subnet(self, server: models.Server, subnet: models.Subnet) -> IpAddress:
-        # Device.objects.filter(server_member__server=server, ip_address__net_contained=subnet.cidr).order('address')
-        # ip_allocation = models.IpAllocation.objects.get_or_create(server=server, subnet=subnet)
-        # candidate = ip_allocation.last_allocated_ip
-        pass
+    def is_ip_available(self, ip_address: Union[str, IpAddress], server: models.Server) -> bool:
+        """
+        Returns true if given address is available for allocation.
+        """
+        entities_count = (
+            models.Device.objects.filter(ip_address=ip_address).count()
+            + models.Server.objects.filter(ip_address=ip_address).count()
+        )
+        return entities_count == 0
 
-    def allocate_ip(self, server: models.Server, member: models.Member) -> str:
-        pass
+    @transaction.atomic
+    def pick_ip_from_subnet(self, server: models.Server, subnet: models.Subnet, allocate: bool = False) -> IpAddress:
+        """
+        Returns the next available IP for the server subnet.
+        If allocate is True, IPAllocationMeta will be updated.
+        """
+        ip_allocation_meta = server.get_ip_allocation_meta(subnet)
+        candidate: Optional[IpAddress] = ip_allocation_meta.last_allocated_ip
+        try:
+            if candidate is None:
+                candidate = ip_allocation_meta.last_allocated_ip = subnet.cidr.network_address + 1
+                while not self.is_ip_available(candidate, server):
+                    candidate += 1
+
+                if allocate:
+                    ip_allocation_meta.last_allocated_ip = candidate
+                    ip_allocation_meta.save()
+
+                return candidate
+        except Exception as e:
+            raise IpAddressUnavailable("Unable to allocate ip for server {} subnet {}".format(server, subnet)) from e
+
+    def allocate_ip(self, server: models.Server, member: models.Member) -> IpAddress:
+        """
+        Allocates ip address for given member. IPAllocationMeta will be updated accordingly.
+        """
+        server_to_member = server.get_or_create_member(member)
+        subnet = server_to_member.get_applicable_subnet()
+        new_ip = self.pick_ip_from_subnet(server, subnet, allocate=True)
+        return new_ip

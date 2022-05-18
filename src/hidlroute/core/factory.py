@@ -46,7 +46,7 @@ class _ServiceFactory(object):
         if isinstance(prop_or_method, property):
             return prop_or_method.fget(self)
         elif isinstance(prop_or_method, Callable):
-            return prop_or_method()
+            return prop_or_method(self)
         raise ValueError("prop_or_method must be either property or method. {} given.".format(type(prop_or_method)))
 
     @classmethod
@@ -70,10 +70,9 @@ class _ServiceFactory(object):
             return self.__cache[method_name]
 
         setattr(wrapper, _SERVICE_METHOD_MARK, True)
-        return wrapper
+        return property(wrapper)
 
     @_cached_service
-    @property
     def ip_allocation_service(self) -> "IPAllocationService":
         IPAllocationService = self.__class_from_str("hidlroute.core.service.ip_allocation.IPAllocationService")
         return IPAllocationService()

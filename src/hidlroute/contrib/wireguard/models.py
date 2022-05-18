@@ -14,10 +14,23 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from typing import Type
+
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 from hidlroute.core import models as models_core
+from hidlroute.core.types import IpAddress
+
+
+class WireguardPeer(models_core.Device):
+    public_key = models.CharField(max_length=1024)
+
+    @classmethod
+    def create_default(cls, server_to_member: models_core.ServerToMember, ip_address: IpAddress) -> "WireguardPeer":
+        return WireguardPeer.objects.create(
+            server_to_member=server_to_member, ip_address=ip_address, public_key="AAAAAAAA"
+        )
 
 
 class WireguardServer(models_core.Server):
@@ -26,8 +39,8 @@ class WireguardServer(models_core.Server):
 
     private_key = models.CharField(max_length=1024)
     listen_port = models.IntegerField(null=False, default=5762)
-
-
-class WireguardPeer(models_core.Device):
-    public_key = models.CharField(max_length=1024)
     preshared_key = models.CharField(max_length=1024, blank=True, null=True)
+
+    @classmethod
+    def get_device_model(cls) -> Type[WireguardPeer]:
+        return WireguardPeer

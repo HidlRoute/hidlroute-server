@@ -160,6 +160,7 @@ delete-db:
         if [ -z $(SKIP_VENV) ]; then source $(VIRTUAL_ENV_PATH)/bin/activate; fi; \
         echo "Deleting database..."; \
         #if [ -f "./dev-data/db.sqlite3" ]; then rm ./dev-data/db.sqlite3; echo "  DONE"; else echo "  Database doesn't exist"; fi; \
+        $(RUN_PSQL) -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'hidl';"; \
         $(RUN_PSQL) -c "DROP DATABASE hidl;"; \
         $(RUN_PSQL) -c "CREATE DATABASE hidl;"; \
         echo "  DONE"; \
