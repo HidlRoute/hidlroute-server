@@ -1,0 +1,10 @@
+{% extends 'admin/submit_line.html' %}
+{% load i18n admin_urls %}
+
+{% block extra-actions %}
+    <div class="form-group">
+        <input type="submit" class="btn {{ jazzmin_ui.button_classes.info }} form-control"
+               value="{% trans 'Generate Config' %}" name="generate-config">
+    </div>
+    {{ block.super }}
+{% endblock %}

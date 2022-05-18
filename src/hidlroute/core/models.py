@@ -13,8 +13,9 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-from typing import Optional, Type
+import abc
+from io import StringIO, BytesIO
+from typing import Optional, Type, io
 
 from django.contrib.postgres.indexes import GistIndex
 from django.core.exceptions import PermissionDenied
@@ -103,6 +104,9 @@ class Member(WithComment, polymorphic_models.PolymorphicModel):
     def __str__(self) -> str:
         return str(self.get_real_instance())
 
+    def get_name(self) -> str:
+        raise NotImplementedError
+
 
 class Person(Member):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, null=False, on_delete=models.CASCADE)
@@ -110,12 +114,18 @@ class Person(Member):
     def __str__(self) -> str:
         return f"P: {self.user.username}"
 
+    def get_name(self) -> str:
+        return self.user.name
+
 
 class Host(Member):
-    host_name = models.SlugField(max_length=100)
+    host_name = models.SlugField(max_length=100, unique=True)
 
     def __str__(self):
         return f"H: {self.host_name}"
+
+    def get_name(self) -> str:
+        return self.host_name
 
 
 class ServerToMember(models.Model):
@@ -163,6 +173,40 @@ class ServerToMember(models.Model):
         return "S2M: " + str(self.member)
 
 
+class DeviceConfig(abc.ABC):
+
+    @property
+    @abc.abstractmethod
+    def name(self) -> str:
+        pass
+
+    @abc.abstractmethod
+    def as_stream(self) -> io.IO:
+        pass
+
+    @abc.abstractmethod
+    def as_str(self) -> str:
+        pass
+
+
+class SimpleTextDeviceConfig(DeviceConfig):
+
+    def __init__(self, content: str, name: str) -> None:
+        super().__init__()
+        self.content = content
+        self._name = name
+
+    def as_stream(self) -> BytesIO:
+        return BytesIO(self.content.encode("utf-8"))
+
+    def as_str(self) -> str:
+        return self.content
+
+    @property
+    def name(self) -> str:
+        return self._name
+
+
 class Device(WithComment, polymorphic_models.PolymorphicModel):
     server_to_member = models.ForeignKey(ServerToMember, on_delete=models.CASCADE, null=False, blank=True)
     ip_address = netfields.InetAddressField(null=False, blank=True, unique=True)
@@ -180,6 +224,9 @@ class Device(WithComment, polymorphic_models.PolymorphicModel):
     def create_default(cls, server_to_member: ServerToMember, ip_address: IpAddress) -> "Device":
         raise NotImplementedError
 
+    def generate_config(self) -> DeviceConfig:
+        raise NotImplementedError
+
     class Meta:
         indexes = (GistIndex(fields=("ip_address",), opclasses=("inet_ops",), name="hidl_device_ipaddress_idx"),)
 
@@ -192,7 +239,7 @@ class ServerRule(WithComment, polymorphic_models.PolymorphicModel):
         constraints = [
             models.CheckConstraint(
                 check=models.Q(server_group__isnull=True, server_member__isnull=False)
-                | models.Q(server_group__isnull=False, server_member__isnull=True),
+                      | models.Q(server_group__isnull=False, server_member__isnull=True),
                 name="check_serverrule_for_member_xor_group",
             ),
         ]

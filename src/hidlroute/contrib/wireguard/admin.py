@@ -16,7 +16,7 @@
 from typing import Any
 
 from django.contrib import admin
-from django.http import QueryDict
+from django.http import QueryDict, FileResponse
 from django.utils.translation import gettext_lazy as _
 
 from hidlroute.contrib.wireguard import models
@@ -34,6 +34,12 @@ class WireguardPeerAdmin(admin.ModelAdmin):
     base_model = models.WireguardPeer
     verbose_name = _("Wireguard Peer")
 
+    def response_change(self, request, obj: models.WireguardPeer):
+        if "generate-config" in request.POST:
+            config = obj.get_real_instance().generate_config()
+            return FileResponse(config.as_stream(), filename=config.name, as_attachment=True)
+        return super().response_change(request, obj)
+
 
 @ServerAdmin.register_implementation()
 class WireguardServerAdmin(ServerAdmin.Impl):
@@ -42,10 +48,17 @@ class WireguardServerAdmin(ServerAdmin.Impl):
     base_model = models.WireguardServer
     verbose_name = _("Wireguard Config")
     verbose_name_plural = verbose_name
-    fieldsets = ServerAdmin.Impl.fieldsets + [(_("Wireguard"), {"fields": ["listen_port", "private_key"]})]
+    fieldsets = ServerAdmin.Impl.fieldsets + [
+        (_("Wireguard"),
+         {"fields": ["client_endpoint", "listen_port", "private_key", "client_dns", "client_keep_alive"]})
+    ]
 
     def get_form(self, request, obj=None, **kwargs):
         form = super().get_form(request, obj, **kwargs)
-        if obj is None:     # For create form only
+        if obj is None:  # For create form only
             form.base_fields['private_key'].initial = generate_private_key
+            default_client_host: str = request.get_host()
+            if ":" in default_client_host:
+                default_client_host = default_client_host.split(":")[0].strip()
+            form.base_fields['client_endpoint'].initial = default_client_host
         return form
