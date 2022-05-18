@@ -22,7 +22,13 @@ import django.contrib.postgres.indexes
 from django.db import migrations, models
 import django.db.models.deletion
 import netfields.fields
+from django.utils.translation import gettext_lazy as _
 
+
+def insert_default_group(apps, schema_editor):
+    from hidlroute.core.models import Group
+
+    Group.add_root(slug=Group.DEFAULT_GROUP_SLUG, name=_("DEFAULT"))
 
 class Migration(migrations.Migration):
 
@@ -359,4 +365,5 @@ class Migration(migrations.Migration):
                 fields=["ip_address"], name="hidl_device_ipaddress_idx", opclasses=("inet_ops",)
             ),
         ),
+        migrations.RunPython(insert_default_group),
     ]

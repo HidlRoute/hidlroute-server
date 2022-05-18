@@ -48,6 +48,8 @@ class IPAllocationService(object):
         try:
             if candidate is None:
                 candidate = ip_allocation_meta.last_allocated_ip = subnet.cidr.network_address + 1
+                if candidate not in subnet.cidr:
+                    raise IpAddressUnavailable("Exceeded IP range")
                 while not self.is_ip_available(candidate, server):
                     candidate += 1
 
