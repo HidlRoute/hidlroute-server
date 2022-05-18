@@ -13,11 +13,14 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+from typing import Any
 
 from django.contrib import admin
+from django.http import QueryDict
 from django.utils.translation import gettext_lazy as _
 
 from hidlroute.contrib.wireguard import models
+from hidlroute.contrib.wireguard.service.key import generate_private_key
 from hidlroute.core import models as core_models
 from hidlroute.core.admin import ServerAdmin, DeviceAdmin
 
@@ -40,3 +43,9 @@ class WireguardServerAdmin(ServerAdmin.Impl):
     verbose_name = _("Wireguard Config")
     verbose_name_plural = verbose_name
     fieldsets = ServerAdmin.Impl.fieldsets + [(_("Wireguard"), {"fields": ["listen_port", "private_key"]})]
+
+    def get_form(self, request, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+        if obj is None:     # For create form only
+            form.base_fields['private_key'].initial = generate_private_key
+        return form
