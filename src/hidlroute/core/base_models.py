@@ -40,3 +40,24 @@ class Sortable(models.Model):
         abstract = True
 
     order = models.PositiveIntegerField(default=0, null=False, blank=False)
+
+
+class ServerRelated(models.Model):
+    """
+    Base class to associate an entity with either server or server member
+    """
+
+    class Meta:
+        abstract = True
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(server_group__isnull=False, server_member__isnull=True, server__isnull=True)
+                | models.Q(server_group__isnull=True, server_member__isnull=False, server__isnull=True)
+                | models.Q(server_group__isnull=True, server_member__isnull=True, server__isnull=False),
+                name="check_%(app_label)s_%(class)s_member_xor_group_xor_server",
+            ),
+        ]
+
+    server = models.ForeignKey("Server", on_delete=models.RESTRICT, null=True, blank=True)
+    server_group = models.ForeignKey("ServerToGroup", on_delete=models.RESTRICT, null=True, blank=True)
+    server_member = models.ForeignKey("ServerToMember", on_delete=models.RESTRICT, null=True, blank=True)

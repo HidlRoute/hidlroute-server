@@ -14,7 +14,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Type, Optional, Iterable, io
+from typing import Type
 
 from django.db import models
 from django.utils.text import slugify
@@ -44,9 +44,14 @@ class WireguardPeer(models_core.Device):
 
     def generate_config(self) -> DeviceConfig:
         private_key, public_key = generate_keypair()
-        config_name = slugify(
-            "-".join((self.server_to_member.member.get_real_instance().get_name(),
-                      self.server_to_member.server.slug))) + ".conf"
+        config_name = (
+            slugify(
+                "-".join(
+                    (self.server_to_member.member.get_real_instance().get_name(), self.server_to_member.server.slug)
+                )
+            )
+            + ".conf"
+        )
         config = WireGuardPeerConfig(generate_new_peer_config(self, private_key), config_name)
         return config
 
@@ -55,18 +60,25 @@ class WireguardServer(models_core.Server):
     class Meta:
         verbose_name = _("Wireguard Server")
 
-    private_key = models.CharField(max_length=1024, null=False, blank=False,
-                                   default=generate_private_key)
+    private_key = models.CharField(max_length=1024, null=False, blank=False, default=generate_private_key)
     listen_port = models.IntegerField(null=False, default=5762)
     preshared_key = models.CharField(max_length=1024, blank=True, null=True)
-    client_dns = models.CharField(max_length=1024, blank=True, null=True,
-                                  help_text=_("DNS to be pushed to client configs"))
-    client_keep_alive = models.IntegerField(blank=True, null=True,
-                                            help_text=_("Keep alive options to be pushed to clients"))
-    client_endpoint = models.CharField(max_length=1024, blank=False, null=False,
-                                       help_text=_("Public server hostname or IP to be pushed to the client. \n"
-                                                   "Optionally you could set port in a form of HOST:PORT to "
-                                                   "override port for the client."))
+    client_dns = models.CharField(
+        max_length=1024, blank=True, null=True, help_text=_("DNS to be pushed to client configs")
+    )
+    client_keep_alive = models.IntegerField(
+        blank=True, null=True, help_text=_("Keep alive options to be pushed to clients")
+    )
+    client_endpoint = models.CharField(
+        max_length=1024,
+        blank=False,
+        null=False,
+        help_text=_(
+            "Public server hostname or IP to be pushed to the client. \n"
+            "Optionally you could set port in a form of HOST:PORT to "
+            "override port for the client."
+        ),
+    )
 
     @classmethod
     def get_device_model(cls) -> Type[WireguardPeer]:

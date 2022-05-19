@@ -143,6 +143,7 @@ migrations:
         if [ -z $(SKIP_VENV) ]; then source $(VIRTUAL_ENV_PATH)/bin/activate; fi; \
         echo "Applying migrations."; \
         $(PYTHON) src/manage.py makemigrations; \
+        make format; \
 	)
 
 create-superuser:

@@ -13,7 +13,6 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from typing import Any
 
 from django.contrib import admin
 from django.http import QueryDict, FileResponse
@@ -49,16 +48,18 @@ class WireguardServerAdmin(ServerAdmin.Impl):
     verbose_name = _("Wireguard Config")
     verbose_name_plural = verbose_name
     fieldsets = ServerAdmin.Impl.fieldsets + [
-        (_("Wireguard"),
-         {"fields": ["client_endpoint", "listen_port", "private_key", "client_dns", "client_keep_alive"]})
+        (
+            _("Wireguard"),
+            {"fields": ["client_endpoint", "listen_port", "private_key", "client_dns", "client_keep_alive"]},
+        )
     ]
 
     def get_form(self, request, obj=None, **kwargs):
         form = super().get_form(request, obj, **kwargs)
         if obj is None:  # For create form only
-            form.base_fields['private_key'].initial = generate_private_key
+            form.base_fields["private_key"].initial = generate_private_key
             default_client_host: str = request.get_host()
             if ":" in default_client_host:
                 default_client_host = default_client_host.split(":")[0].strip()
-            form.base_fields['client_endpoint'].initial = default_client_host
+            form.base_fields["client_endpoint"].initial = default_client_host
         return form

@@ -13,8 +13,9 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 import abc
-from io import StringIO, BytesIO
+from io import BytesIO
 from typing import Optional, Type, io
 
 from django.contrib.postgres.indexes import GistIndex
@@ -27,7 +28,7 @@ import netfields
 from polymorphic import models as polymorphic_models
 from treebeard import mp_tree
 
-from hidlroute.core.base_models import Nameable, WithComment, Sortable
+from hidlroute.core.base_models import Nameable, WithComment, Sortable, ServerRelated
 from hidlroute.core.factory import service_factory
 from hidlroute.core.types import IpAddress
 
@@ -174,7 +175,6 @@ class ServerToMember(models.Model):
 
 
 class DeviceConfig(abc.ABC):
-
     @property
     @abc.abstractmethod
     def name(self) -> str:
@@ -190,7 +190,6 @@ class DeviceConfig(abc.ABC):
 
 
 class SimpleTextDeviceConfig(DeviceConfig):
-
     def __init__(self, content: str, name: str) -> None:
         super().__init__()
         self.content = content
@@ -208,6 +207,9 @@ class SimpleTextDeviceConfig(DeviceConfig):
 
 
 class Device(WithComment, polymorphic_models.PolymorphicModel):
+    class Meta:
+        indexes = (GistIndex(fields=("ip_address",), opclasses=("inet_ops",), name="hidl_device_ipaddress_idx"),)
+
     server_to_member = models.ForeignKey(ServerToMember, on_delete=models.CASCADE, null=False, blank=True)
     ip_address = netfields.InetAddressField(null=False, blank=True, unique=True)
     mac_address = netfields.MACAddressField(null=True, blank=True)
@@ -227,22 +229,10 @@ class Device(WithComment, polymorphic_models.PolymorphicModel):
     def generate_config(self) -> DeviceConfig:
         raise NotImplementedError
 
-    class Meta:
-        indexes = (GistIndex(fields=("ip_address",), opclasses=("inet_ops",), name="hidl_device_ipaddress_idx"),)
 
-
-class ServerRule(WithComment, polymorphic_models.PolymorphicModel):
-    server_group = models.ForeignKey(ServerToGroup, on_delete=models.RESTRICT, null=True, blank=True)
-    server_member = models.ForeignKey(ServerToMember, on_delete=models.RESTRICT, null=True, blank=True)
-
-    class Meta:
-        constraints = [
-            models.CheckConstraint(
-                check=models.Q(server_group__isnull=True, server_member__isnull=False)
-                      | models.Q(server_group__isnull=False, server_member__isnull=True),
-                name="check_serverrule_for_member_xor_group",
-            ),
-        ]
+class ServerRule(WithComment, ServerRelated):
+    class Meta(ServerRelated.Meta):
+        abstract = True
 
 
 class ServerFirewallRule(Sortable, ServerRule):
@@ -258,5 +248,10 @@ class ServerRoutingRule(ServerRule):
     interface = models.CharField(max_length=16)
 
 
-class ClientConfig(models.Model):
-    DNS = models.CharField(max_length=128)
+class ClientRule(WithComment, ServerRelated):
+    class Meta(ServerRelated.Meta):
+        abstract = True
+
+
+class ClientRoutingRule(ClientRule):
+    network = netfields.CidrAddressField()
