@@ -14,15 +14,12 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
-class FirewallService(object):
-    pass
-
-
-class RoutingService(object):
-    def add_route(self):
-        pass
+from django.apps import AppConfig
+from django.utils.translation import gettext_lazy as _
 
 
-class VPNService(object):
-    pass
+class DummyConfig(AppConfig):
+    default_auto_field = "django.db.models.BigAutoField"
+    name = "hidlroute.contrib.dummy"
+    label = "hidl_dummy"
+    verbose_name = _("Dummy")

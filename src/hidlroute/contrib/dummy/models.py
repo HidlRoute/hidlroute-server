@@ -14,15 +14,29 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from typing import Type
 
-class FirewallService(object):
-    pass
+from django.utils.translation import gettext_lazy as _
 
-
-class RoutingService(object):
-    def add_route(self):
-        pass
+from hidlroute.core import models as models_core
+from hidlroute.core.types import IpAddress
 
 
-class VPNService(object):
-    pass
+class DummyDevice(models_core.Device):
+    @classmethod
+    def create_default(cls, server_to_member: models_core.ServerToMember, ip_address: IpAddress) -> "DummyDevice":
+        peer = cls.objects.create(
+            name=cls.generate_name(server_to_member.server, server_to_member.member),
+            server_to_member=server_to_member,
+            ip_address=ip_address,
+        )
+        return peer
+
+
+class DummyServer(models_core.Server):
+    class Meta:
+        verbose_name = _("Dummy Server")
+
+    @classmethod
+    def get_device_model(cls) -> Type[DummyDevice]:
+        return DummyDevice

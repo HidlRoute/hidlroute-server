@@ -14,7 +14,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING
 from autoslug import AutoSlugField
 from django.db import models
 from django.db.models import Q

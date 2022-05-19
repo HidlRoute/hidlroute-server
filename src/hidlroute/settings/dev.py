@@ -17,6 +17,7 @@
 import os
 
 os.environ.setdefault("DEBUG", "True")
+os.environ.setdefault("ENABLE_DUMMY", "True")
 from .base_server import *
 
 SECRET_KEY = "django-insecure-56=tojj)c&&vurqvd=afvhqzxc095cub@hxf7dd$^iqpm=h$_k"
@@ -33,6 +34,7 @@ AUTH_PASSWORD_VALIDATORS = []
 #         "NAME": BASE_DIR.parent / "dev-data" / "db.sqlite3",
 #     }
 # }
+
 
 DATABASES = {"default": env.db_url_config("postgres://hidl:hidl@127.0.0.1:5432/hidl")}
 

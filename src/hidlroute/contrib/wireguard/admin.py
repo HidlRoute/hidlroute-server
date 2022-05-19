@@ -15,17 +15,12 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from django.contrib import admin
-from django.http import QueryDict, FileResponse
+from django.http import FileResponse
 from django.utils.translation import gettext_lazy as _
 
 from hidlroute.contrib.wireguard import models
 from hidlroute.contrib.wireguard.service.key import generate_private_key
-from hidlroute.core import models as core_models
 from hidlroute.core.admin import ServerAdmin, DeviceAdmin
-
-
-class ServerInlineAdmin(admin.TabularInline):
-    model = core_models.Server
 
 
 @DeviceAdmin.register_implementation()

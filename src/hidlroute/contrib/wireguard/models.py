@@ -17,7 +17,6 @@
 from typing import Type
 
 from django.db import models
-from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
 from hidlroute.contrib.wireguard.service.key import generate_keypair, generate_private_key, generate_public_key
@@ -38,7 +37,7 @@ class WireguardPeer(models_core.Device):
     def create_default(cls, server_to_member: models_core.ServerToMember, ip_address: IpAddress) -> "WireguardPeer":
         private_key, public_key = generate_keypair()
         peer = WireguardPeer.objects.create(
-            name=WireguardPeer.generate_name(server_to_member.server, server_to_member.member),
+            name=cls.generate_name(server_to_member.server, server_to_member.member),
             server_to_member=server_to_member,
             ip_address=ip_address,
             public_key=public_key,
@@ -47,14 +46,7 @@ class WireguardPeer(models_core.Device):
 
     def generate_config(self) -> DeviceConfig:
         private_key, public_key = generate_keypair()
-        config_name = (
-            slugify(
-                "-".join(
-                    (self.server_to_member.member.get_real_instance().get_name(), self.server_to_member.server.slug)
-                )
-            )
-            + ".conf"
-        )
+        config_name = self.name + ".conf"
         config = WireGuardPeerConfig(generate_new_peer_config(self, private_key), config_name)
         return config
 

@@ -13,10 +13,9 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from typing import Any, Optional, Union, Type, List, Sequence, Callable
 
-from django.core.checks import CheckMessage
-from django.utils.translation import gettext_lazy as _
+from typing import Any, Optional, Type, List
+
 from adminsortable2.admin import SortableAdminMixin
 from django.contrib import admin
 from django.contrib.admin.options import InlineModelAdmin
@@ -27,7 +26,8 @@ from django.http import HttpRequest, HttpResponse
 from polymorphic.admin import PolymorphicChildModelAdmin
 from treebeard.admin import TreeAdmin
 from treebeard.forms import movenodeform_factory
-from django.utils.translation import gettext_lazy as _
+
+# from django.utils.translation import gettext_lazy as _
 
 from hidlroute.core import models
 from hidlroute.core.admin_commons import HidlBaseModelAdmin, GroupSelectAdminMixin, HidlePolymorphicParentAdmin
@@ -140,11 +140,11 @@ class BaseServerAdminImpl(PolymorphicChildModelAdmin):
             None,
             {
                 "fields": HidlBaseModelAdmin.nameable_fields
-                          + [
-                              "interface_name",
-                              ("subnet", "ip_address"),
-                              "comment",
-                          ]
+                + [
+                    "interface_name",
+                    ("subnet", "ip_address"),
+                    "comment",
+                ]
             },
         ),
     ]
@@ -171,6 +171,13 @@ class BaseServerAdminImpl(PolymorphicChildModelAdmin):
             request.POST = request.POST.copy()  # noqa
             request.POST["_continue"] = 1  # noqa
         return super().response_add(request, obj, post_url_continue)
+
+    def response_change(self, request: HttpRequest, obj: models.Server) -> HttpResponse:
+        # Stay on the edit page unless Add Another button is pressed
+        if "_addanother" not in request.POST:
+            request.POST = request.POST.copy()  # noqa
+            request.POST["_continue"] = 1  # noqa
+        return super().response_add(request, obj)
 
     def save_formset(self, request: Any, form: Any, formset: Any, change: Any) -> None:
         instances = formset.save(commit=False)
@@ -207,14 +214,6 @@ class ServerAdmin(HidlBaseModelAdmin, HidlePolymorphicParentAdmin):
                 continue
             choices.append((ct.id, dict(name=model._meta.verbose_name, image=model_admin.get_icon())))
         return choices
-
-
-@ServerAdmin.register_implementation()
-class DummyServerAdmin(ServerAdmin.Impl):
-    ICON = "images/server/logging.png"
-    base_model = models.DummyLoggingServer
-    verbose_name = _("Dummy Logging Server")
-    verbose_name_plural = verbose_name
 
 
 @admin.register(models.Group)

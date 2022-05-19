@@ -14,15 +14,25 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from django.contrib import admin
+from django.utils.translation import gettext_lazy as _
 
-class FirewallService(object):
-    pass
-
-
-class RoutingService(object):
-    def add_route(self):
-        pass
+from hidlroute.contrib.dummy import models
+from hidlroute.core.admin import ServerAdmin, DeviceAdmin
 
 
-class VPNService(object):
-    pass
+@DeviceAdmin.register_implementation()
+class DummyDeviceAdmin(admin.ModelAdmin):
+    base_model = models.DummyDevice
+    verbose_name = _("Dummy Device")
+
+
+@ServerAdmin.register_implementation()
+class WireguardServerAdmin(ServerAdmin.Impl):
+    ICON = "images/server/logging.png"
+    base_model = models.DummyServer
+
+    verbose_name = _("Dummy Server Config")
+    verbose_name_plural = verbose_name
+
+    fieldsets = ServerAdmin.Impl.fieldsets

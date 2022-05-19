@@ -16,7 +16,7 @@
 
 import abc
 from io import BytesIO
-from typing import Optional, Type, io, List, Iterable
+from typing import Optional, Type, io
 
 import logging
 from autoslug.settings import slugify
@@ -82,19 +82,6 @@ class Server(NameableIdentifiable, WithComment, polymorphic_models.PolymorphicMo
     @classmethod
     def get_device_model(cls) -> Type["Device"]:
         raise NotImplementedError
-
-
-class DummyLoggingServer(Server):
-    SERVER_LOGGER = logging.getLogger("hidl_core.LoggingServer")
-
-    class Meta:
-        verbose_name = _("Dummy Logging Server")
-
-    def _start_vpn(self):
-        DummyLoggingServer.SERVER_LOGGER.warning(f"Starting server {self.name}")
-
-    def stop(self):
-        DummyLoggingServer.SERVER_LOGGER.warning(f"Stopping server {self.name}")
 
 
 class IpAllocationMeta(models.Model):
