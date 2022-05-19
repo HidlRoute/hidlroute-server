@@ -17,6 +17,8 @@
 import abc
 from io import BytesIO
 from typing import Optional, Type, io
+import logging
+from typing import Optional, Type
 
 from django.contrib.postgres.indexes import GistIndex
 from django.core.exceptions import PermissionDenied
@@ -35,6 +37,9 @@ from hidlroute.core.types import IpAddress
 
 def should_be_single_IP(ip_network):
     return True
+
+
+LOGGER = logging.getLogger("hidl_core.models")
 
 
 class Subnet(Nameable, WithComment, models.Model):
@@ -61,15 +66,46 @@ class Server(Nameable, WithComment, polymorphic_models.PolymorphicModel):
     def get_ip_allocation_meta(self, subnet: Subnet) -> "IpAllocationMeta":
         return IpAllocationMeta.objects.get_or_create(server=self, subnet=subnet)[0]
 
+    def _start_vpn(self):
+        raise NotImplementedError
+
+    def start(self):
+        self._start_vpn()
+
+        all_server_rules = ServerRule.objects.filter(
+            models.Q(server_group__server=self) | models.Q(server_member__server=self))
+        LOGGER.warning(all_server_rules)
+        for rule in all_server_rules:
+            rule.start()
+
+    def stop(self):
+        pass
+
     @classmethod
     def get_device_model(cls) -> Type["Device"]:
         raise NotImplementedError
+
+
+class DummyLoggingServer(Server):
+    SERVER_LOGGER = logging.getLogger("hidl_core.LoggingServer")
+
+    class Meta:
+        verbose_name = _("Dummy Logging Server")
+
+    def _start_vpn(self):
+        DummyLoggingServer.SERVER_LOGGER.warning(f"Starting server {self.name}")
+
+    def stop(self):
+        DummyLoggingServer.SERVER_LOGGER.warning(f"Stopping server {self.name}")
 
 
 class IpAllocationMeta(models.Model):
     server = models.ForeignKey(Server, on_delete=models.CASCADE)
     subnet = models.ForeignKey(Subnet, on_delete=models.RESTRICT)
     last_allocated_ip = netfields.InetAddressField(null=True, blank=True)
+
+    def start(self):
+        raise NotImplementedError
 
     class Meta:
         unique_together = [("server", "subnet")]
@@ -238,6 +274,11 @@ class ServerRule(WithComment, ServerRelated):
 class ServerFirewallRule(Sortable, ServerRule):
     action = models.CharField(max_length=16)
 
+    def start(self):
+
+        LOGGER.info(f"Starting rule. Action {self.action} for {self.pk}")
+        pass
+
     def __str__(self):
         return f"{self.action} {self.comment}"
 
@@ -246,6 +287,9 @@ class ServerRoutingRule(ServerRule):
     network = netfields.CidrAddressField()
     gateway = netfields.InetAddressField()
     interface = models.CharField(max_length=16)
+
+    def start(self):
+        LOGGER.info(f"Starting Routing rule. Network:{self.network}, gw:{self.gateway}, if:{self.interface}")
 
 
 class ClientRule(WithComment, ServerRelated):

@@ -19,6 +19,8 @@ from typing import TYPE_CHECKING, Callable, Dict, Union
 
 from django.utils.module_loading import import_string
 
+from hidlroute.core.service.networking import RoutingService
+
 if TYPE_CHECKING:
     from hidlroute.core.service.ip_allocation import IPAllocationService
 
@@ -76,6 +78,11 @@ class _ServiceFactory(object):
     def ip_allocation_service(self) -> "IPAllocationService":
         IPAllocationService = self.__class_from_str("hidlroute.core.service.ip_allocation.IPAllocationService")
         return IPAllocationService()
+
+    @_cached_service
+    def routing_service(self) -> "RoutingService":
+        RoutingService = self.__class_from_str("hidlroute.core.service.networking.RoutingService")
+        return RoutingService()
 
 
 service_factory = _ServiceFactory()
