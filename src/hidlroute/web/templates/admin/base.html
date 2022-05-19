@@ -1,4 +1,4 @@
-{% load i18n static jazzmin admin_urls %}
+{% load i18n static jazzmin admin_urls hidl_web %}
 {% get_current_language as LANGUAGE_CODE %}
 {% get_current_language_bidi as LANGUAGE_BIDI %}
 {% get_jazzmin_settings request as jazzmin_settings %}
@@ -232,7 +232,7 @@
                                 </li>
 
                                 {% if jazzmin_settings.navigation_expanded %}
-                                    {% for app in side_menu_list %}
+                                    {% for app in side_menu_list|filter_child_models %}
                                         <li class="nav-header">{{ app.name }}</li>
                                         {% for model in app.models %}
                                             <li class="nav-item">
@@ -261,6 +261,7 @@
                                                 {% for model in app.models %}
                                                     <li class="nav-item">
                                                         <a href="
+
                                                                 {% if model.url %}{{ model.url }}{% else %}javascript:void(0){% endif %}"
                                                            class="nav-link">
                                                             <i class="nav-icon {{ model.icon }}"></i>

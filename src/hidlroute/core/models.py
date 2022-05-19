@@ -35,11 +35,6 @@ from hidlroute.core.base_models import NameableIdentifiable, WithComment, Sortab
 from hidlroute.core.factory import service_factory
 from hidlroute.core.types import IpAddress
 
-
-def should_be_single_IP(ip_network):
-    return True
-
-
 LOGGER = logging.getLogger("hidl_core.models")
 
 

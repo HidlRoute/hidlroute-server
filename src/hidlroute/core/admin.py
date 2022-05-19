@@ -30,7 +30,8 @@ from treebeard.forms import movenodeform_factory
 # from django.utils.translation import gettext_lazy as _
 
 from hidlroute.core import models
-from hidlroute.core.admin_commons import HidlBaseModelAdmin, GroupSelectAdminMixin, HidlePolymorphicParentAdmin
+from hidlroute.core.admin_commons import HidlBaseModelAdmin, GroupSelectAdminMixin, HidlePolymorphicParentAdmin, \
+    HidlePolymorphicChildAdmin
 from hidlroute.core.forms import ServerTypeSelectForm
 
 
@@ -59,8 +60,13 @@ class HostAdmin(HidlBaseModelAdmin):
     show_in_index = True
 
 
+class BaseChildDeviceAdmin(HidlePolymorphicChildAdmin):
+    pass
+
+
 @admin.register(models.Device)
 class DeviceAdmin(HidlBaseModelAdmin, HidlePolymorphicParentAdmin):
+    Impl = BaseChildDeviceAdmin
     base_model = models.Device
     child_models = []
 
@@ -99,14 +105,14 @@ class ClientRoutingRuleAdmin(admin.TabularInline):
         original_formset = super().get_formset(request, obj, **kwargs)
 
         def modified_constructor(
-            _self,
-            data=None,
-            files=None,
-            instance=None,
-            save_as_new=False,
-            prefix=None,
-            queryset=None,
-            **kwargs,
+                _self,
+                data=None,
+                files=None,
+                instance=None,
+                save_as_new=False,
+                prefix=None,
+                queryset=None,
+                **kwargs,
         ):
             if instance is None:
                 _self.instance = _self.fk.remote_field.model()
@@ -140,11 +146,11 @@ class BaseServerAdminImpl(PolymorphicChildModelAdmin):
             None,
             {
                 "fields": HidlBaseModelAdmin.nameable_fields
-                + [
-                    "interface_name",
-                    ("subnet", "ip_address"),
-                    "comment",
-                ]
+                          + [
+                              "interface_name",
+                              ("subnet", "ip_address"),
+                              "comment",
+                          ]
             },
         ),
     ]

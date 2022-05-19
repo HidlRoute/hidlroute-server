@@ -22,14 +22,14 @@ from django.db.models import ForeignKey
 from django.forms import ModelChoiceField
 from django.http import HttpRequest
 from django.contrib import admin
-from polymorphic.admin import PolymorphicParentModelAdmin
+from polymorphic.admin import PolymorphicParentModelAdmin, PolymorphicChildModelAdmin
 
 from hidlroute.core import models as core_models
 
 
 class GroupSelectAdminMixin(BaseModelAdmin):
     def formfield_for_foreignkey(
-        self, db_field: ForeignKey, request: Optional[HttpRequest], **kwargs: Any
+            self, db_field: ForeignKey, request: Optional[HttpRequest], **kwargs: Any
     ) -> Optional[ModelChoiceField]:
         form_field: ModelChoiceField = super().formfield_for_foreignkey(db_field, request, **kwargs)
         if db_field.related_model == core_models.Group:
@@ -63,3 +63,7 @@ class HidlePolymorphicParentAdmin(PolymorphicParentModelAdmin):
             return impl_admin_cls
 
         return _wrap
+
+
+class HidlePolymorphicChildAdmin(PolymorphicChildModelAdmin):
+    show_in_index = False

@@ -24,7 +24,7 @@ from hidlroute.core.admin import ServerAdmin, DeviceAdmin
 
 
 @DeviceAdmin.register_implementation()
-class WireguardPeerAdmin(admin.ModelAdmin):
+class WireguardPeerAdmin(DeviceAdmin.Impl):
     base_model = models.WireguardPeer
     verbose_name = _("Wireguard Peer")
 
