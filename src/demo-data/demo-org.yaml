@@ -71,41 +71,41 @@
   pk: 1
   fields:
     comment: ''
-    polymorphic_ctype: 22
+    polymorphic_ctype: 20
     group: 1
 - model: hidl_core.member
   pk: 2
   fields:
     comment: ''
-    polymorphic_ctype: 22
+    polymorphic_ctype: 20
     group: 1
 - model: hidl_core.member
   pk: 3
   fields:
     comment: ''
-    polymorphic_ctype: 22
+    polymorphic_ctype: 20
     group: 1
 - model: hidl_core.member
   pk: 4
   fields:
     comment: ''
-    polymorphic_ctype: 22
+    polymorphic_ctype: 20
     group: 1
 - model: hidl_core.member
   pk: 5
   fields:
     comment: ''
-    polymorphic_ctype: 22
+    polymorphic_ctype: 20
     group: 1
 - model: hidl_core.member
   pk: 6
   fields:
     comment: ''
-    polymorphic_ctype: 22
+    polymorphic_ctype: 20
     group: 1
 - model: hidl_core.member
   pk: 7
   fields:
     comment: ''
-    polymorphic_ctype: 22
+    polymorphic_ctype: 20
     group: 1

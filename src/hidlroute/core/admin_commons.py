@@ -43,6 +43,13 @@ class HidlBaseModelAdmin(GroupSelectAdminMixin, admin.ModelAdmin):
     nameable_fields = [
         ("name", "slug"),
     ]
+    attachable_fieldset = (
+        _("Attachment"),
+        {
+            "fields": ["server", "server_group", "server_member"],
+            "description": _("Pick one of the entities to attach the rules."),
+        },
+    )
 
 
 class HidlePolymorphicParentAdmin(PolymorphicParentModelAdmin):

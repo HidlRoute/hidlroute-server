@@ -150,7 +150,10 @@ JAZZMIN_SETTINGS: Dict[str, Any] = {
     # - single, horizontal_tabs (default), vertical_tabs, collapsible, carousel
     "changeform_format": "horizontal_tabs",
     # override change forms on a per modeladmin basis
-    "changeform_format_overrides": {},
+    "changeform_format_overrides": {
+        "hidl_core.serverfirewallrule": "single",
+        "hidl_core.serverroutingrule": "single",
+    },
     # Add a language dropdown into the admin
     "language_chooser": True,
 }

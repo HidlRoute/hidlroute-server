@@ -13,10 +13,17 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+from typing import Any, Optional, Union, Type, List, Sequence, Callable
 
+from django.core.checks import CheckMessage
+from django.utils.translation import gettext_lazy as _
 from adminsortable2.admin import SortableAdminMixin
 from django.contrib import admin
+from django.contrib.admin.options import InlineModelAdmin
 from django.contrib.contenttypes.models import ContentType
+from django.db.models import QuerySet, TextField
+from django.forms import widgets, BaseModelFormSet
+from django.http import HttpRequest, HttpResponse
 from polymorphic.admin import PolymorphicChildModelAdmin
 from treebeard.admin import TreeAdmin
 from treebeard.forms import movenodeform_factory
@@ -67,6 +74,64 @@ class ServerToGroupAdmin(GroupSelectAdminMixin, admin.TabularInline):
     extra = 0
 
 
+class ClientRoutingRuleAdmin(admin.TabularInline):
+    model = models.ClientRoutingRule
+    extra = 0
+    fields = (
+        "network",
+        "server_group",
+        "server_member",
+        "comment",
+    )
+    formfield_overrides = {
+        TextField: {"widget": widgets.TextInput},
+    }
+
+    def __init__(self, parent_model, admin_site) -> None:
+        super().__init__(parent_model, admin_site)
+        self.parent_obj: Optional[models.Server] = None
+
+    def get_formset(self, request, obj=None, **kwargs):
+        if self.parent_obj is None and obj:
+            self.parent_obj = obj
+
+        original_formset = super().get_formset(request, obj, **kwargs)
+
+        def modified_constructor(
+            _self,
+            data=None,
+            files=None,
+            instance=None,
+            save_as_new=False,
+            prefix=None,
+            queryset=None,
+            **kwargs,
+        ):
+            if instance is None:
+                _self.instance = _self.fk.remote_field.model()
+            else:
+                _self.instance = instance
+            _self.save_as_new = save_as_new
+            if queryset is None:
+                queryset = _self.model._default_manager
+            BaseModelFormSet.__init__(_self, data, files, prefix=prefix, queryset=queryset, **kwargs)
+
+            # Add the generated field to form._meta.fields if it's defined to make
+            # sure validation isn't skipped on that field.
+            if _self.form._meta.fields and _self.fk.name not in _self.form._meta.fields:
+                if isinstance(_self.form._meta.fields, tuple):
+                    _self.form._meta.fields = list(_self.form._meta.fields)
+                _self.form._meta.fields.append(_self.fk.name)
+
+        # We replaced original constructor to avoid limiting fieldset by server_id
+        original_formset.__init__ = modified_constructor
+        return original_formset
+
+    def get_queryset(self, request: HttpRequest) -> QuerySet:
+        qs = models.ClientRoutingRule.load_related_to_server(self.parent_obj)
+        return qs
+
+
 class BaseServerAdminImpl(PolymorphicChildModelAdmin):
     ICON = "images/server/no-icon.png"
     fieldsets = [
@@ -82,11 +147,40 @@ class BaseServerAdminImpl(PolymorphicChildModelAdmin):
             },
         ),
     ]
-    inlines = [ServerToGroupAdmin, ServerToMemberAdmin]
+    inlines = [ServerToGroupAdmin, ServerToMemberAdmin, ClientRoutingRuleAdmin]
+    create_inlines = [ServerToGroupAdmin]
+
+    def get_inlines(self, request: HttpRequest, obj: Optional[models.Server] = None) -> List[Type[InlineModelAdmin]]:
+        is_create = obj is None
+        if is_create and self.create_inlines is not None:
+            return self.create_inlines
+        else:
+            return self.inlines
 
     @classmethod
     def get_icon(cls) -> str:
         return cls.ICON
+
+    def response_add(self, request: HttpRequest, obj: models.Server, post_url_continue=None) -> HttpResponse:
+        # We should allow further modification of the user just added i.e. the
+        # 'Save' button should behave like the 'Save and continue editing'
+        # button except of:
+        # * The user has pressed the 'Save and add another' button
+        if "_addanother" not in request.POST:
+            request.POST = request.POST.copy()  # noqa
+            request.POST["_continue"] = 1  # noqa
+        return super().response_add(request, obj, post_url_continue)
+
+    def save_formset(self, request: Any, form: Any, formset: Any, change: Any) -> None:
+        instances = formset.save(commit=False)
+        for obj in formset.deleted_objects:
+            obj.delete()
+        for instance in instances:
+            if isinstance(instance, models.ServerRelated):
+                if instance.server_group is not None or instance.server_member is not None:
+                    instance.server = None
+            instance.save()
+        formset.save_m2m()
 
 
 @admin.register(models.Server)
@@ -123,11 +217,20 @@ class GroupAdmin(TreeAdmin):
 class ServerFirewallRuleAdmin(SortableAdminMixin, HidlBaseModelAdmin):
     ordering = ["order"]
     list_display = ["order", "__str__"]
+    fieldsets = (
+        (None, {"fields": ("action",)}),
+        HidlBaseModelAdmin.attachable_fieldset,
+        HidlBaseModelAdmin.with_comment_fieldset,
+    )
 
 
 @admin.register(models.ServerRoutingRule)
 class ServerRoutingRuleAdmin(HidlBaseModelAdmin):
-    pass
+    fieldsets = (
+        (None, {"fields": ["network", "gateway", "interface"]}),
+        HidlBaseModelAdmin.attachable_fieldset,
+        HidlBaseModelAdmin.with_comment_fieldset,
+    )
 
 
 @admin.register(models.Subnet)

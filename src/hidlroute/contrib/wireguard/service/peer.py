@@ -88,6 +88,8 @@ def generate_new_peer_config(peer: "models.WireguardPeer", private_key: str):
         peer_section.add(CfgOpt.PresharedKey, server.preshared_key)
     if server.client_keep_alive:
         peer_section.add(CfgOpt.PersistentKeepalive, server.client_keep_alive)
-    # TODO: Populate Allowed IPs here!
-
+    allowed_ips = []
+    for routing_rule in peer.get_client_routing_rules():
+        allowed_ips.append(str(routing_rule.network.cidr))
+    peer_section.add(CfgOpt.AllowedIPs, ", ".join(allowed_ips))
     return builder.build()

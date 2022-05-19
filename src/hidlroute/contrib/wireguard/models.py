@@ -38,7 +38,10 @@ class WireguardPeer(models_core.Device):
     def create_default(cls, server_to_member: models_core.ServerToMember, ip_address: IpAddress) -> "WireguardPeer":
         private_key, public_key = generate_keypair()
         peer = WireguardPeer.objects.create(
-            server_to_member=server_to_member, ip_address=ip_address, public_key=public_key
+            name=WireguardPeer.generate_name(server_to_member.server, server_to_member.member),
+            server_to_member=server_to_member,
+            ip_address=ip_address,
+            public_key=public_key,
         )
         return peer
 

@@ -16,10 +16,12 @@
 
 import abc
 from io import BytesIO
-from typing import Optional, Type, io
+from typing import Optional, Type, io, List, Iterable
 
+from autoslug.settings import slugify
 from django.contrib.postgres.indexes import GistIndex
 from django.core.exceptions import PermissionDenied
+from django.db.models import QuerySet
 from django.utils.translation import gettext_lazy as _
 from django.conf import settings
 from django.db import models, transaction
@@ -28,7 +30,7 @@ import netfields
 from polymorphic import models as polymorphic_models
 from treebeard import mp_tree
 
-from hidlroute.core.base_models import Nameable, WithComment, Sortable, ServerRelated
+from hidlroute.core.base_models import NameableIdentifiable, WithComment, Sortable, ServerRelated
 from hidlroute.core.factory import service_factory
 from hidlroute.core.types import IpAddress
 
@@ -37,20 +39,32 @@ def should_be_single_IP(ip_network):
     return True
 
 
-class Subnet(Nameable, WithComment, models.Model):
+class Subnet(NameableIdentifiable, WithComment, models.Model):
     cidr = netfields.CidrAddressField()
 
     def __str__(self) -> str:
         return f"{self.name} ({self.cidr})"
 
 
-class Server(Nameable, WithComment, polymorphic_models.PolymorphicModel):
+class Server(NameableIdentifiable, WithComment, polymorphic_models.PolymorphicModel):
     interface_name = models.CharField(max_length=16)
     ip_address = netfields.InetAddressField(null=False, blank=False)
     subnet = models.ForeignKey(Subnet, on_delete=models.RESTRICT)
 
     def __str__(self):
         return f"S: {self.name}"
+
+    @transaction.atomic
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None) -> None:
+        is_creating = self.pk is None
+        super().save(force_insert, force_update, using, update_fields)
+        # If there are no any client routing rules, create default one to route all traffic to
+        # the server subnet via VPN interface
+        if is_creating and self.clientroutingrule_set.all().count() == 0:
+            default_client_rule = ClientRoutingRule.objects.create(
+                server=self, network=self.subnet, comment=_("Route main server subnet to the vpn tunnel")
+            )
+            self.clientroutingrule_set.add(default_client_rule)
 
     def get_or_create_member(self, member: "Member") -> "ServerToMember":
         return ServerToMember.get_or_create(self, member)
@@ -75,7 +89,7 @@ class IpAllocationMeta(models.Model):
         unique_together = [("server", "subnet")]
 
 
-class Group(Nameable, WithComment, mp_tree.MP_Node):
+class Group(NameableIdentifiable, WithComment, mp_tree.MP_Node):
     DEFAULT_GROUP_SLUG = "x-default"
     servers = models.ManyToManyField(Server, through="ServerToGroup")
 
@@ -96,6 +110,9 @@ class ServerToGroup(models.Model):
     server = models.ForeignKey(Server, on_delete=models.RESTRICT)
     group = models.ForeignKey(Group, on_delete=models.RESTRICT)
     subnet = models.ForeignKey(Subnet, on_delete=models.RESTRICT, null=True, blank=True)
+
+    def __str__(self) -> str:
+        return str(self.group)
 
 
 class Member(WithComment, polymorphic_models.PolymorphicModel):
@@ -166,12 +183,12 @@ class ServerToMember(models.Model):
             server_to_group: Optional[ServerToGroup] = self.server.servertogroup_set.get(group=self.member.group)
         except ServerToGroup.DoesNotExist:
             server_to_group = None
-        if server_to_group is not None:
+        if server_to_group is not None and server_to_group.subnet is not None:
             return server_to_group.subnet
         return self.server.subnet
 
     def __str__(self) -> str:
-        return "S2M: " + str(self.member)
+        return str(self.member)
 
 
 class DeviceConfig(abc.ABC):
@@ -206,7 +223,7 @@ class SimpleTextDeviceConfig(DeviceConfig):
         return self._name
 
 
-class Device(WithComment, polymorphic_models.PolymorphicModel):
+class Device(NameableIdentifiable, WithComment, polymorphic_models.PolymorphicModel):
     class Meta:
         indexes = (GistIndex(fields=("ip_address",), opclasses=("inet_ops",), name="hidl_device_ipaddress_idx"),)
 
@@ -226,8 +243,18 @@ class Device(WithComment, polymorphic_models.PolymorphicModel):
     def create_default(cls, server_to_member: ServerToMember, ip_address: IpAddress) -> "Device":
         raise NotImplementedError
 
+    @classmethod
+    def generate_name(cls, server: Server, member: Member) -> str:
+        return slugify("-".join((member.get_real_instance().get_name(), server.slug)))
+
     def generate_config(self) -> DeviceConfig:
         raise NotImplementedError
+
+    def get_client_routing_rules(self) -> QuerySet["ClientRoutingRule"]:
+        return ClientRoutingRule.load_related_to_servermember(self.server_to_member)
+
+    def __str__(self) -> str:
+        return f"{self.name}"
 
 
 class ServerRule(WithComment, ServerRelated):
@@ -243,9 +270,13 @@ class ServerFirewallRule(Sortable, ServerRule):
 
 
 class ServerRoutingRule(ServerRule):
-    network = netfields.CidrAddressField()
-    gateway = netfields.InetAddressField()
-    interface = models.CharField(max_length=16)
+    network = models.ForeignKey(Subnet, null=True, blank=True, on_delete=models.CASCADE)
+    gateway = netfields.InetAddressField(null=True, blank=True)
+    interface = models.CharField(
+        max_length=16,
+        null=True,
+        blank=True,
+    )
 
 
 class ClientRule(WithComment, ServerRelated):
@@ -254,4 +285,4 @@ class ClientRule(WithComment, ServerRelated):
 
 
 class ClientRoutingRule(ClientRule):
-    network = netfields.CidrAddressField()
+    network = models.ForeignKey(Subnet, null=False, blank=False, on_delete=models.CASCADE)
