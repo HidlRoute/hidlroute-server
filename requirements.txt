@@ -17,6 +17,10 @@ django-treebeard==4.5.1
 django-autoslug==1.9.8
 django-admin-sortable2==2.0.4
 django-netfields==1.3.0
+pyroute2==0.6.9
+python-iptables==1.0.0
+
+--no-binary=python-iptables,pyroute2
 
 # ===== Optional Dependencies =====
 

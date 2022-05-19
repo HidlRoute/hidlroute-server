@@ -27,6 +27,7 @@ from django.http import HttpRequest, HttpResponse
 from polymorphic.admin import PolymorphicChildModelAdmin
 from treebeard.admin import TreeAdmin
 from treebeard.forms import movenodeform_factory
+from django.utils.translation import gettext_lazy as _
 
 from hidlroute.core import models
 from hidlroute.core.admin_commons import HidlBaseModelAdmin, GroupSelectAdminMixin, HidlePolymorphicParentAdmin
@@ -139,11 +140,11 @@ class BaseServerAdminImpl(PolymorphicChildModelAdmin):
             None,
             {
                 "fields": HidlBaseModelAdmin.nameable_fields
-                + [
-                    "interface_name",
-                    ("subnet", "ip_address"),
-                    "comment",
-                ]
+                          + [
+                              "interface_name",
+                              ("subnet", "ip_address"),
+                              "comment",
+                          ]
             },
         ),
     ]
@@ -206,6 +207,14 @@ class ServerAdmin(HidlBaseModelAdmin, HidlePolymorphicParentAdmin):
                 continue
             choices.append((ct.id, dict(name=model._meta.verbose_name, image=model_admin.get_icon())))
         return choices
+
+
+@ServerAdmin.register_implementation()
+class DummyServerAdmin(ServerAdmin.Impl):
+    ICON = "images/server/logging.png"
+    base_model = models.DummyLoggingServer
+    verbose_name = _("Dummy Logging Server")
+    verbose_name_plural = verbose_name
 
 
 @admin.register(models.Group)

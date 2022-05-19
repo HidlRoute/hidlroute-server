@@ -18,6 +18,7 @@ import abc
 from io import BytesIO
 from typing import Optional, Type, io, List, Iterable
 
+import logging
 from autoslug.settings import slugify
 from django.contrib.postgres.indexes import GistIndex
 from django.core.exceptions import PermissionDenied
@@ -37,6 +38,9 @@ from hidlroute.core.types import IpAddress
 
 def should_be_single_IP(ip_network):
     return True
+
+
+LOGGER = logging.getLogger("hidl_core.models")
 
 
 class Subnet(NameableIdentifiable, WithComment, models.Model):
@@ -78,6 +82,19 @@ class Server(NameableIdentifiable, WithComment, polymorphic_models.PolymorphicMo
     @classmethod
     def get_device_model(cls) -> Type["Device"]:
         raise NotImplementedError
+
+
+class DummyLoggingServer(Server):
+    SERVER_LOGGER = logging.getLogger("hidl_core.LoggingServer")
+
+    class Meta:
+        verbose_name = _("Dummy Logging Server")
+
+    def _start_vpn(self):
+        DummyLoggingServer.SERVER_LOGGER.warning(f"Starting server {self.name}")
+
+    def stop(self):
+        DummyLoggingServer.SERVER_LOGGER.warning(f"Stopping server {self.name}")
 
 
 class IpAllocationMeta(models.Model):
