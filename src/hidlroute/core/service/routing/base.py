@@ -13,3 +13,19 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+import abc
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from hidlroute.core import models
+
+
+class RoutingService(abc.ABC):
+    @abc.abstractmethod
+    def setup_routes_for_server(self, server: "models.Server"):
+        pass
+
+    @abc.abstractmethod
+    def destroy_routes_for_server(self, server: "models.Server"):
+        pass

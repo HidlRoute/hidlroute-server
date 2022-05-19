@@ -13,3 +13,20 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+from hidlroute.core.factory import ServiceFactory
+from hidlroute.core.service.firewall.base import FirewallService
+from hidlroute.core.service.routing.base import RoutingService
+
+
+class DummyServiceFactory(ServiceFactory):
+    @ServiceFactory._cached_service
+    def routing_service(self) -> RoutingService:
+        return self._instance_from_str("hidlroute.contrib.dummy.service.network.DummyRoutingService")
+
+    @ServiceFactory._cached_service
+    def firewall_service(self) -> FirewallService:
+        return self._instance_from_str("hidlroute.contrib.dummy.service.network.DummyFirewallService")
+
+
+dummy_service_factory = DummyServiceFactory()

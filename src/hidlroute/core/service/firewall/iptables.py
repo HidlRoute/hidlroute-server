@@ -13,3 +13,14 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+from hidlroute.core import models
+from hidlroute.core.service.firewall.base import FirewallService
+
+
+class IpTablesFirewallService(FirewallService):
+    def setup_firewall_for_server(self, server: "models.Server"):
+        pass
+
+    def destroy_firewall_for_server(self, server: "models.Server"):
+        pass

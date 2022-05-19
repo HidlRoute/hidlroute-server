@@ -13,3 +13,14 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+from hidlroute.core import models
+from hidlroute.core.service.routing.base import RoutingService
+
+
+class PyRoute2RoutingService(RoutingService):
+    def setup_routes_for_server(self, server: models.Server):
+        pass
+
+    def destroy_routes_for_server(self, server: models.Server):
+        pass

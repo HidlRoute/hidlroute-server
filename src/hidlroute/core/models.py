@@ -32,7 +32,7 @@ from polymorphic import models as polymorphic_models
 from treebeard import mp_tree
 
 from hidlroute.core.base_models import NameableIdentifiable, WithComment, Sortable, ServerRelated
-from hidlroute.core.factory import service_factory
+from hidlroute.core.factory import ServiceFactory, service_factory as default_service_factory
 from hidlroute.core.types import IpAddress
 
 LOGGER = logging.getLogger("hidl_core.models")
@@ -69,7 +69,7 @@ class Server(NameableIdentifiable, WithComment, polymorphic_models.PolymorphicMo
         return ServerToMember.get_or_create(self, member)
 
     def allocate_ip_for_member(self, member: "Member") -> str:
-        service_factory.ip_allocation_service.allocate_ip(self, member)
+        self.service_factory.ip_allocation_service.allocate_ip(self, member)
 
     def get_ip_allocation_meta(self, subnet: Subnet) -> "IpAllocationMeta":
         return IpAllocationMeta.objects.get_or_create(server=self, subnet=subnet)[0]
@@ -77,6 +77,10 @@ class Server(NameableIdentifiable, WithComment, polymorphic_models.PolymorphicMo
     @classmethod
     def get_device_model(cls) -> Type["Device"]:
         raise NotImplementedError
+
+    @property
+    def service_factory(self) -> ServiceFactory:
+        return default_service_factory
 
 
 class IpAllocationMeta(models.Model):
@@ -234,7 +238,7 @@ class Device(NameableIdentifiable, WithComment, polymorphic_models.PolymorphicMo
     @transaction.atomic
     def create_device_for_host(cls, host: Host, server: Server) -> "Device":
         server_to_member = ServerToMember.get_or_create(server=server, member=host)
-        ip = service_factory.ip_allocation_service.allocate_ip(server_to_member.server, server_to_member.member)
+        ip = server.service_factory.ip_allocation_service.allocate_ip(server_to_member.server, server_to_member.member)
         device = server.get_device_model().create_default(server_to_member=server_to_member, ip_address=ip)
         return device
 

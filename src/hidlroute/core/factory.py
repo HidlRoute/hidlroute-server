@@ -15,25 +15,26 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-from typing import TYPE_CHECKING, Callable, Dict, Union
+from typing import TYPE_CHECKING, Callable, Dict, Union, Any
 
 from django.utils.module_loading import import_string
 
-from hidlroute.core.service.networking import RoutingService
+from hidlroute.core.service.firewall.base import FirewallService
+from hidlroute.core.service.routing.base import RoutingService
 
 if TYPE_CHECKING:
     from hidlroute.core.service.ip_allocation import IPAllocationService
 
-__all__ = ["service_factory"]
+__all__ = ["service_factory", "ServiceFactory"]
 
 _SERVICE_METHOD_MARK = "_service_method"
 
 LOGGER = logging.getLogger("hidl_core.factory")
 
 
-class _ServiceFactory(object):
+class ServiceFactory(object):
     def __init__(self) -> None:
-        self.__cache: Dict[str, Callable] = {}
+        self._cache: Dict[str, Callable] = {}
 
     def bootstrap(self):
         LOGGER.info("Bootstrapping HidlCore factory:")
@@ -44,6 +45,9 @@ class _ServiceFactory(object):
                 self._invoke_prop_or_method(prop_or_method)
         LOGGER.info("HidlCore factory bootstrap finished")
 
+    def reset_cache(self):
+        self._cache.clear()
+
     def _invoke_prop_or_method(self, prop_or_method: Union[property, Callable]):
         if isinstance(prop_or_method, property):
             return prop_or_method.fget(self)
@@ -52,9 +56,13 @@ class _ServiceFactory(object):
         raise ValueError("prop_or_method must be either property or method. {} given.".format(type(prop_or_method)))
 
     @classmethod
-    def __class_from_str(cls, class_full_name: str) -> type:
+    def _class_from_str(cls, class_full_name: str) -> type:
         LOGGER.info("\t Loading {}".format(class_full_name))
         return import_string(class_full_name)
+
+    @classmethod
+    def _instance_from_str(cls, class_full_name: str) -> Any:
+        return cls._class_from_str(class_full_name)()
 
     def _cached_service(service_method):
         def wrapper(self):
@@ -65,24 +73,26 @@ class _ServiceFactory(object):
             else:
                 raise ValueError("_register_service decorator must be applied either on method or property")
 
-            if method_name not in self.__cache:
+            if method_name not in self._cache:
                 result = self._invoke_prop_or_method(service_method)
-                self.__cache[method_name] = result
+                self._cache[method_name] = result
 
-            return self.__cache[method_name]
+            return self._cache[method_name]
 
         setattr(wrapper, _SERVICE_METHOD_MARK, True)
         return property(wrapper)
 
     @_cached_service
     def ip_allocation_service(self) -> "IPAllocationService":
-        IPAllocationService = self.__class_from_str("hidlroute.core.service.ip_allocation.IPAllocationService")
-        return IPAllocationService()
+        return self._instance_from_str("hidlroute.core.service.ip_allocation.IPAllocationService")
 
     @_cached_service
-    def routing_service(self) -> "RoutingService":
-        RoutingService = self.__class_from_str("hidlroute.core.service.networking.RoutingService")
-        return RoutingService()
+    def routing_service(self) -> RoutingService:
+        return self._instance_from_str("hidlroute.core.service.routing.pyroute2.PyRoute2RoutingService")
+
+    @_cached_service
+    def firewall_service(self) -> FirewallService:
+        return self._instance_from_str("hidlroute.core.service.firewall.iptables.IpTablesFirewallService")
 
 
-service_factory = _ServiceFactory()
+service_factory = ServiceFactory()

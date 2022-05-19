@@ -13,3 +13,31 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+import abc
+import datetime
+from typing import TYPE_CHECKING, NamedTuple
+
+if TYPE_CHECKING:
+    from hidlroute.core import models
+
+
+class VPNService(abc.ABC):
+    def start(self, server: models.Server):
+        pass
+
+    def stop(self, server: models.Server):
+        pass
+
+
+class PostedJob(NamedTuple):
+    uuid: str
+    timestamp: datetime.datetime
+
+
+class WorkerService(abc.ABC):
+    def start_vpn_server(self, server: models.Server) -> PostedJob:
+        pass
+
+    def stop_vpn_server(self, server: models.Server) -> PostedJob:
+        pass

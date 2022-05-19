@@ -18,7 +18,9 @@ from typing import Type
 
 from django.utils.translation import gettext_lazy as _
 
+from hidlroute.contrib.dummy.dummy_factory import dummy_service_factory
 from hidlroute.core import models as models_core
+from hidlroute.core.factory import ServiceFactory
 from hidlroute.core.types import IpAddress
 
 
@@ -40,3 +42,7 @@ class DummyServer(models_core.Server):
     @classmethod
     def get_device_model(cls) -> Type[DummyDevice]:
         return DummyDevice
+
+    @property
+    def service_factory(self) -> ServiceFactory:
+        return dummy_service_factory

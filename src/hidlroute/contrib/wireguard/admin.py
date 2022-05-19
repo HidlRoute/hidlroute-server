@@ -14,7 +14,6 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from django.contrib import admin
 from django.http import FileResponse
 from django.utils.translation import gettext_lazy as _
 

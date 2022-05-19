@@ -16,21 +16,24 @@
 
 import logging
 
-from django.apps import AppConfig
-from django.utils.translation import gettext_lazy as _
+from hidlroute.core import models
+from hidlroute.core.service.firewall.base import FirewallService
+from hidlroute.core.service.routing.base import RoutingService
 
-from hidlroute.contrib.dummy.dummy_factory import dummy_service_factory
-
-LOGGER = logging.Logger("hidle.contrib.dummy")
+LOGGER = logging.Logger("hidle.contrib.dummy.service")
 
 
-class DummyConfig(AppConfig):
-    default_auto_field = "django.db.models.BigAutoField"
-    name = "hidlroute.contrib.dummy"
-    label = "hidl_dummy"
-    verbose_name = _("Dummy")
+class DummyFirewallService(FirewallService):
+    def setup_firewall_for_server(self, server: models.Server):
+        LOGGER.info("Setup Firewall for {}".format(server))
 
-    def ready(self) -> None:
-        LOGGER.warning("=== Bootsraping DUMMY Service Factory ===")
-        dummy_service_factory.bootstrap()
-        LOGGER.warning("=== DUMMY Service Factory initialized ===")
+    def destroy_firewall_for_server(self, server: models.Server):
+        LOGGER.info("Destroy Firewall for {}".format(server))
+
+
+class DummyRoutingService(RoutingService):
+    def setup_routes_for_server(self, server: models.Server):
+        LOGGER.info("Setup Routes for {}".format(server))
+
+    def destroy_routes_for_server(self, server: models.Server):
+        LOGGER.info("Destroy Routes for {}".format(server))
