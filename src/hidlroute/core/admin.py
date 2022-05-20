@@ -280,6 +280,7 @@ class ServerRoutingRuleAdmin(HidlBaseModelAdmin):
         HidlBaseModelAdmin.attachable_fieldset,
         HidlBaseModelAdmin.with_comment_fieldset,
     )
+    list_select_related = ["network"]
 
 
 @admin.register(models.Subnet)

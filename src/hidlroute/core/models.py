@@ -103,6 +103,12 @@ class Server(NameableIdentifiable, WithComment, polymorphic_models.PolymorphicMo
     def restart(self):
         self.service_factory.worker_service.restart_vpn_server(self)
 
+    def get_firewall_rules(self) -> QuerySet["ServerFirewallRule"]:
+        return ServerFirewallRule.load_related_to_server(self)
+
+    def get_routing_rules(self) -> QuerySet["ServerRoutingRule"]:
+        return ServerRoutingRule.load_related_to_server(self).select_related("network")
+
 
 class IpAllocationMeta(models.Model):
     server = models.ForeignKey(Server, on_delete=models.CASCADE)
@@ -300,7 +306,17 @@ class ServerRoutingRule(ServerRule):
         max_length=16,
         null=True,
         blank=True,
+        help_text=_("Use special keyword $self to reference interface of the VPN server this route is attached to"),
     )
+
+    def resolved_interface_name(self, server: Server) -> Optional[str]:
+        if self.interface is not None and self.interface.strip().lower() == "$self":
+            return server.interface_name
+        else:
+            return self.interface
+
+    def __str__(self) -> str:
+        return f"{self.network.cidr} gw: {self.gateway or 'n/a'} iface: {self.interface or 'n/a'}"
 
 
 class ClientRule(WithComment, ServerRelated):
