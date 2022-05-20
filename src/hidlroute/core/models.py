@@ -56,7 +56,7 @@ class Server(NameableIdentifiable, WithComment, polymorphic_models.PolymorphicMo
 
     @cached_property
     def is_running(self):
-        return self.vpn_service().get_status(self)
+        return self.service_factory.worker_service.get_server_status(self)
 
     def __str__(self):
         return f"S: {self.name}"

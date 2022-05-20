@@ -22,6 +22,12 @@ from hidlroute.core.service.base import VPNService, VPNServerStatus
 
 
 class WireguardVPNService(VPNService):
+    def start(self, server: "models.Server"):
+        pass
+
+    def stop(self, server: "models.Server"):
+        pass
+
     def get_status(self, server: models.Server) -> VPNServerStatus:
         if not isinstance(server, WireguardServer):
             raise ValueError("Wireguard VPN Service can only take Wireguard server as an argument.")
