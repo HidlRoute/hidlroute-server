@@ -1,6 +1,9 @@
 # Runtime dependencies
 -r requirements.txt
 
+# Runtime DEV dependencies
+django-debug-toolbar==3.4.0
+
 # Development dependencies
 copyright==1.0.1.0
 twine==4.0.0

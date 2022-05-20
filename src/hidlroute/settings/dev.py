@@ -18,6 +18,7 @@ import os
 
 os.environ.setdefault("DEBUG", "True")
 os.environ.setdefault("ENABLE_DUMMY", "True")
+os.environ.setdefault("DEBUG_TOOLBAR", "True")
 from .base_server import *
 
 SECRET_KEY = "django-insecure-56=tojj)c&&vurqvd=afvhqzxc095cub@hxf7dd$^iqpm=h$_k"

@@ -43,5 +43,13 @@ urlpatterns = [
     path("sso-social/", include("social_django.urls", namespace="social")),
     path("i18n/", include("django.conf.urls.i18n")),
     path("2fa/", include(tf_urls)),
+]
+
+if settings.DEBUG_TOOLBAR:
+    urlpatterns += [
+        path("__debug__/", include("debug_toolbar.urls")),
+    ]
+
+urlpatterns += [
     path("", admin.site.urls),
 ]

@@ -26,12 +26,26 @@ from django.utils.translation import gettext_lazy as _
 from .helper import *
 from .base import *
 
+DEBUG_TOOLBAR = env.bool("DEBUG_TOOLBAR", False)
+
 # Application definition
-INSTALLED_APPS = (
-    ["hidlroute.web", "jazzmin", "django.contrib.admin", "crispy_forms", "treebeard", "adminsortable2"]
+INSTALLED_APPS = filter_none(
+    [
+        "hidlroute.web",
+        "jazzmin",
+        "django.contrib.admin",
+        "crispy_forms",
+        "treebeard",
+        "adminsortable2",
+        "debug_toolbar" if DEBUG_TOOLBAR else None,
+    ]
     + BASE_APPS
     + ["social_django"]
 )
+
+INTERNAL_IPS = [
+    "127.0.0.1",
+]
 
 MIDDLEWARE = filter_none(
     [
@@ -40,6 +54,7 @@ MIDDLEWARE = filter_none(
         "django.contrib.sessions.middleware.SessionMiddleware",
         "django.middleware.locale.LocaleMiddleware",
         "django.middleware.common.CommonMiddleware",
+        "debug_toolbar.middleware.DebugToolbarMiddleware" if DEBUG_TOOLBAR else None,
         "django.middleware.csrf.CsrfViewMiddleware",
         "django.contrib.auth.middleware.AuthenticationMiddleware",
         "django_otp.middleware.OTPMiddleware",
