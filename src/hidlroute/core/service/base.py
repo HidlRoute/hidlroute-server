@@ -16,18 +16,30 @@
 
 import abc
 import datetime
-from typing import TYPE_CHECKING, NamedTuple
+from enum import Enum
+from typing import NamedTuple, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from hidlroute.core import models
 
+class VPNServerStatus(Enum):
+    STOPPED = 1
+    RUNNING = 2
+    STARTING = 3
+    FAILE = 4
+    RUNNING_CHANGES_PENDING = 5
+
 
 class VPNService(abc.ABC):
-    def start(self, server: models.Server):
+    def start(self, server: "models.Server"):
         pass
 
-    def stop(self, server: models.Server):
+    def stop(self, server: "models.Server"):
         pass
+
+    @abc.abstractmethod
+    def get_status(self, server: "models.Server") -> VPNServerStatus:
+        raise NotImplementedError
 
 
 class PostedJob(NamedTuple):
@@ -36,8 +48,11 @@ class PostedJob(NamedTuple):
 
 
 class WorkerService(abc.ABC):
-    def start_vpn_server(self, server: models.Server) -> PostedJob:
+    def start_vpn_server(self, server: "models.Server") -> PostedJob:
         pass
 
-    def stop_vpn_server(self, server: models.Server) -> PostedJob:
+    def stop_vpn_server(self, server: "models.Server") -> PostedJob:
+        pass
+
+    def get_server_status(self, server: "models.Server") -> VPNServerStatus:
         pass

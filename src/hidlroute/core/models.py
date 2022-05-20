@@ -15,25 +15,28 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import abc
+import logging
 from io import BytesIO
 from typing import Optional, Type, io
 
-import logging
+import netfields
 from autoslug.settings import slugify
+from django.conf import settings
 from django.contrib.postgres.indexes import GistIndex
 from django.core.exceptions import PermissionDenied
+from django.db import models, transaction
 from django.db.models import QuerySet
 from django.utils.translation import gettext_lazy as _
-from django.conf import settings
-from django.db import models, transaction
-import netfields
-
 from polymorphic import models as polymorphic_models
 from treebeard import mp_tree
+from typing import TYPE_CHECKING
 
 from hidlroute.core.base_models import NameableIdentifiable, WithComment, Sortable, ServerRelated
 from hidlroute.core.factory import ServiceFactory, service_factory as default_service_factory
 from hidlroute.core.types import IpAddress
+
+if TYPE_CHECKING:
+    from hidlroute.core.service.base import VPNService
 
 LOGGER = logging.getLogger("hidl_core.models")
 
@@ -49,6 +52,10 @@ class Server(NameableIdentifiable, WithComment, polymorphic_models.PolymorphicMo
     interface_name = models.CharField(max_length=16)
     ip_address = netfields.InetAddressField(null=False, blank=False)
     subnet = models.ForeignKey(Subnet, on_delete=models.RESTRICT)
+
+    @property
+    def is_running(self):
+        return self.get_vpn_service().get_status(self)
 
     def __str__(self):
         return f"S: {self.name}"
@@ -81,6 +88,9 @@ class Server(NameableIdentifiable, WithComment, polymorphic_models.PolymorphicMo
     @property
     def service_factory(self) -> ServiceFactory:
         return default_service_factory
+
+    def get_vpn_service(self) -> "VPNService":
+        raise NotImplementedError
 
 
 class IpAllocationMeta(models.Model):

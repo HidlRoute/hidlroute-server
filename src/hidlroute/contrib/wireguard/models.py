@@ -55,6 +55,7 @@ class WireguardServer(models_core.Server):
     class Meta:
         verbose_name = _("Wireguard Server")
 
+    _wireguard_vpn_service = None
     private_key = models.CharField(max_length=1024, null=False, blank=False, default=generate_private_key)
     listen_port = models.IntegerField(null=False, default=5762)
     preshared_key = models.CharField(max_length=1024, blank=True, null=True)
@@ -74,6 +75,12 @@ class WireguardServer(models_core.Server):
             "override port for the client."
         ),
     )
+
+    def get_vpn_service(self) -> "VPNService":
+        if not WireguardServer._wireguard_vpn_service:
+            from hidlroute.contrib.wireguard.service.wireguard_vpn import WireguardVPNService
+            WireguardServer._wireguard_vpn_service = WireguardVPNService()
+        return WireguardServer._wireguard_vpn_service
 
     @classmethod
     def get_device_model(cls) -> Type[WireguardPeer]:

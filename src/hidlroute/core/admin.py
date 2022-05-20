@@ -109,14 +109,14 @@ class ClientRoutingRuleAdmin(admin.TabularInline):
         original_formset = super().get_formset(request, obj, **kwargs)
 
         def modified_constructor(
-            _self,
-            data=None,
-            files=None,
-            instance=None,
-            save_as_new=False,
-            prefix=None,
-            queryset=None,
-            **kwargs,
+                _self,
+                data=None,
+                files=None,
+                instance=None,
+                save_as_new=False,
+                prefix=None,
+                queryset=None,
+                **kwargs,
         ):
             if instance is None:
                 _self.instance = _self.fk.remote_field.model()
@@ -150,11 +150,11 @@ class BaseServerAdminImpl(PolymorphicChildModelAdmin):
             None,
             {
                 "fields": HidlBaseModelAdmin.nameable_fields
-                + [
-                    "interface_name",
-                    ("subnet", "ip_address"),
-                    "comment",
-                ]
+                          + [
+                              "interface_name",
+                              ("subnet", "ip_address"),
+                              "comment",
+                          ]
             },
         ),
     ]
@@ -207,6 +207,12 @@ class ServerAdmin(HidlBaseModelAdmin, HidlePolymorphicParentAdmin):
     base_model = models.Server
     child_models = []
     add_type_form = ServerTypeSelectForm
+    list_display = ["__str__", "subnet", "ip_address", "is_server_running"]
+    readonly_fields = ["is_server_running"]
+    polymorphic_list = True
+
+    def is_server_running(self, obj: models.Server):
+        return obj.get_real_instance().is_running
 
     def get_child_type_choices(self, request, action):
         """

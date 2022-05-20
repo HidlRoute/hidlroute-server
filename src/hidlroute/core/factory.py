@@ -19,6 +19,7 @@ from typing import TYPE_CHECKING, Callable, Dict, Union, Any
 
 from django.utils.module_loading import import_string
 
+from hidlroute.core.service.base import WorkerService
 from hidlroute.core.service.firewall.base import FirewallService
 from hidlroute.core.service.routing.base import RoutingService
 
@@ -93,6 +94,10 @@ class ServiceFactory(object):
     @_cached_service
     def firewall_service(self) -> FirewallService:
         return self._instance_from_str("hidlroute.core.service.firewall.iptables.IpTablesFirewallService")
+
+    @_cached_service
+    def worker_service(self) -> WorkerService:
+        return self._instance_from_str("hidlroute.contrib.dummy.service.network.DummySyncrhonousWorkerService")
 
 
 service_factory = ServiceFactory()

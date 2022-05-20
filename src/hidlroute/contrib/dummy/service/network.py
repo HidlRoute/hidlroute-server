@@ -17,6 +17,7 @@
 import logging
 
 from hidlroute.core import models
+from hidlroute.core.service.base import WorkerService, VPNServerStatus, VPNService
 from hidlroute.core.service.firewall.base import FirewallService
 from hidlroute.core.service.routing.base import RoutingService
 
@@ -37,3 +38,13 @@ class DummyRoutingService(RoutingService):
 
     def destroy_routes_for_server(self, server: models.Server):
         LOGGER.info("Destroy Routes for {}".format(server))
+
+class DummyLoggingVPNService(VPNService):
+
+    def get_status(self, server: "models.Server") -> VPNServerStatus:
+        return VPNServerStatus.STOPPED
+
+
+class DummySyncrhonousWorkerService(WorkerService):
+    def get_server_status(self, server: models.Server) -> VPNServerStatus:
+        return server.get_vpn_service().get_status(server)
