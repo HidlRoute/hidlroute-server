@@ -22,12 +22,12 @@ from django.contrib.admin.options import InlineModelAdmin
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import QuerySet, TextField
 from django.forms import widgets, BaseModelFormSet
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from polymorphic.admin import PolymorphicChildModelAdmin
 from treebeard.admin import TreeAdmin
 from treebeard.forms import movenodeform_factory
 
-# from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from hidlroute.core import models
 from hidlroute.core.admin_commons import (
@@ -37,7 +37,6 @@ from hidlroute.core.admin_commons import (
     HidlePolymorphicChildAdmin,
 )
 from hidlroute.core.forms import ServerTypeSelectForm
-
 
 # @admin.register(models.Member)
 # class MemberAdmin(GroupSelectAdminMixin, PolymorphicParentModelAdmin):
@@ -56,6 +55,7 @@ from hidlroute.core.forms import ServerTypeSelectForm
 # class PersonAdmin(GroupSelectAdminMixin, PolymorphicChildModelAdmin):
 #     base_model = models.Person
 #     show_in_index = False
+from hidlroute.core.utils import wait
 
 
 @admin.register(models.Host)
@@ -65,7 +65,7 @@ class HostAdmin(HidlBaseModelAdmin):
 
 
 class BaseChildDeviceAdmin(HidlePolymorphicChildAdmin):
-    pass
+    base_model = models.Device
 
 
 @admin.register(models.Device)
@@ -145,6 +145,7 @@ class ClientRoutingRuleAdmin(admin.TabularInline):
 
 class BaseServerAdminImpl(PolymorphicChildModelAdmin):
     ICON = "images/server/no-icon.png"
+    base_model = models.Server
     fieldsets = [
         (
             None,
@@ -187,7 +188,13 @@ class BaseServerAdminImpl(PolymorphicChildModelAdmin):
         if "_addanother" not in request.POST:
             request.POST = request.POST.copy()  # noqa
             request.POST["_continue"] = 1  # noqa
-        return super().response_add(request, obj)
+        if "_start_server" in request.POST:
+            return self.action_start_server(request, obj)
+        elif "_stop_server" in request.POST:
+            return self.action_stop_server(request, obj)
+        elif "_restart_server" in request.POST:
+            return self.action_restart_server(request, obj)
+        return super().response_change(request, obj)
 
     def save_formset(self, request: Any, form: Any, formset: Any, change: Any) -> None:
         instances = formset.save(commit=False)
@@ -199,6 +206,24 @@ class BaseServerAdminImpl(PolymorphicChildModelAdmin):
                     instance.server = None
             instance.save()
         formset.save_m2m()
+
+    def action_start_server(self, request: HttpRequest, obj: models.Server) -> HttpResponse:
+        self.message_user(request, _("Server {} is starting".format(obj)))
+        obj.start()
+        wait()
+        return HttpResponseRedirect(request.path)
+
+    def action_stop_server(self, request: HttpRequest, obj: models.Server) -> HttpResponse:
+        self.message_user(request, _("Server {} is shutting down".format(obj)))
+        obj.stop()
+        wait()
+        return HttpResponseRedirect(request.path)
+
+    def action_restart_server(self, request: HttpRequest, obj: models.Server) -> HttpResponse:
+        self.message_user(request, _("Server {} is re-starting".format(obj)))
+        obj.restart()
+        wait()
+        return HttpResponseRedirect(request.path)
 
 
 @admin.register(models.Server)

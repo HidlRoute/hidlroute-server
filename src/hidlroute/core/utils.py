@@ -1,5 +1,3 @@
-# from django.contrib import admin
-
 #    Hidl Route - opensource vpn management system
 #    Copyright (C) 2023 Dmitry Berezovsky, Alexander Cherednichenko
 #
@@ -16,14 +14,10 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from django.utils.translation import gettext_lazy as _
+import time
 
-from hidlroute.contrib.openvpn import models
-from hidlroute.core.admin import ServerAdmin
+DEFAULT_WAIT_SEC = 2
 
 
-@ServerAdmin.register_implementation(models.OpenVPNServer)
-class OpenVPNServerAdmin(ServerAdmin.Impl):
-    ICON = "images/server/openvpn.png"
-    verbose_name = _("OpenVPN Config")
-    verbose_name_plural = verbose_name
+def wait(duration=DEFAULT_WAIT_SEC):
+    time.sleep(duration)

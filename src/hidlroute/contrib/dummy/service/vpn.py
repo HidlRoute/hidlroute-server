@@ -1,5 +1,3 @@
-# from django.contrib import admin
-
 #    Hidl Route - opensource vpn management system
 #    Copyright (C) 2023 Dmitry Berezovsky, Alexander Cherednichenko
 #
@@ -16,14 +14,24 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from django.utils.translation import gettext_lazy as _
+import logging
+from typing import TYPE_CHECKING
 
-from hidlroute.contrib.openvpn import models
-from hidlroute.core.admin import ServerAdmin
+from hidlroute.core.service.base import VPNService, VPNServerStatus
+
+if TYPE_CHECKING:
+    from hidlroute.core import models as core_models
+
+LOGGER = logging.getLogger("hidl.contrib.dummy.service")
 
 
-@ServerAdmin.register_implementation(models.OpenVPNServer)
-class OpenVPNServerAdmin(ServerAdmin.Impl):
-    ICON = "images/server/openvpn.png"
-    verbose_name = _("OpenVPN Config")
-    verbose_name_plural = verbose_name
+class DummyLoggingVPNService(VPNService):
+    def start(self, server: "core_models.Server"):
+        LOGGER.info(f"Started server {server}")
+
+    def stop(self, server: "core_models.Server"):
+        LOGGER.info(f"Stopped server {server}")
+
+    def get_status(self, server: "core_models.Server") -> VPNServerStatus:
+        LOGGER.info(f"Get server status: {server}")
+        return VPNServerStatus.STOPPED

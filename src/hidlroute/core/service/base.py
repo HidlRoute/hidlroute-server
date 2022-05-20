@@ -32,11 +32,17 @@ class VPNServerStatus(Enum):
 
 
 class VPNService(abc.ABC):
+    @abc.abstractmethod
     def start(self, server: "models.Server"):
         pass
 
+    @abc.abstractmethod
     def stop(self, server: "models.Server"):
         pass
+
+    def restart(self, server: "models.Server"):
+        self.stop(server)
+        self.start(server)
 
     @abc.abstractmethod
     def get_status(self, server: "models.Server") -> VPNServerStatus:
@@ -49,11 +55,18 @@ class PostedJob(NamedTuple):
 
 
 class WorkerService(abc.ABC):
+    @abc.abstractmethod
     def start_vpn_server(self, server: "models.Server") -> PostedJob:
         pass
 
+    @abc.abstractmethod
     def stop_vpn_server(self, server: "models.Server") -> PostedJob:
         pass
 
+    @abc.abstractmethod
+    def restart_vpn_server(self, server: "models.Server") -> PostedJob:
+        pass
+
+    @abc.abstractmethod
     def get_server_status(self, server: "models.Server") -> VPNServerStatus:
         pass

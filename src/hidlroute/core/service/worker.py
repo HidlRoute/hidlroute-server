@@ -13,3 +13,39 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+import datetime
+import json
+import uuid
+from typing import Any, NamedTuple
+
+from hidlroute.core import models
+from hidlroute.core.service.base import WorkerService, VPNServerStatus, PostedJob
+
+
+class SynchronousWorkerService(WorkerService):
+    class JobRegistryItem(NamedTuple):
+        posted_job: PostedJob
+        result: Any
+
+    def __init__(self) -> None:
+        self.__job_registry = {}
+
+    def __register_job_result(self, result: Any) -> PostedJob:
+        _result = json.loads(json.dumps(result))
+        new_uuid = uuid.uuid4().hex
+        job = PostedJob(new_uuid, datetime.datetime.now())
+        self.__job_registry[new_uuid] = self.JobRegistryItem(job, _result)
+        return job
+
+    def get_server_status(self, server: models.Server) -> VPNServerStatus:
+        return server.vpn_service.get_status(server)
+
+    def start_vpn_server(self, server: "models.Server") -> PostedJob:
+        return self.__register_job_result(server.vpn_service.start(server))
+
+    def stop_vpn_server(self, server: "models.Server") -> PostedJob:
+        return self.__register_job_result(server.vpn_service.stop(server))
+
+    def restart_vpn_server(self, server: "models.Server") -> PostedJob:
+        return self.__register_job_result(server.vpn_service.restart(server))

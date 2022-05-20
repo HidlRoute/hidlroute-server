@@ -84,7 +84,7 @@ class WireguardServer(models_core.Server):
     def service_factory(self) -> "WireguardServiceFactory":
         return wireguard_service_factory
 
-    def get_vpn_service(self) -> "WireguardVPNService":
+    def vpn_service(self) -> "WireguardVPNService":
         return self.service_factory.wireguard_vpn_service
 
     @classmethod

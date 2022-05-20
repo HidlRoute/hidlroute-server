@@ -26,6 +26,7 @@ from django.contrib.postgres.indexes import GistIndex
 from django.core.exceptions import PermissionDenied
 from django.db import models, transaction
 from django.db.models import QuerySet
+from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from polymorphic import models as polymorphic_models
 from treebeard import mp_tree
@@ -53,9 +54,9 @@ class Server(NameableIdentifiable, WithComment, polymorphic_models.PolymorphicMo
     ip_address = netfields.InetAddressField(null=False, blank=False)
     subnet = models.ForeignKey(Subnet, on_delete=models.RESTRICT)
 
-    @property
+    @cached_property
     def is_running(self):
-        return self.get_vpn_service().get_status(self)
+        return self.vpn_service().get_status(self)
 
     def __str__(self):
         return f"S: {self.name}"
@@ -89,8 +90,18 @@ class Server(NameableIdentifiable, WithComment, polymorphic_models.PolymorphicMo
     def service_factory(self) -> ServiceFactory:
         return default_service_factory
 
-    def get_vpn_service(self) -> "VPNService":
+    @property
+    def vpn_service(self) -> "VPNService":
         raise NotImplementedError
+
+    def stop(self):
+        self.service_factory.worker_service.stop_vpn_server(self)
+
+    def start(self):
+        self.service_factory.worker_service.start_vpn_server(self)
+
+    def restart(self):
+        self.service_factory.worker_service.restart_vpn_server(self)
 
 
 class IpAllocationMeta(models.Model):

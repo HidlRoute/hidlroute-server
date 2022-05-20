@@ -54,12 +54,12 @@ class HidlBaseModelAdmin(GroupSelectAdminMixin, admin.ModelAdmin):
 
 class HidlePolymorphicParentAdmin(PolymorphicParentModelAdmin):
     @classmethod
-    def register_implementation(cls, *args):
+    def register_implementation(cls, model):
         def _wrap(impl_admin_cls):
-            if impl_admin_cls.base_model not in cls.child_models:
-                cls.child_models.append(impl_admin_cls.base_model)
-            if not admin.site.is_registered(impl_admin_cls.base_model):
-                admin.site.register(impl_admin_cls.base_model, impl_admin_cls)
+            if model not in cls.child_models:
+                cls.child_models.append(model)
+            if not admin.site.is_registered(model):
+                admin.site.register(model, impl_admin_cls)
             return impl_admin_cls
 
         return _wrap

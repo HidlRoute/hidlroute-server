@@ -19,7 +19,7 @@ from typing import Type
 from django.utils.translation import gettext_lazy as _
 
 from hidlroute.contrib.dummy.dummy_factory import dummy_service_factory
-from hidlroute.contrib.dummy.service.network import DummyLoggingVPNService
+from hidlroute.contrib.dummy.service.vpn import DummyLoggingVPNService
 from hidlroute.core import models as models_core
 from hidlroute.core.factory import ServiceFactory
 from hidlroute.core.service.base import VPNService
@@ -51,5 +51,6 @@ class DummyServer(models_core.Server):
     def service_factory(self) -> ServiceFactory:
         return dummy_service_factory
 
-    def get_vpn_service(self) -> VPNService:
+    @property
+    def vpn_service(self) -> VPNService:
         return _dummy_logging_VPN_service

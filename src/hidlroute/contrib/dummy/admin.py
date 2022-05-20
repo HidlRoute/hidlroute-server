@@ -14,23 +14,20 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
 
 from hidlroute.contrib.dummy import models
 from hidlroute.core.admin import ServerAdmin, DeviceAdmin
 
 
-@DeviceAdmin.register_implementation()
-class DummyDeviceAdmin(admin.ModelAdmin):
-    base_model = models.DummyDevice
+@DeviceAdmin.register_implementation(models.DummyDevice)
+class DummyDeviceAdmin(DeviceAdmin.Impl):
     verbose_name = _("Dummy Device")
 
 
-@ServerAdmin.register_implementation()
-class WireguardServerAdmin(ServerAdmin.Impl):
+@ServerAdmin.register_implementation(models.DummyServer)
+class DummyServerAdmin(ServerAdmin.Impl):
     ICON = "images/server/logging.png"
-    base_model = models.DummyServer
 
     verbose_name = _("Dummy Server Config")
     verbose_name_plural = verbose_name
