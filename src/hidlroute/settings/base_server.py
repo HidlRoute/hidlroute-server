@@ -168,6 +168,7 @@ JAZZMIN_SETTINGS: Dict[str, Any] = {
     "changeform_format_overrides": {
         "hidl_core.serverfirewallrule": "single",
         "hidl_core.serverroutingrule": "single",
+        "hidl_core.firewallservice": "single",
     },
     # Add a language dropdown into the admin
     "language_chooser": True,

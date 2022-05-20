@@ -15,13 +15,43 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import abc
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List, Optional
 
 if TYPE_CHECKING:
     from hidlroute.core import models
 
 
+class FirewallAction(object):
+    ACCEPT = "ACCEPT"
+    DENY = "DENY"
+    REJECT = "REJECT"
+    LOG = "LOG"
+
+    supported_actions = [ACCEPT, DENY, REJECT, LOG]
+
+    @classmethod
+    def if_action_supported(cls, action: str):
+        if action is None:
+            return False
+        return action.strip().upper() in cls.supported_actions
+
+
+class NativeFirewallRule(abc.ABC):
+    """Base class for native firewall rule"""
+
+    def __init__(self, original_rule: Optional["models.ServerFirewallRule"] = None) -> None:
+        self.original_rule = original_rule
+
+
 class FirewallService(abc.ABC):
+    def get_supported_actions(self) -> List[str]:
+        return FirewallAction.supported_actions
+
+    def build_native_firewall_rule(
+        self, rule: "models.ServerFirewallRule", server: "models.Server"
+    ) -> List[NativeFirewallRule]:
+        return []
+
     @abc.abstractmethod
     def setup_firewall_for_server(self, server: "models.Server"):
         pass

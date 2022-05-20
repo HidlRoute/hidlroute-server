@@ -17,6 +17,7 @@
 from typing import Any, Optional, Type, List
 
 from adminsortable2.admin import SortableAdminMixin
+from django import forms
 from django.contrib import admin
 from django.contrib.admin.options import InlineModelAdmin
 from django.contrib.contenttypes.models import ContentType
@@ -36,6 +37,7 @@ from hidlroute.core.admin_commons import (
     HidlePolymorphicParentAdmin,
     HidlePolymorphicChildAdmin,
 )
+from hidlroute.core.factory import default_service_factory
 from hidlroute.core.forms import ServerTypeSelectForm
 
 # @admin.register(models.Member)
@@ -262,15 +264,56 @@ class GroupAdmin(TreeAdmin):
     form = movenodeform_factory(models.Group)
 
 
+class PortRanceForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+
+
+class PortRangeAdmin(admin.TabularInline):
+    model = models.FirewallPortRange
+    form = PortRanceForm
+    extra = 0
+
+
+@admin.register(models.FirewallService)
+class FirewallServiceAdmin(HidlBaseModelAdmin):
+    list_display = ["name", "slug", "comment"]
+    inlines = [PortRangeAdmin]
+    fieldsets = [
+        (None, {"fields": ("name",)}),
+    ]
+
+
+class ServerFirewallRuleForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        supported_actions = [(x, x) for x in default_service_factory.firewall_service.get_supported_actions()]
+        self.fields["action"].widget = forms.widgets.Select(choices=supported_actions)
+
+
 @admin.register(models.ServerFirewallRule)
 class ServerFirewallRuleAdmin(SortableAdminMixin, HidlBaseModelAdmin):
     ordering = ["order"]
     list_display = ["order", "__str__"]
+    form = ServerFirewallRuleForm
     fieldsets = (
-        (None, {"fields": ("action",)}),
+        (
+            None,
+            {
+                "fields": (
+                    "action",
+                    "service",
+                    ("network_from", "network_from_override"),
+                    ("network_to", "network_to_override"),
+                )
+            },
+        ),
         HidlBaseModelAdmin.attachable_fieldset,
         HidlBaseModelAdmin.with_comment_fieldset,
     )
+
+    def get_urls(self):
+        return super().get_urls()
 
 
 @admin.register(models.ServerRoutingRule)

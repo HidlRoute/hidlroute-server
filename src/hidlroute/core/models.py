@@ -292,11 +292,54 @@ class ServerRule(WithComment, ServerRelated):
         abstract = True
 
 
+class FirewallPortRange(models.Model):
+    protocol = models.CharField(max_length=20, null=True, blank=True)
+    start = models.PositiveIntegerField(null=False, blank=False)
+    end = models.PositiveIntegerField(null=True, blank=True)
+    service = models.ForeignKey("FirewallService", on_delete=models.CASCADE)
+
+
+class FirewallService(WithComment, NameableIdentifiable):
+    pass
+
+
 class ServerFirewallRule(Sortable, ServerRule):
-    action = models.CharField(max_length=16)
+    class Meta(ServerRule.Meta):
+        constraints = ServerRule.Meta.constraints + [
+            models.CheckConstraint(
+                check=~models.Q(network_from__isnull=False, network_from_override__isnull=False),
+                name="check_firewallrule_network_from_xor_override",
+            ),
+            models.CheckConstraint(
+                check=~models.Q(network_to__isnull=False, network_to_override__isnull=False),
+                name="check_firewallrule_network_to_xor_override",
+            ),
+        ]
+
+    action = models.CharField(max_length=20)
+    service = models.ForeignKey(FirewallService, null=True, blank=True, on_delete=models.RESTRICT)
+    network_from = models.ForeignKey(
+        Subnet, null=True, blank=True, on_delete=models.RESTRICT, related_name="network_from"
+    )
+    network_from_override = models.CharField(max_length=100, null=True, blank=True)
+    network_to = models.ForeignKey(Subnet, null=True, blank=True, on_delete=models.RESTRICT, related_name="network_to")
+    network_to_override = models.CharField(max_length=100, null=True, blank=True)
 
     def __str__(self):
-        return f"{self.action} {self.comment}"
+        return f"{self.comment}" if self.comment else f"Rule {self.pk}"
+
+    def __resolve_str(self, data: str, server: Server) -> str:
+        return data.strip().replace("$self", server.interface_name)
+
+    def resolved_network_to(self, server: Server) -> str:
+        if self.network_to_override and len(self.network_to_override.strip()) > 0:
+            return self.__resolve_str(self.network_to_override, server)
+        return self.network_to.cidr
+
+    def resolved_network_from(self, server: Server) -> str:
+        if self.network_from_override and len(self.network_from_override.strip()) > 0:
+            return self.__resolve_str(self.network_from_override, server)
+        return self.network_from.cidr
 
 
 class ServerRoutingRule(ServerRule):

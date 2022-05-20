@@ -18,3 +18,5 @@ import ipaddress
 from typing import Union
 
 IpAddress = Union[ipaddress.IPv4Address, ipaddress.IPv6Address]
+IpNetwork = Union[ipaddress.IPv4Network, ipaddress.IPv6Network]
+IpAddressOrNetwork = Union[IpAddress, IpNetwork]
