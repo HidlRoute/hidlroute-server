@@ -146,11 +146,21 @@ migrations:
         make format; \
 	)
 
+clear-migrations:
+	@( \
+        if [ -z $(SKIP_VENV) ]; then source $(VIRTUAL_ENV_PATH)/bin/activate; fi; \
+        echo "Clearing base migrations."; \
+        rm -rf `find ./src/hidlroute -not -path  "*__init__.py" -wholename "*/migrations/*.py"`; \
+	)
+
+
 create-superuser:
 	@( \
         if [ -z $(SKIP_VENV) ]; then source $(VIRTUAL_ENV_PATH)/bin/activate; fi; \
-        echo "Applying migrations..."; \
-        $(PYTHON) src/manage.py migrate; \
+#        echo "Applying migrations..."; \
+#        $(PYTHON) src/manage.py migrate; \
+		echo "Creating initial group for superuser..."; \
+		$(PYTHON) src/manage.py create-default-super-group; \
         echo "Creating superuser..."; \
         DJANGO_SUPERUSER_PASSWORD=demoadmin $(PYTHON) src/manage.py createsuperuser --username=demoadmin --email=admin@demo.com  --no-input; \
 	)
