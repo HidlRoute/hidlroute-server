@@ -14,7 +14,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from hidlroute.core.factory import ServiceFactory
+from hidlroute.core.factory import ServiceFactory, default_service_factory
 from hidlroute.core.service.firewall.base import FirewallService
 from hidlroute.core.service.routing.base import RoutingService
 
@@ -29,4 +29,4 @@ class DummyServiceFactory(ServiceFactory):
         return self._instance_from_str("hidlroute.contrib.dummy.service.network.DummyFirewallService")
 
 
-dummy_service_factory = DummyServiceFactory()
+dummy_service_factory = DummyServiceFactory(default_service_factory)

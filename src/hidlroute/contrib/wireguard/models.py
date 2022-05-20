@@ -14,16 +14,20 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Type
+from typing import Type, TYPE_CHECKING
 
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
+from hidlroute.contrib.wireguard.factory import wireguard_service_factory, WireguardServiceFactory
 from hidlroute.contrib.wireguard.service.key import generate_keypair, generate_private_key, generate_public_key
 from hidlroute.contrib.wireguard.service.peer import generate_new_peer_config
 from hidlroute.core import models as models_core
 from hidlroute.core.models import DeviceConfig, SimpleTextDeviceConfig
 from hidlroute.core.types import IpAddress
+
+if TYPE_CHECKING:
+    from hidlroute.contrib.wireguard.service.wireguard_vpn import WireguardVPNService
 
 
 class WireGuardPeerConfig(SimpleTextDeviceConfig):
@@ -76,11 +80,12 @@ class WireguardServer(models_core.Server):
         ),
     )
 
-    def get_vpn_service(self) -> "VPNService":
-        if not WireguardServer._wireguard_vpn_service:
-            from hidlroute.contrib.wireguard.service.wireguard_vpn import WireguardVPNService
-            WireguardServer._wireguard_vpn_service = WireguardVPNService()
-        return WireguardServer._wireguard_vpn_service
+    @property
+    def service_factory(self) -> "WireguardServiceFactory":
+        return wireguard_service_factory
+
+    def get_vpn_service(self) -> "WireguardVPNService":
+        return self.service_factory.wireguard_vpn_service
 
     @classmethod
     def get_device_model(cls) -> Type[WireguardPeer]:

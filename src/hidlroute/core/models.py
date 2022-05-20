@@ -32,7 +32,7 @@ from treebeard import mp_tree
 from typing import TYPE_CHECKING
 
 from hidlroute.core.base_models import NameableIdentifiable, WithComment, Sortable, ServerRelated
-from hidlroute.core.factory import ServiceFactory, service_factory as default_service_factory
+from hidlroute.core.factory import ServiceFactory, default_service_factory as default_service_factory
 from hidlroute.core.types import IpAddress
 
 if TYPE_CHECKING:

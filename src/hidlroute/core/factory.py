@@ -15,7 +15,7 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-from typing import TYPE_CHECKING, Callable, Dict, Union, Any
+from typing import TYPE_CHECKING, Callable, Dict, Union, Any, Optional
 
 from django.utils.module_loading import import_string
 
@@ -26,7 +26,7 @@ from hidlroute.core.service.routing.base import RoutingService
 if TYPE_CHECKING:
     from hidlroute.core.service.ip_allocation import IPAllocationService
 
-__all__ = ["service_factory", "ServiceFactory"]
+__all__ = ["default_service_factory", "ServiceFactory"]
 
 _SERVICE_METHOD_MARK = "_service_method"
 
@@ -34,20 +34,22 @@ LOGGER = logging.getLogger("hidl_core.factory")
 
 
 class ServiceFactory(object):
-    def __init__(self) -> None:
-        self._cache: Dict[str, Callable] = {}
+    def __init__(self, parent: "ServiceFactory" = None) -> None:
+        self.parent_cache = parent.cache if parent is not None else {}
+        self.cache: Dict[str, Callable] = {}
 
     def bootstrap(self):
-        LOGGER.info("Bootstrapping HidlCore factory:")
+        factory_name = self.__class__.__name__
+        LOGGER.info(f"Bootstrapping {factory_name} factory:")
         for prop_name in dir(self):
             prop_or_method = getattr(self, prop_name)
             if hasattr(prop_or_method, _SERVICE_METHOD_MARK):
                 LOGGER.info("Determining implementation for {}".format(prop_name))
                 self._invoke_prop_or_method(prop_or_method)
-        LOGGER.info("HidlCore factory bootstrap finished")
+        LOGGER.info(f"{factory_name} factory bootstrap finished")
 
     def reset_cache(self):
-        self._cache.clear()
+        self.cache.clear()
 
     def _invoke_prop_or_method(self, prop_or_method: Union[property, Callable]):
         if isinstance(prop_or_method, property):
@@ -65,7 +67,14 @@ class ServiceFactory(object):
     def _instance_from_str(cls, class_full_name: str) -> Any:
         return cls._class_from_str(class_full_name)()
 
-    def _cached_service(service_method):
+    def _get_from_cache(self, identity: str, consider_parent=True) -> Optional[Callable]:
+        if identity in self.cache:
+            return self.cache[identity]
+        if consider_parent:
+            return self.parent_cache.get(identity)
+        return None
+
+    def _cached_service(service_method, override=True):
         def wrapper(self):
             if isinstance(service_method, property):
                 method_name = str(id(service_method))
@@ -74,11 +83,12 @@ class ServiceFactory(object):
             else:
                 raise ValueError("_register_service decorator must be applied either on method or property")
 
-            if method_name not in self._cache:
+            from_cache = self._get_from_cache(method_name, not override)
+            if from_cache is None:
                 result = self._invoke_prop_or_method(service_method)
-                self._cache[method_name] = result
+                self.cache[method_name] = result
 
-            return self._cache[method_name]
+            return self.cache[method_name]
 
         setattr(wrapper, _SERVICE_METHOD_MARK, True)
         return property(wrapper)
@@ -100,4 +110,4 @@ class ServiceFactory(object):
         return self._instance_from_str("hidlroute.contrib.dummy.service.network.DummySyncrhonousWorkerService")
 
 
-service_factory = ServiceFactory()
+default_service_factory = ServiceFactory()

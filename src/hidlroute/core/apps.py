@@ -17,7 +17,7 @@
 from django.utils.translation import gettext_lazy as _
 from django.apps import AppConfig
 
-from hidlroute.core.factory import service_factory
+from hidlroute.core.factory import default_service_factory
 
 
 class CoreConfig(AppConfig):
@@ -29,4 +29,4 @@ class CoreConfig(AppConfig):
     def ready(self):
         from . import signals  # noqa: F401
 
-        service_factory.bootstrap()
+        default_service_factory.bootstrap()

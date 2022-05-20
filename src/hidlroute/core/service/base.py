@@ -22,6 +22,7 @@ from typing import NamedTuple, TYPE_CHECKING
 if TYPE_CHECKING:
     from hidlroute.core import models
 
+
 class VPNServerStatus(Enum):
     STOPPED = 1
     RUNNING = 2

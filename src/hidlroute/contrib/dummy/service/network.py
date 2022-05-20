@@ -39,8 +39,8 @@ class DummyRoutingService(RoutingService):
     def destroy_routes_for_server(self, server: models.Server):
         LOGGER.info("Destroy Routes for {}".format(server))
 
-class DummyLoggingVPNService(VPNService):
 
+class DummyLoggingVPNService(VPNService):
     def get_status(self, server: "models.Server") -> VPNServerStatus:
         return VPNServerStatus.STOPPED
 

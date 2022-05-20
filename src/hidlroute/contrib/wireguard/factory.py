@@ -14,22 +14,18 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from pr2modules.iproute import IPRoute
+from typing import TYPE_CHECKING
 
-from hidlroute.contrib.wireguard.models import WireguardServer
-from hidlroute.core import models
-from hidlroute.core.service.base import VPNService, VPNServerStatus
+from hidlroute.core.factory import ServiceFactory, default_service_factory
+
+if TYPE_CHECKING:
+    from hidlroute.contrib.wireguard.service.wireguard_vpn import WireguardVPNService
 
 
-class WireguardVPNService(VPNService):
-    def get_status(self, server: models.Server) -> VPNServerStatus:
-        if not isinstance(server, WireguardServer):
-            raise ValueError("Wireguard VPN Service can only take Wireguard server as an argument.")
+class WireguardServiceFactory(ServiceFactory):
+    @ServiceFactory._cached_service
+    def wireguard_vpn_service(self) -> "WireguardVPNService":
+        return self._instance_from_str("hidlroute.contrib.wireguard.service.wireguard_vpn.WireguardVPNService")
 
-        with IPRoute() as ipr:
-            link_index = ipr.link_lookup(ifname=server.interface_name)
-            if not len(link_index):
-                return False
 
-            link_detail = ipr.get_links(link_index)[0]
-            return link_detail.get("state", "down") == "up"
+wireguard_service_factory = WireguardServiceFactory(default_service_factory)
