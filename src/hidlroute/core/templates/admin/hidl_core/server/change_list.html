@@ -1,0 +1,21 @@
+{% extends "admin/change_list.html" %}
+
+{% block extrajs %}
+    {{ block.super }}
+    <script>
+        function updateData() {
+            $.ajax({
+                url: window.location,
+                method: 'GET',
+                success: function (response) {
+                    console.log(response)
+                    django.jQuery("#result_list").replaceWith($(response).find("#result_list"))
+                    setTimeout(updateData, 5000);
+                }
+            });
+        }
+
+        updateData();
+
+    </script>
+{% endblock %}
