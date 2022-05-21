@@ -22,11 +22,13 @@ from django.contrib import admin
 from django.contrib.admin.options import InlineModelAdmin
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import QuerySet, TextField
+from django.db.models.fields.related import RelatedField
 from django.forms import widgets, BaseModelFormSet
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.template import loader
 from django.urls import path, reverse
 from django.utils.translation import gettext_lazy as _
+from django_reverse_admin import ReverseModelAdmin
 from polymorphic.admin import PolymorphicChildModelAdmin
 from treebeard.admin import TreeAdmin
 from treebeard.forms import movenodeform_factory
@@ -37,6 +39,7 @@ from hidlroute.core.admin_commons import (
     GroupSelectAdminMixin,
     HidlePolymorphicParentAdmin,
     HidlePolymorphicChildAdmin,
+    ManagedRelActionsMixin,
 )
 from hidlroute.core.factory import default_service_factory
 from hidlroute.core.forms import ServerTypeSelectForm
@@ -82,17 +85,17 @@ class DeviceAdmin(HidlBaseModelAdmin, HidlePolymorphicParentAdmin):
     child_models = []
 
 
-class ServerToMemberAdmin(admin.TabularInline):
+class ServerToMemberAdmin(ManagedRelActionsMixin, admin.TabularInline):
     model = models.ServerToMember
     extra = 0
 
 
-class ServerToGroupAdmin(GroupSelectAdminMixin, admin.TabularInline):
+class ServerToGroupAdmin(GroupSelectAdminMixin, ManagedRelActionsMixin, admin.TabularInline):
     model = models.ServerToGroup
     extra = 0
 
 
-class ClientRoutingRuleAdmin(admin.TabularInline):
+class ClientRoutingRuleAdmin(GroupSelectAdminMixin, admin.TabularInline):
     model = models.ClientRoutingRule
     extra = 0
     fields = (
@@ -150,7 +153,18 @@ class ClientRoutingRuleAdmin(admin.TabularInline):
         return qs
 
 
-class BaseServerAdminImpl(PolymorphicChildModelAdmin):
+class RelateFirewallRulesReadonlyInline(admin.TabularInline):
+    model = models.FirewallRule
+    fields = ("__str__",)
+    readonly_fields = fields
+    extra = 0
+    template = "admin/hidl_core/server/firewall_inline.html"
+
+    def has_add_permission(self, request: HttpRequest, obj=None) -> bool:
+        return False
+
+
+class BaseServerAdminImpl(ManagedRelActionsMixin, PolymorphicChildModelAdmin):
     ICON = "images/server/no-icon.png"
     base_model = models.Server
     fieldsets = [
@@ -166,7 +180,7 @@ class BaseServerAdminImpl(PolymorphicChildModelAdmin):
             },
         ),
     ]
-    inlines = [ServerToGroupAdmin, ServerToMemberAdmin, ClientRoutingRuleAdmin]
+    inlines = [ServerToGroupAdmin, ServerToMemberAdmin, ClientRoutingRuleAdmin, RelateFirewallRulesReadonlyInline]
     create_inlines = [ServerToGroupAdmin]
 
     def get_inlines(self, request: HttpRequest, obj: Optional[models.Server] = None) -> List[Type[InlineModelAdmin]]:
@@ -340,31 +354,80 @@ class ServerFirewallRuleForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         supported_actions = [(x, x) for x in default_service_factory.firewall_service.get_supported_actions()]
         self.fields["action"].widget = forms.widgets.Select(choices=supported_actions)
+        self.fields["server"].widget = forms.widgets.HiddenInput()
 
 
-@admin.register(models.ServerFirewallRule)
-class ServerFirewallRuleAdmin(SortableAdminMixin, HidlBaseModelAdmin):
+class NetworkFilterInline(ManagedRelActionsMixin, admin.TabularInline):
+    model = models.NetworkFilter
+    template = "admin/hidl_core/network_filter/tabular_inline.html"
+    extra = 0
+    fields = ["server_group", "server_member", "custom", "subnet"]
+    select_related = ["server_group__group"]
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.parent_instance: Optional[models.FirewallRule] = None
+        self.template = self.__class__.template
+        self.can_delete = False
+
+    def has_delete_permission(self, request: HttpRequest, obj=None) -> bool:
+        return False
+
+    def get_field_queryset(
+        self, db: None, db_field: RelatedField, request: Optional[HttpRequest]
+    ) -> Optional[QuerySet]:
+        qs = super().get_field_queryset(db, db_field, request)
+        if qs is None:
+            qs = db_field.remote_field.model._default_manager.using(db)
+        if self.parent_instance and db_field.related_model in (models.ServerToMember, models.ServerToGroup):
+            qs.filter(server=self.parent_instance.server)
+        return qs
+
+
+@admin.register(models.FirewallRule)
+class ServerFirewallRuleAdmin(SortableAdminMixin, HidlBaseModelAdmin, ReverseModelAdmin):
     ordering = ["order"]
     list_display = ["order", "__str__"]
     form = ServerFirewallRuleForm
+    inline_reverse = [
+        {"admin_class": NetworkFilterInline, "field_name": "network_from", "kwargs": {}},
+        {"admin_class": NetworkFilterInline, "field_name": "network_to", "kwargs": {}},
+    ]
+    inline_type = "tabular"
     fieldsets = (
         (
             None,
             {
                 "fields": (
-                    "action",
-                    "service",
-                    ("network_from", "network_from_override"),
-                    ("network_to", "network_to_override"),
+                    "server",
+                    ("action", "service"),
                 )
             },
         ),
-        HidlBaseModelAdmin.attachable_fieldset,
         HidlBaseModelAdmin.with_comment_fieldset,
     )
+    jazzmin_section_order = (None, _("From"), _("To"), HidlBaseModelAdmin.with_comment_fieldset[0])
 
-    def get_urls(self):
-        return super().get_urls()
+    def get_inline_instances(self, request, obj=None):
+        instances = super().get_inline_instances(request, obj)
+        for x in instances:
+            if isinstance(x, NetworkFilterInline):
+                x.parent_instance = obj
+        return instances
+
+    def response_add(
+        self, request: HttpRequest, obj: models.FirewallRule, post_url_continue: Optional[str] = None
+    ) -> HttpResponse:
+        original_response = super().response_add(request, obj, post_url_continue)
+        if "_continue" not in request.POST:
+            return HttpResponseRedirect(obj.server.get_admin_url() + "#firewall-rules-tab")
+        return original_response
+
+    def response_change(self, request: HttpRequest, obj: models.FirewallRule) -> HttpResponse:
+        original_response = super().response_change(request, obj)
+        if "_continue" not in request.POST:
+            return HttpResponseRedirect(obj.server.get_admin_url() + "#firewall-rules-tab")
+        return original_response
 
 
 @admin.register(models.ServerRoutingRule)

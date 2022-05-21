@@ -165,7 +165,7 @@ create-superuser:
         DJANGO_SUPERUSER_PASSWORD=demoadmin $(PYTHON) src/manage.py createsuperuser --username=demoadmin --email=admin@demo.com  --no-input; \
 	)
 
-create-dev-db: migrate create-superuser load-demo-dataset
+create-dev-db: migrate create-superuser load-data load-demo-dataset
 delete-db:
 	@( \
         if [ -z $(SKIP_VENV) ]; then source $(VIRTUAL_ENV_PATH)/bin/activate; fi; \
@@ -176,6 +176,14 @@ delete-db:
         $(RUN_PSQL) -c "CREATE DATABASE hidl;"; \
         echo "  DONE"; \
 	)
+
+load-data:
+	@( \
+        if [ -z $(SKIP_VENV) ]; then source $(VIRTUAL_ENV_PATH)/bin/activate; fi; \
+        echo "Loading standard data..."; \
+        $(PYTHON) src/manage.py loaddata default-firewall-services; \
+	)
+
 
 load-demo-dataset:
 	@( \

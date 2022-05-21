@@ -54,6 +54,25 @@ class WithComment(models.Model):
     comment = models.TextField(null=False, blank=True)
 
 
+class WithReprCache(models.Model):
+    class Meta:
+        abstract = True
+
+    repr_cache = models.CharField(max_length=200, null=True, blank=True)
+
+    def _get_repr(self):
+        raise NotImplementedError
+
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None) -> None:
+        self.repr_cache = self._get_repr()
+        super().save(force_insert, force_update, using, update_fields)
+
+    def __str__(self) -> str:
+        if self.repr_cache:
+            return self.repr_cache
+        return super().__str__()
+
+
 class Sortable(models.Model):
     class Meta:
         abstract = True

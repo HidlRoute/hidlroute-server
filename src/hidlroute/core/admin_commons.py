@@ -20,8 +20,6 @@ from django import forms
 from django.contrib.admin.options import BaseModelAdmin
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-from django.db.models import ForeignKey
-from django.forms import ModelChoiceField
 from django.http import HttpRequest
 from django.contrib import admin
 from polymorphic.admin import PolymorphicParentModelAdmin, PolymorphicChildModelAdmin
@@ -30,17 +28,28 @@ from hidlroute.core import models as core_models
 
 
 class GroupSelectAdminMixin(BaseModelAdmin):
-    def formfield_for_foreignkey(
-        self, db_field: ForeignKey, request: Optional[HttpRequest], **kwargs: Any
-    ) -> Optional[ModelChoiceField]:
-        form_field: ModelChoiceField = super().formfield_for_foreignkey(db_field, request, **kwargs)
-        if db_field.related_model == core_models.Group:
+    def formfield_for_dbfield(
+        self, db_field: models.Field, request: Optional[HttpRequest], **kwargs: Any
+    ) -> Optional[forms.Field]:
+        form_field = super().formfield_for_dbfield(db_field, request, **kwargs)
+        if form_field.__class__ == forms.ModelChoiceField and db_field.related_model == core_models.Group:
             form_field.queryset = core_models.Group.get_tree()
-            form_field.label_from_instance = lambda obj: " / ".join([x.name for x in obj.get_ancestors()] + [obj.name])
+            form_field.label_from_instance = lambda obj: obj.get_full_name()
         return form_field
 
 
-class HidlBaseModelAdmin(GroupSelectAdminMixin, admin.ModelAdmin):
+class ManagedRelActionsMixin(BaseModelAdmin):
+    def formfield_for_dbfield(
+        self, db_field: models.Field, request: Optional[HttpRequest], **kwargs: Any
+    ) -> Optional[forms.Field]:
+        form_field = super().formfield_for_dbfield(db_field, request, **kwargs)
+        if form_field.__class__ == forms.ModelChoiceField:
+            form_field.widget.can_delete_related = False
+            # form_field.widget.can_change_related = False
+        return form_field
+
+
+class HidlBaseModelAdmin(ManagedRelActionsMixin, GroupSelectAdminMixin, admin.ModelAdmin):
     with_comment_fieldset = (_("Notes"), {"fields": ("comment",)})
     nameable_fields = [
         ("name", "slug"),
@@ -52,15 +61,6 @@ class HidlBaseModelAdmin(GroupSelectAdminMixin, admin.ModelAdmin):
             "description": _("Pick one of the entities to attach the rules."),
         },
     )
-
-    def formfield_for_dbfield(
-        self, db_field: models.Field, request: Optional[HttpRequest], **kwargs: Any
-    ) -> Optional[forms.Field]:
-        form_field = super().formfield_for_dbfield(db_field, request, **kwargs)
-        if form_field.__class__ == forms.ModelChoiceField:
-            form_field.widget.can_delete_related = False
-            # form_field.widget.can_change_related = False
-        return form_field
 
 
 class HidlePolymorphicParentAdmin(PolymorphicParentModelAdmin):

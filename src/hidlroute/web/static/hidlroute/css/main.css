@@ -45,3 +45,8 @@
 }
 
 /* ======================= END PORT RANGE ADMIN ========================= */
+
+
+.network-filter-inline .inline-deletelink {
+    display: none !important;
+}

@@ -28,7 +28,7 @@ class DummyFirewallService(FirewallService):
         super().__init__()
         self.__logger = LOGGER.getChild(".firewall")
 
-    def _log_rule(self, rule: core_models.ServerFirewallRule):
+    def _log_rule(self, rule: core_models.FirewallRule):
         self.__logger.info(f"\t {rule.action} From: To: ")
 
     def setup_firewall_for_server(self, server: core_models.Server):

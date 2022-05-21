@@ -1,0 +1,204 @@
+- model: hidl_core.firewallservice
+  pk: 1
+  fields:
+    slug: http
+    name: HTTP
+    comment: ''
+- model: hidl_core.firewallservice
+  pk: 2
+  fields:
+    slug: https
+    name: HTTPS
+    comment: ''
+- model: hidl_core.firewallservice
+  pk: 3
+  fields:
+    slug: httphttps
+    name: HTTP/HTTPS
+    comment: ''
+- model: hidl_core.firewallservice
+  pk: 4
+  fields:
+    slug: dns
+    name: DNS
+    comment: ''
+- model: hidl_core.firewallservice
+  pk: 5
+  fields:
+    slug: ssh
+    name: SSH
+    comment: ''
+- model: hidl_core.firewallservice
+  pk: 6
+  fields:
+    slug: mysql
+    name: MySql
+    comment: ''
+- model: hidl_core.firewallservice
+  pk: 7
+  fields:
+    slug: ntp
+    name: NTP
+    comment: ''
+- model: hidl_core.firewallservice
+  pk: 8
+  fields:
+    slug: any-icmp
+    name: Any ICMP
+    comment: ''
+- model: hidl_core.firewallservice
+  pk: 9
+  fields:
+    slug: nfs
+    name: NFS
+    comment: ''
+- model: hidl_core.firewallservice
+  pk: 10
+  fields:
+    slug: rdp
+    name: RDP
+    comment: ''
+- model: hidl_core.firewallservice
+  pk: 11
+  fields:
+    slug: rsync
+    name: RSync
+    comment: ''
+- model: hidl_core.firewallservice
+  pk: 12
+  fields:
+    slug: samba
+    name: Samba
+    comment: ''
+- model: hidl_core.firewallservice
+  pk: 13
+  fields:
+    slug: smtp-plain
+    name: SMTP Plain
+    comment: ''
+- model: hidl_core.firewallportrange
+  pk: 1
+  fields:
+    protocol: TCP
+    start: 80
+    end: null
+    service: 1
+- model: hidl_core.firewallportrange
+  pk: 2
+  fields:
+    protocol: TCP
+    start: 443
+    end: null
+    service: 2
+- model: hidl_core.firewallportrange
+  pk: 3
+  fields:
+    protocol: TCP
+    start: 80
+    end: null
+    service: 3
+- model: hidl_core.firewallportrange
+  pk: 4
+  fields:
+    protocol: TCP
+    start: 443
+    end: null
+    service: 3
+- model: hidl_core.firewallportrange
+  pk: 5
+  fields:
+    protocol: TCP
+    start: 53
+    end: null
+    service: 4
+- model: hidl_core.firewallportrange
+  pk: 6
+  fields:
+    protocol: UDP
+    start: 53
+    end: null
+    service: 4
+- model: hidl_core.firewallportrange
+  pk: 7
+  fields:
+    protocol: TCP
+    start: 22
+    end: null
+    service: 5
+- model: hidl_core.firewallportrange
+  pk: 8
+  fields:
+    protocol: TCP
+    start: 3306
+    end: null
+    service: 6
+- model: hidl_core.firewallportrange
+  pk: 9
+  fields:
+    protocol: UDP
+    start: 123
+    end: null
+    service: 7
+- model: hidl_core.firewallportrange
+  pk: 10
+  fields:
+    protocol: ICMP
+    start: 0
+    end: 65535
+    service: 8
+- model: hidl_core.firewallportrange
+  pk: 11
+  fields:
+    protocol: TCP
+    start: 2049
+    end: null
+    service: 9
+- model: hidl_core.firewallportrange
+  pk: 12
+  fields:
+    protocol: UDP
+    start: 2049
+    end: null
+    service: 9
+- model: hidl_core.firewallportrange
+  pk: 13
+  fields:
+    protocol: TCP
+    start: 3389
+    end: null
+    service: 10
+- model: hidl_core.firewallportrange
+  pk: 14
+  fields:
+    protocol: TCP
+    start: 873
+    end: null
+    service: 11
+- model: hidl_core.firewallportrange
+  pk: 15
+  fields:
+    protocol: TCP
+    start: 139
+    end: null
+    service: 12
+- model: hidl_core.firewallportrange
+  pk: 16
+  fields:
+    protocol: TCP
+    start: 445
+    end: null
+    service: 12
+- model: hidl_core.firewallportrange
+  pk: 17
+  fields:
+    protocol: UDP
+    start: 137
+    end: 138
+    service: 12
+- model: hidl_core.firewallportrange
+  pk: 18
+  fields:
+    protocol: TCP
+    start: 25
+    end: null
+    service: 13

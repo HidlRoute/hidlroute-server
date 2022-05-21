@@ -26,13 +26,14 @@ from django.contrib.postgres.indexes import GistIndex
 from django.core.exceptions import PermissionDenied
 from django.db import models, transaction
 from django.db.models import QuerySet
+from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from polymorphic import models as polymorphic_models
 from treebeard import mp_tree
 from typing import TYPE_CHECKING
 
-from hidlroute.core.base_models import NameableIdentifiable, WithComment, Sortable, ServerRelated
+from hidlroute.core.base_models import NameableIdentifiable, WithComment, Sortable, ServerRelated, WithReprCache
 from hidlroute.core.factory import ServiceFactory, default_service_factory as default_service_factory
 from hidlroute.core.types import IpAddress
 
@@ -103,11 +104,16 @@ class Server(NameableIdentifiable, WithComment, polymorphic_models.PolymorphicMo
     def restart(self):
         self.service_factory.worker_service.restart_vpn_server(self)
 
-    def get_firewall_rules(self) -> QuerySet["ServerFirewallRule"]:
-        return ServerFirewallRule.load_related_to_server(self)
+    def get_firewall_rules(self) -> QuerySet["FirewallRule"]:
+        return FirewallRule.load_related_to_server(self)
 
     def get_routing_rules(self) -> QuerySet["ServerRoutingRule"]:
         return ServerRoutingRule.load_related_to_server(self).select_related("network")
+
+    def get_admin_url(self):
+        return reverse(
+            "admin:%s_%s_change" % (Server._meta.app_label, Server._meta.model_name), args=(self.pk,)  # noqa
+        )
 
 
 class IpAllocationMeta(models.Model):
@@ -124,11 +130,14 @@ class Group(NameableIdentifiable, WithComment, mp_tree.MP_Node):
     servers = models.ManyToManyField(Server, through="ServerToGroup")
 
     def __str__(self):
-        return f"G: {self.name}"
+        return f"{self.name}"
 
     @classmethod
     def get_default_group(cls):
         return cls.objects.get(slug=cls.DEFAULT_GROUP_SLUG)
+
+    def get_full_name(self):
+        return " / ".join([x.name for x in self.get_ancestors()] + [self.name])
 
 
 class ServerToGroup(models.Model):
@@ -142,7 +151,7 @@ class ServerToGroup(models.Model):
     subnet = models.ForeignKey(Subnet, on_delete=models.RESTRICT, null=True, blank=True)
 
     def __str__(self) -> str:
-        return str(self.group)
+        return str(self.group.get_full_name())
 
 
 class Member(WithComment, polymorphic_models.PolymorphicModel):
@@ -160,7 +169,7 @@ class Person(Member):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, null=False, on_delete=models.CASCADE)
 
     def __str__(self) -> str:
-        return f"P: {self.user.username}"
+        return f"{self.user.username} ({self.user.get_full_name()})"
 
     def get_name(self) -> str:
         return self.user.name
@@ -303,43 +312,82 @@ class FirewallService(WithComment, NameableIdentifiable):
     pass
 
 
-class ServerFirewallRule(Sortable, ServerRule):
-    class Meta(ServerRule.Meta):
-        constraints = ServerRule.Meta.constraints + [
-            models.CheckConstraint(
-                check=~models.Q(network_from__isnull=False, network_from_override__isnull=False),
-                name="check_firewallrule_network_from_xor_override",
-            ),
-            models.CheckConstraint(
-                check=~models.Q(network_to__isnull=False, network_to_override__isnull=False),
-                name="check_firewallrule_network_to_xor_override",
-            ),
-        ]
+class NetworkFilter(WithReprCache, models.Model):
+    subnet = models.ForeignKey(Subnet, null=True, blank=True, on_delete=models.RESTRICT, related_name="network_from")
+    custom = models.CharField(max_length=100, null=True, blank=True)
+    server_group = models.ForeignKey("ServerToGroup", on_delete=models.CASCADE, null=True, blank=True)
+    server_member = models.ForeignKey("ServerToMember", on_delete=models.CASCADE, null=True, blank=True)
+
+    def _get_repr(self):
+        if self.server_group:
+            return "Group({})".format(self.server_group)
+        if self.server_member:
+            kind = self.server_member.member.get_real_instance()._meta.verbose_name.capitalize()
+            return f"{kind}({self.server_member.member})"
+        if self.subnet:
+            return str(self.subnet)
+        if self.custom:
+            return self.custom
+        return "<any>"
+
+
+class FirewallRule(Sortable, WithComment, WithReprCache):
+    class Meta:
+        verbose_name = _("Firewall Rule")
+
+    #     constraints = ServerRule.Meta.constraints + [
+    #         models.CheckConstraint(
+    #             check=~models.Q(network_from__isnull=False, network_from_override__isnull=False),
+    #             name="check_firewallrule_network_from_xor_override",
+    #         ),
+    #         models.CheckConstraint(
+    #             check=~models.Q(network_to__isnull=False, network_to_override__isnull=False),
+    #             name="check_firewallrule_network_to_xor_override",
+    #         ),
+    #     ]
 
     action = models.CharField(max_length=20)
     service = models.ForeignKey(FirewallService, null=True, blank=True, on_delete=models.RESTRICT)
-    network_from = models.ForeignKey(
-        Subnet, null=True, blank=True, on_delete=models.RESTRICT, related_name="network_from"
+    server = models.ForeignKey(Server, null=False, blank=False, on_delete=models.CASCADE)
+    network_from = models.OneToOneField(
+        NetworkFilter,
+        null=True,
+        blank=True,
+        on_delete=models.RESTRICT,
+        related_name="network_from",
+        verbose_name=_("From"),
     )
-    network_from_override = models.CharField(max_length=100, null=True, blank=True)
-    network_to = models.ForeignKey(Subnet, null=True, blank=True, on_delete=models.RESTRICT, related_name="network_to")
-    network_to_override = models.CharField(max_length=100, null=True, blank=True)
+    network_to = models.ForeignKey(
+        NetworkFilter, null=True, blank=True, on_delete=models.RESTRICT, related_name="network_to", verbose_name=_("To")
+    )
 
     def __str__(self):
-        return f"{self.comment}" if self.comment else f"Rule {self.pk}"
+        if self.comment:
+            return self.comment
+        if self.repr_cache:
+            return self.repr_cache
+        return f"Rule {self.pk}"
+
+    def _get_repr(self):
+        return (
+            f"{self.action} Service: {self.service or '<any>'} "
+            f"From: {self.network_from or '<any>'} To: {self.network_to or '<any>'}"
+        )
 
     def __resolve_str(self, data: str, server: Server) -> str:
         return data.strip().replace("$self", server.interface_name)
 
     def resolved_network_to(self, server: Server) -> str:
-        if self.network_to_override and len(self.network_to_override.strip()) > 0:
-            return self.__resolve_str(self.network_to_override, server)
-        return self.network_to.cidr
+        return ""
+        # if self.network_to_override and len(self.network_to_override.strip()) > 0:
+        #     return self.__resolve_str(self.network_to_override, server)
+        # return self.network_to.cidr
 
     def resolved_network_from(self, server: Server) -> str:
-        if self.network_from_override and len(self.network_from_override.strip()) > 0:
-            return self.__resolve_str(self.network_from_override, server)
-        return self.network_from.cidr
+        return ""
+        # if self.network_from_override and len(self.network_from_override.strip()) > 0:
+        #     return self.__resolve_str(self.network_from_override, server)
+        # return self.network_from.cidr
 
 
 class ServerRoutingRule(ServerRule):

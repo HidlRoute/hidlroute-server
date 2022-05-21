@@ -28,7 +28,7 @@ class IpTablesFirewallAction(FirewallAction):
 
 
 class IpTablesRule(NativeFirewallRule):
-    def __init__(self, original_rule: Optional["models.ServerFirewallRule"] = None) -> None:
+    def __init__(self, original_rule: Optional["models.FirewallRule"] = None) -> None:
         super().__init__(original_rule)
         self.source_port: Optional[int] = None
         self.source_protocol: Optional[str] = None
@@ -40,9 +40,7 @@ class IpTablesRule(NativeFirewallRule):
 
 
 class IpTablesFirewallService(FirewallService):
-    def build_native_firewall_rule(
-        self, rule: "models.ServerFirewallRule", server: "models.Server"
-    ) -> List[IpTablesRule]:
+    def build_native_firewall_rule(self, rule: "models.FirewallRule", server: "models.Server") -> List[IpTablesRule]:
         native_rule = IpTablesRule(rule)
         if IpTablesFirewallAction.if_action_supported(rule.action):
             native_rule.action = rule.action.upper().strip()

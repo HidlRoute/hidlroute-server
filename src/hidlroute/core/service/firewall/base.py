@@ -54,7 +54,7 @@ class FirewallProtocol(object):
 class NativeFirewallRule(abc.ABC):
     """Base class for native firewall rule"""
 
-    def __init__(self, original_rule: Optional["models.ServerFirewallRule"] = None) -> None:
+    def __init__(self, original_rule: Optional["models.FirewallRule"] = None) -> None:
         self.original_rule = original_rule
 
 
@@ -66,7 +66,7 @@ class FirewallService(abc.ABC):
         return FirewallProtocol.supported_protocols
 
     def build_native_firewall_rule(
-        self, rule: "models.ServerFirewallRule", server: "models.Server"
+        self, rule: "models.FirewallRule", server: "models.Server"
     ) -> List[NativeFirewallRule]:
         return []
 
