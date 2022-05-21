@@ -24,11 +24,12 @@ from django.contrib.contenttypes.models import ContentType
 from django.db.models import QuerySet, TextField
 from django.forms import widgets, BaseModelFormSet
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
+from django.template import loader
+from django.urls import path, reverse
+from django.utils.translation import gettext_lazy as _
 from polymorphic.admin import PolymorphicChildModelAdmin
 from treebeard.admin import TreeAdmin
 from treebeard.forms import movenodeform_factory
-
-from django.utils.translation import gettext_lazy as _
 
 from hidlroute.core import models
 from hidlroute.core.admin_commons import (
@@ -39,7 +40,6 @@ from hidlroute.core.admin_commons import (
 )
 from hidlroute.core.factory import default_service_factory
 from hidlroute.core.forms import ServerTypeSelectForm
-
 # @admin.register(models.Member)
 # class MemberAdmin(GroupSelectAdminMixin, PolymorphicParentModelAdmin):
 #     base_model = models.Member
@@ -57,7 +57,11 @@ from hidlroute.core.forms import ServerTypeSelectForm
 # class PersonAdmin(GroupSelectAdminMixin, PolymorphicChildModelAdmin):
 #     base_model = models.Person
 #     show_in_index = False
+from hidlroute.core.service.base import VPNServerStatus
 from hidlroute.core.utils import wait
+
+
+# from django.utils.translation import gettext_lazy as _
 
 
 @admin.register(models.Host)
@@ -111,14 +115,14 @@ class ClientRoutingRuleAdmin(admin.TabularInline):
         original_formset = super().get_formset(request, obj, **kwargs)
 
         def modified_constructor(
-            _self,
-            data=None,
-            files=None,
-            instance=None,
-            save_as_new=False,
-            prefix=None,
-            queryset=None,
-            **kwargs,
+                _self,
+                data=None,
+                files=None,
+                instance=None,
+                save_as_new=False,
+                prefix=None,
+                queryset=None,
+                **kwargs,
         ):
             if instance is None:
                 _self.instance = _self.fk.remote_field.model()
@@ -153,11 +157,11 @@ class BaseServerAdminImpl(PolymorphicChildModelAdmin):
             None,
             {
                 "fields": HidlBaseModelAdmin.nameable_fields
-                + [
-                    "interface_name",
-                    ("subnet", "ip_address"),
-                    "comment",
-                ]
+                          + [
+                              "interface_name",
+                              ("subnet", "ip_address"),
+                              "comment",
+                          ]
             },
         ),
     ]
@@ -170,6 +174,15 @@ class BaseServerAdminImpl(PolymorphicChildModelAdmin):
             return self.create_inlines
         else:
             return self.inlines
+
+    def get_urls(self):
+        custom_urls = [
+            path('startserver/<int:server_id>', self.admin_site.admin_view(self.action_start_server),
+                 name='startserver_url'),
+            path('stopserver/<int:server_id>', self.admin_site.admin_view(self.action_stop_server),
+                 name='stopserver_url'),
+        ]
+        return custom_urls + super().get_urls()
 
     @classmethod
     def get_icon(cls) -> str:
@@ -191,11 +204,11 @@ class BaseServerAdminImpl(PolymorphicChildModelAdmin):
             request.POST = request.POST.copy()  # noqa
             request.POST["_continue"] = 1  # noqa
         if "_start_server" in request.POST:
-            return self.action_start_server(request, obj)
+            return self.action_start_server(request, obj.pk)
         elif "_stop_server" in request.POST:
-            return self.action_stop_server(request, obj)
+            return self.action_stop_server(request, obj.pk)
         elif "_restart_server" in request.POST:
-            return self.action_restart_server(request, obj)
+            return self.action_restart_server(request, obj.pk)
         return super().response_change(request, obj)
 
     def save_formset(self, request: Any, form: Any, formset: Any, change: Any) -> None:
@@ -209,22 +222,35 @@ class BaseServerAdminImpl(PolymorphicChildModelAdmin):
             instance.save()
         formset.save_m2m()
 
-    def action_start_server(self, request: HttpRequest, obj: models.Server) -> HttpResponse:
+    def action_start_server(self, request: HttpRequest, server_id: int) -> HttpResponse:
+        obj = models.Server.objects.get(pk=server_id)
         self.message_user(request, _("Server {} is starting".format(obj)))
         obj.start()
         wait()
+
+        if request.method == "GET":
+            return HttpResponseRedirect(reverse("admin:hidl_core_server_changelist"))
+
         return HttpResponseRedirect(request.path)
 
-    def action_stop_server(self, request: HttpRequest, obj: models.Server) -> HttpResponse:
+    def action_stop_server(self, request: HttpRequest, server_id: int) -> HttpResponse:
+        obj = models.Server.objects.get(pk=server_id)
         self.message_user(request, _("Server {} is shutting down".format(obj)))
         obj.stop()
         wait()
+        if request.method == "GET":
+            return HttpResponseRedirect(reverse("admin:hidl_core_server_changelist"))
+
         return HttpResponseRedirect(request.path)
 
-    def action_restart_server(self, request: HttpRequest, obj: models.Server) -> HttpResponse:
+    def action_restart_server(self, request: HttpRequest, server_id: int) -> HttpResponse:
+        obj = models.Server.objects.get(pk=server_id)
         self.message_user(request, _("Server {} is re-starting".format(obj)))
         obj.restart()
         wait()
+        if request.method == "GET":
+            return HttpResponseRedirect(reverse("admin:hidl_core_server_changelist"))
+
         return HttpResponseRedirect(request.path)
 
 
@@ -234,12 +260,16 @@ class ServerAdmin(HidlBaseModelAdmin, HidlePolymorphicParentAdmin):
     base_model = models.Server
     child_models = []
     add_type_form = ServerTypeSelectForm
-    list_display = ["__str__", "subnet", "ip_address", "is_server_running"]
-    readonly_fields = ["is_server_running"]
+    list_display = ["__str__", "subnet", "ip_address", "vpn_status", "control_button"]
+    readonly_fields = ["vpn_status"]
     polymorphic_list = True
 
-    def is_server_running(self, obj: models.Server):
-        return obj.get_real_instance().is_running
+    def vpn_status(self, obj: models.Server):
+        return obj.get_real_instance().status
+
+    def control_button(self, obj: models.Server):
+        template = loader.get_template("admin/hidl_core/server/server_control_buttons.html")
+        return template.render(context={"server": obj, "status": obj.status, "VPNServerStatus": VPNServerStatus})
 
     def get_child_type_choices(self, request, action):
         """

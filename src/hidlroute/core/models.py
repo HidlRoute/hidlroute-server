@@ -55,7 +55,7 @@ class Server(NameableIdentifiable, WithComment, polymorphic_models.PolymorphicMo
     subnet = models.ForeignKey(Subnet, on_delete=models.RESTRICT)
 
     @cached_property
-    def is_running(self):
+    def status(self):
         return self.service_factory.worker_service.get_server_status(self)
 
     def __str__(self):

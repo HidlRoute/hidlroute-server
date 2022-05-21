@@ -1,0 +1,6 @@
+{% if status == VPNServerStatus.STOPPED %}
+    <a href="{% url "admin:startserver_url" server_id=server.pk %}">START</a>
+{% elif server.status == VPNServerStatus.RUNNING %}
+    <a href="{% url "admin:stopserver_url" server_id=server.pk %}">STOP</a>
+{% endif %}
+

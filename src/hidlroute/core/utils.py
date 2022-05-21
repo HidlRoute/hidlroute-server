@@ -21,3 +21,12 @@ DEFAULT_WAIT_SEC = 2
 
 def wait(duration=DEFAULT_WAIT_SEC):
     time.sleep(duration)
+
+
+def django_enum(cls):
+    """
+    This is a special fix for wrong Django enum behavior in templates. Enum classes need to be annotated with this.
+    see https://code.djangoproject.com/ticket/27910 which seems to be still broken for us
+    """
+    cls.do_not_call_in_templates = True
+    return cls

@@ -19,10 +19,13 @@ import datetime
 from enum import Enum
 from typing import NamedTuple, TYPE_CHECKING
 
+from hidlroute.core.utils import django_enum
+
 if TYPE_CHECKING:
     from hidlroute.core import models
 
 
+@django_enum
 class VPNServerStatus(Enum):
     STOPPED = 1
     RUNNING = 2
