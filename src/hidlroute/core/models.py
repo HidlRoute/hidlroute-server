@@ -15,9 +15,10 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import abc
+import ipaddress
 import logging
 from io import BytesIO
-from typing import Optional, Type, io
+from typing import Optional, Type, io, List
 
 import netfields
 from autoslug.settings import slugify
@@ -35,7 +36,7 @@ from typing import TYPE_CHECKING
 
 from hidlroute.core.base_models import NameableIdentifiable, WithComment, Sortable, ServerRelated, WithReprCache
 from hidlroute.core.factory import ServiceFactory, default_service_factory as default_service_factory
-from hidlroute.core.types import IpAddress
+from hidlroute.core.types import IpAddress, IpNetwork
 
 if TYPE_CHECKING:
     from hidlroute.core.service.base import VPNService
@@ -318,6 +319,28 @@ class NetworkFilter(WithReprCache, models.Model):
     server_group = models.ForeignKey("ServerToGroup", on_delete=models.CASCADE, null=True, blank=True)
     server_member = models.ForeignKey("ServerToMember", on_delete=models.CASCADE, null=True, blank=True)
 
+    def __resolve_str(self, data: str, server: Server) -> str:
+        return data.strip().replace("$self", server.subnet.cidr)
+
+    def parse_custom(self, server: Server):
+        custom = self.__resolve_str(self.custom, server)
+        try:
+            return ipaddress.ip_network(custom, strict=True)
+        except ValueError:
+            raise ValueError(f"Network filter {custom} is invalid")
+
+    def to_networks(self, server: Server) -> List[IpNetwork]:
+        if self.server_group:
+            return self.server_group.subnet.cidr
+        if self.server_member:
+            devices = self.server_member.device_set.all()
+            return [ipaddress.ip_network(str(x.ip_address) + "/32") for x in devices]
+        if self.subnet:
+            return self.subnet.cidr
+        if self.custom:
+            return self.parse_custom(server)
+        return []
+
     def _get_repr(self):
         if self.server_group:
             return "Group({})".format(self.server_group)
@@ -381,17 +404,15 @@ class FirewallRule(Sortable, WithComment, WithReprCache):
     def __resolve_str(self, data: str, server: Server) -> str:
         return data.strip().replace("$self", server.interface_name)
 
-    def resolved_network_to(self, server: Server) -> str:
-        return ""
-        # if self.network_to_override and len(self.network_to_override.strip()) > 0:
-        #     return self.__resolve_str(self.network_to_override, server)
-        # return self.network_to.cidr
+    def resolved_network_to(self, server: Server) -> Optional[List[IpNetwork]]:
+        if self.network_to:
+            return self.network_to.network_to(server)
+        return None
 
-    def resolved_network_from(self, server: Server) -> str:
-        return ""
-        # if self.network_from_override and len(self.network_from_override.strip()) > 0:
-        #     return self.__resolve_str(self.network_from_override, server)
-        # return self.network_from.cidr
+    def resolved_network_from(self, server: Server) -> Optional[List[IpNetwork]]:
+        if self.network_from:
+            return self.network_from.network_to(server)
+        return None
 
 
 class ServerRoutingRule(ServerRule):

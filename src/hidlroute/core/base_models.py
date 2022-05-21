@@ -60,6 +60,13 @@ class WithReprCache(models.Model):
 
     repr_cache = models.CharField(max_length=200, null=True, blank=True)
 
+    @property
+    def repr(self):
+        if self.repr_cache:
+            return self.repr_cache
+        else:
+            return self._get_repr()
+
     def _get_repr(self):
         raise NotImplementedError
 

@@ -22,32 +22,60 @@ from hidlroute.core.types import IpAddressOrNetwork
 
 
 class IpTablesFirewallAction(FirewallAction):
-    JUMP = "JUMP"
+    RETURN = "RETURN"
 
-    supported_actions = FirewallAction.supported_actions + [JUMP]
+    supported_actions = FirewallAction.supported_actions + [RETURN]
 
 
 class IpTablesRule(NativeFirewallRule):
     def __init__(self, original_rule: Optional["models.FirewallRule"] = None) -> None:
         super().__init__(original_rule)
         self.source_port: Optional[int] = None
-        self.source_protocol: Optional[str] = None
+        self.protocol: Optional[str] = None
         self.dest_port: Optional[int] = None
-        self.dest_protocol: Optional[str] = None
+        self.tcp_flags: Optional[List[str]] = None
+        self.syn: Optional[bool] = None
+        self.icmp_type: Optional[str] = None
+        self.state: Optional[str] = None
+        self.mac_src: Optional[str] = None
+        self.log_prefix: Optional[str] = None
         self.scr_net: Optional[IpAddressOrNetwork] = None
         self.dst_net: Optional[IpAddressOrNetwork] = None
         self.action: Optional[str] = None
 
+    @classmethod
+    def to_port_str(cls, port_range: models.FirewallPortRange) -> str:
+        s = str(port_range.start)
+        if port_range.end:
+            s += ":" + str(port_range.end)
+        return s
+
+    def set_protocol(self, port_range: models.FirewallPortRange):
+        if port_range.protocol:
+            # TODO: handle non standard e.g. PING
+            self.protocol = port_range.protocol.lower()
+
 
 class IpTablesFirewallService(FirewallService):
     def build_native_firewall_rule(self, rule: "models.FirewallRule", server: "models.Server") -> List[IpTablesRule]:
-        native_rule = IpTablesRule(rule)
-        if IpTablesFirewallAction.if_action_supported(rule.action):
-            native_rule.action = rule.action.upper().strip()
-        else:
-            raise ValueError(f"Invalid firewall rule {rule}: Action {rule.action} is not supported by iptables")
-
-        return [native_rule]
+        native_rules: List[IpTablesRule] = []
+        self.ensure_rule_supported(rule)
+        port_definitions: List[models.FirewallPortRange] = (
+            rule.service.firewallportrange_set.all() if rule.service else [None]
+        )
+        for port_def in port_definitions:
+            for from_net in rule.network_from.network_from or [None]:
+                for to_net in rule.network_from.network_to or [None]:
+                    native_rule = IpTablesRule(rule)
+                    native_rule.action = rule.action.upper().strip()
+                    native_rule.dest_port = native_rule.to_port_str(port_def)
+                    native_rule.set_protocol(port_def)
+                    if from_net is not None:
+                        native_rule.scr_net = from_net
+                    if to_net is not None:
+                        native_rule.dst_net = to_net
+                    native_rules.append(native_rule)
+        return native_rules
 
     def setup_firewall_for_server(self, server: "models.Server"):
         pass

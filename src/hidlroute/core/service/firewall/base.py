@@ -29,12 +29,6 @@ class FirewallAction(object):
 
     supported_actions = [ACCEPT, DENY, REJECT, LOG]
 
-    @classmethod
-    def if_action_supported(cls, action: str) -> bool:
-        if action is None:
-            return False
-        return action.strip().upper() in cls.supported_actions
-
 
 class FirewallProtocol(object):
     TCP = "TCP"
@@ -43,12 +37,6 @@ class FirewallProtocol(object):
     GRE = "GRE"
 
     supported_protocols = [TCP, UDP, ICMP, GRE]
-
-    @classmethod
-    def if_protocol_supported(cls, protocol: str) -> bool:
-        if protocol is None:
-            return False
-        return protocol.strip().upper() in cls.supported_protocols
 
 
 class NativeFirewallRule(abc.ABC):
@@ -62,8 +50,28 @@ class FirewallService(abc.ABC):
     def get_supported_actions(self) -> List[str]:
         return FirewallAction.supported_actions
 
+    def if_action_supported(self, action: str) -> bool:
+        if action is None:
+            return False
+        return action.strip().upper() in self.get_supported_actions()
+
     def get_supported_protocols(self) -> List[str]:
         return FirewallProtocol.supported_protocols
+
+    def is_supported_protocol(self, protocol: str) -> bool:
+        if protocol is None:
+            return False
+        return protocol.strip().upper() in self.get_supported_protocols()
+
+    def ensure_rule_supported(self, rule: "models.FirewallRule"):
+        if not self.if_action_supported(rule.action):
+            raise ValueError(f"Invalid firewall rule {rule}: Action {rule.action} is not supported by iptables")
+        if rule.service:
+            for port_def in rule.service.firewallportrange_set.all():
+                if not self.is_supported_protocol(port_def.protocol):
+                    raise ValueError(
+                        f"Invalid firewall rule {rule}: " f"Protocol {rule.action} is not supported by iptables"
+                    )
 
     def build_native_firewall_rule(
         self, rule: "models.FirewallRule", server: "models.Server"
