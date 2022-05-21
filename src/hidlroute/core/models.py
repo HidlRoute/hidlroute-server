@@ -361,11 +361,15 @@ class FirewallRule(Sortable, WithComment, WithReprCache):
         NetworkFilter, null=True, blank=True, on_delete=models.RESTRICT, related_name="network_to", verbose_name=_("To")
     )
 
-    def __str__(self):
+    @property
+    def description(self) -> str:
         if self.comment:
             return self.comment
         if self.repr_cache:
             return self.repr_cache
+        return f"Rule {self.pk}"
+
+    def __str__(self):
         return f"Rule {self.pk}"
 
     def _get_repr(self):

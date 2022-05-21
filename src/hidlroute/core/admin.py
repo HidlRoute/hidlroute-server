@@ -16,7 +16,7 @@
 
 from typing import Any, Optional, Type, List, Union, Sequence, Callable
 
-from adminsortable2.admin import SortableAdminMixin
+from adminsortable2.admin import SortableAdminMixin, SortableInlineAdminMixin
 from django import forms
 from django.contrib import admin
 from django.contrib.admin.options import InlineModelAdmin
@@ -153,10 +153,16 @@ class ClientRoutingRuleAdmin(GroupSelectAdminMixin, admin.TabularInline):
         return qs
 
 
-class RelateFirewallRulesReadonlyInline(admin.TabularInline):
+class RelateFirewallRulesReadonlyInline(SortableInlineAdminMixin, admin.TabularInline):
+    ordering = ["order"]
     model = models.FirewallRule
-    fields = ("__str__",)
-    readonly_fields = fields
+    fields = [
+        "order",
+        "description",
+    ]
+    readonly_fields = [
+        "description",
+    ]
     extra = 0
     template = "admin/hidl_core/server/firewall_inline.html"
 
@@ -164,9 +170,10 @@ class RelateFirewallRulesReadonlyInline(admin.TabularInline):
         return False
 
 
-class BaseServerAdminImpl(ManagedRelActionsMixin, PolymorphicChildModelAdmin):
+class BaseServerAdminImpl(ManagedRelActionsMixin, SortableAdminMixin, PolymorphicChildModelAdmin):
     ICON = "images/server/no-icon.png"
     base_model = models.Server
+    ordering = ["id"]
     fieldsets = [
         (
             None,
@@ -272,6 +279,14 @@ class BaseServerAdminImpl(ManagedRelActionsMixin, PolymorphicChildModelAdmin):
 
         return HttpResponseRedirect(request.path)
 
+    def get_changelist_instance(self, request):
+        instance = super().get_changelist_instance(request)
+        self.enable_sorting = False
+        return instance
+
+    def get_list_display(self, request):
+        return super(PolymorphicChildModelAdmin, self).get_list_display(request)
+
 
 @admin.register(models.Server)
 class ServerAdmin(HidlBaseModelAdmin, HidlePolymorphicParentAdmin):
@@ -279,6 +294,7 @@ class ServerAdmin(HidlBaseModelAdmin, HidlePolymorphicParentAdmin):
     base_model = models.Server
     child_models = []
     add_type_form = ServerTypeSelectForm
+    ordering = ["id"]
     list_display = ["__str__", "subnet", "ip_address", "vpn_status", "control_button"]
     readonly_fields = ["vpn_status"]
     polymorphic_list = True
