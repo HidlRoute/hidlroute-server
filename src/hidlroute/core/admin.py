@@ -95,19 +95,7 @@ class ServerToGroupAdmin(GroupSelectAdminMixin, ManagedRelActionsMixin, admin.Ta
     extra = 0
 
 
-class ClientRoutingRuleAdmin(GroupSelectAdminMixin, admin.TabularInline):
-    model = models.ClientRoutingRule
-    extra = 0
-    fields = (
-        "network",
-        "server_group",
-        "server_member",
-        "comment",
-    )
-    formfield_overrides = {
-        TextField: {"widget": widgets.TextInput},
-    }
-
+class ServerRelatedAdminMixin:
     def __init__(self, parent_model, admin_site) -> None:
         super().__init__(parent_model, admin_site)
         self.parent_obj: Optional[models.Server] = None
@@ -149,11 +137,31 @@ class ClientRoutingRuleAdmin(GroupSelectAdminMixin, admin.TabularInline):
         return original_formset
 
     def get_queryset(self, request: HttpRequest) -> QuerySet:
-        qs = models.ClientRoutingRule.load_related_to_server(self.parent_obj)
+        qs = self.model.load_related_to_server(self.parent_obj)
         return qs
 
 
-class RelateFirewallRulesReadonlyInline(SortableInlineAdminMixin, admin.TabularInline):
+class ClientRoutingRuleAdmin(GroupSelectAdminMixin, ServerRelatedAdminMixin, admin.TabularInline):
+    model = models.ClientRoutingRule
+    extra = 0
+    fields = (
+        "network",
+        "server_group",
+        "server_member",
+        "comment",
+    )
+    formfield_overrides = {
+        TextField: {"widget": widgets.TextInput},
+    }
+
+
+class ServerRoutingRulesInlineAdmin(GroupSelectAdminMixin, ServerRelatedAdminMixin, admin.StackedInline):
+    model = models.ServerRoutingRule
+    fields = ("network", "gateway", "interface", ("server_group", "server_member"), "comment")
+    extra = 0
+
+
+class RelatedFirewallRulesReadonlyInline(SortableInlineAdminMixin, admin.TabularInline):
     ordering = ["order"]
     model = models.FirewallRule
     fields = [
@@ -187,7 +195,13 @@ class BaseServerAdminImpl(ManagedRelActionsMixin, SortableAdminMixin, Polymorphi
             },
         ),
     ]
-    inlines = [ServerToGroupAdmin, ServerToMemberAdmin, ClientRoutingRuleAdmin, RelateFirewallRulesReadonlyInline]
+    inlines = [
+        ServerToGroupAdmin,
+        ServerToMemberAdmin,
+        RelatedFirewallRulesReadonlyInline,
+        ServerRoutingRulesInlineAdmin,
+        ClientRoutingRuleAdmin,
+    ]
     create_inlines = [ServerToGroupAdmin]
 
     def get_inlines(self, request: HttpRequest, obj: Optional[models.Server] = None) -> List[Type[InlineModelAdmin]]:
