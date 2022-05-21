@@ -16,7 +16,9 @@
 
 from typing import Optional, Any
 
+from django import forms
 from django.contrib.admin.options import BaseModelAdmin
+from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.db.models import ForeignKey
 from django.forms import ModelChoiceField
@@ -50,6 +52,15 @@ class HidlBaseModelAdmin(GroupSelectAdminMixin, admin.ModelAdmin):
             "description": _("Pick one of the entities to attach the rules."),
         },
     )
+
+    def formfield_for_dbfield(
+        self, db_field: models.Field, request: Optional[HttpRequest], **kwargs: Any
+    ) -> Optional[forms.Field]:
+        form_field = super().formfield_for_dbfield(db_field, request, **kwargs)
+        if form_field.__class__ == forms.ModelChoiceField:
+            form_field.widget.can_delete_related = False
+            # form_field.widget.can_change_related = False
+        return form_field
 
 
 class HidlePolymorphicParentAdmin(PolymorphicParentModelAdmin):

@@ -30,10 +30,25 @@ class FirewallAction(object):
     supported_actions = [ACCEPT, DENY, REJECT, LOG]
 
     @classmethod
-    def if_action_supported(cls, action: str):
+    def if_action_supported(cls, action: str) -> bool:
         if action is None:
             return False
         return action.strip().upper() in cls.supported_actions
+
+
+class FirewallProtocol(object):
+    TCP = "TCP"
+    UDP = "UDP"
+    ICMP = "ICMP"
+    GRE = "GRE"
+
+    supported_protocols = [TCP, UDP, ICMP, GRE]
+
+    @classmethod
+    def if_protocol_supported(cls, protocol: str) -> bool:
+        if protocol is None:
+            return False
+        return protocol.strip().upper() in cls.supported_protocols
 
 
 class NativeFirewallRule(abc.ABC):
@@ -46,6 +61,9 @@ class NativeFirewallRule(abc.ABC):
 class FirewallService(abc.ABC):
     def get_supported_actions(self) -> List[str]:
         return FirewallAction.supported_actions
+
+    def get_supported_protocols(self) -> List[str]:
+        return FirewallProtocol.supported_protocols
 
     def build_native_firewall_rule(
         self, rule: "models.ServerFirewallRule", server: "models.Server"

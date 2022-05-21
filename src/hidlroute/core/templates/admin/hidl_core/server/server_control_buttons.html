@@ -1,6 +1,18 @@
-{% if status == VPNServerStatus.STOPPED %}
-    <a href="{% url "admin:startserver_url" server_id=server.pk %}">START</a>
-{% elif server.status == VPNServerStatus.RUNNING %}
-    <a href="{% url "admin:stopserver_url" server_id=server.pk %}">STOP</a>
-{% endif %}
+{% load i18n jazzmin %}
+{% get_jazzmin_ui_tweaks as jazzmin_ui %}
+<div class="btn-group-sm">
+    {% if server.status == VPNServerStatus.STOPPED %}
+        <a class="btn {{ jazzmin_ui.button_classes.success }}"
+           href="{% url "admin:startserver_url" server_id=server.pk %}">
+            <i class="fa fa-play-circle"></i>
+            {% trans "Start" %}
+        </a>
+    {% elif server.status == VPNServerStatus.RUNNING %}
+        <a class="btn {{ jazzmin_ui.button_classes.danger }}"
+           href="{% url "admin:stopserver_url" server_id=server.pk %}">
+            <i class="fa fa-stop-circle"></i>
+            {% trans "Stop" %}
+        </a>
+    {% endif %}
+</div>
 

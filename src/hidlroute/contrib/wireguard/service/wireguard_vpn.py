@@ -35,7 +35,7 @@ class WireguardVPNService(VPNService):
         with IPRoute() as ipr:
             link_index = ipr.link_lookup(ifname=server.interface_name)
             if not len(link_index):
-                return False
+                return VPNServerStatus.STOPPED
 
             link_detail = ipr.get_links(link_index)[0]
-            return link_detail.get("state", "down") == "up"
+            return VPNServerStatus.RUNNING if link_detail.get("state", "down") == "up" else VPNServerStatus.STOPPED

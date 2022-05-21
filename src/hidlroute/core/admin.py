@@ -14,7 +14,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Any, Optional, Type, List
+from typing import Any, Optional, Type, List, Union, Sequence, Callable
 
 from adminsortable2.admin import SortableAdminMixin
 from django import forms
@@ -40,6 +40,7 @@ from hidlroute.core.admin_commons import (
 )
 from hidlroute.core.factory import default_service_factory
 from hidlroute.core.forms import ServerTypeSelectForm
+
 # @admin.register(models.Member)
 # class MemberAdmin(GroupSelectAdminMixin, PolymorphicParentModelAdmin):
 #     base_model = models.Member
@@ -115,14 +116,14 @@ class ClientRoutingRuleAdmin(admin.TabularInline):
         original_formset = super().get_formset(request, obj, **kwargs)
 
         def modified_constructor(
-                _self,
-                data=None,
-                files=None,
-                instance=None,
-                save_as_new=False,
-                prefix=None,
-                queryset=None,
-                **kwargs,
+            _self,
+            data=None,
+            files=None,
+            instance=None,
+            save_as_new=False,
+            prefix=None,
+            queryset=None,
+            **kwargs,
         ):
             if instance is None:
                 _self.instance = _self.fk.remote_field.model()
@@ -157,11 +158,11 @@ class BaseServerAdminImpl(PolymorphicChildModelAdmin):
             None,
             {
                 "fields": HidlBaseModelAdmin.nameable_fields
-                          + [
-                              "interface_name",
-                              ("subnet", "ip_address"),
-                              "comment",
-                          ]
+                + [
+                    "interface_name",
+                    ("subnet", "ip_address"),
+                    "comment",
+                ]
             },
         ),
     ]
@@ -177,10 +178,14 @@ class BaseServerAdminImpl(PolymorphicChildModelAdmin):
 
     def get_urls(self):
         custom_urls = [
-            path('startserver/<int:server_id>', self.admin_site.admin_view(self.action_start_server),
-                 name='startserver_url'),
-            path('stopserver/<int:server_id>', self.admin_site.admin_view(self.action_stop_server),
-                 name='stopserver_url'),
+            path(
+                "startserver/<int:server_id>",
+                self.admin_site.admin_view(self.action_start_server),
+                name="startserver_url",
+            ),
+            path(
+                "stopserver/<int:server_id>", self.admin_site.admin_view(self.action_stop_server), name="stopserver_url"
+            ),
         ]
         return custom_urls + super().get_urls()
 
@@ -263,13 +268,17 @@ class ServerAdmin(HidlBaseModelAdmin, HidlePolymorphicParentAdmin):
     list_display = ["__str__", "subnet", "ip_address", "vpn_status", "control_button"]
     readonly_fields = ["vpn_status"]
     polymorphic_list = True
+    control_buttons_template = loader.get_template("admin/hidl_core/server/server_control_buttons.html")
 
     def vpn_status(self, obj: models.Server):
         return obj.get_real_instance().status
 
     def control_button(self, obj: models.Server):
-        template = loader.get_template("admin/hidl_core/server/server_control_buttons.html")
-        return template.render(context={"server": obj, "status": obj.status, "VPNServerStatus": VPNServerStatus})
+        return self.control_buttons_template.render(
+            context={"server": obj, "status": obj.status, "VPNServerStatus": VPNServerStatus}
+        )
+
+    control_button.short_description = _("Actions")
 
     def get_child_type_choices(self, request, action):
         """
@@ -303,6 +312,18 @@ class PortRangeAdmin(admin.TabularInline):
     model = models.FirewallPortRange
     form = PortRanceForm
     extra = 0
+
+    def get_fields(self, request: HttpRequest, obj: Optional[Any] = None) -> Sequence[Union[Callable, str]]:
+        fields = super().get_fields(request, obj)
+
+        return fields
+
+    def formfield_for_dbfield(self, db_field, request: Optional[HttpRequest], **kwargs: Any) -> Optional[forms.Field]:
+        field = super().formfield_for_dbfield(db_field, request, **kwargs)
+        if db_field.name == "protocol":
+            supported_protocols = [(x, x) for x in default_service_factory.firewall_service.get_supported_protocols()]
+            field.widget = forms.widgets.Select(choices=supported_protocols)
+        return field
 
 
 @admin.register(models.FirewallService)
