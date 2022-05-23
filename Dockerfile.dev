@@ -1,0 +1,13 @@
+FROM python:3.8-alpine
+WORKDIR /app
+RUN apk add alpine-sdk linux-headers iptables libffi-dev
+RUN ln -s /usr/lib/libip6tc.so.2 /usr/lib/libip6tc.so && ln -s /usr/lib/libip4tc.so.2 /usr/lib/libip4tc.so
+ENV XTABLES_LIBDIR "/usr/lib/xtables"
+ENV PYTHON_IPTABLES_XTABLES_VERSION 12
+ENV IPTABLES_LIBDIR "/usr/lib"
+
+COPY ./requirements.txt /requirements.txt
+COPY ./requirements-dev.txt /requirements-dev.txt
+RUN pip3 install -r /requirements-dev.txt
+
+CMD ["python3", "src/manage.py", "runserver"]

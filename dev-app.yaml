@@ -1,0 +1,12 @@
+version: '3'
+services:
+  web:
+    build:
+      dockerfile: Dockerfile.dev
+      context: .
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+    volumes:
+      - "./requirements.txt:/requirements.txt:ro"
+      - "./src:/app:ro"

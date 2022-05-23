@@ -20,6 +20,15 @@
 import os
 import sys
 
+try:
+    if os.environ.get("REMOTE_DEBUG", "0").lower() in ["yes", "true", "1"]:
+        import pydevd_pycharm
+
+        pydevd_pycharm.settrace('localhost', port=int(os.environ.get("REMOTE_DEBUG_PORT", "9543")),
+                                stdoutToServer=True, stderrToServer=True)
+except ImportError:
+    pass
+
 
 def main():
     """Run administrative tasks."""

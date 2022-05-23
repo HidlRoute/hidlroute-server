@@ -1,0 +1,3 @@
+dev-data/
+.mypy_cache
+venv/

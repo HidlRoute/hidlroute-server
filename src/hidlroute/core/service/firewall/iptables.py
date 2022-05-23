@@ -14,6 +14,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from enum import Enum
 from typing import Optional, List
 
 from hidlroute.core import models
@@ -57,6 +58,12 @@ class IpTablesRule(NativeFirewallRule):
             self.protocol = port_range.protocol.lower()
 
 
+class ChainType(Enum):
+    INPUT = "in"
+    OUTPUT = "out"
+    FORWARD = "fw"
+
+
 class IpTablesFirewallService(FirewallService):
     def build_native_firewall_rule(self, rule: "models.FirewallRule", server: "models.Server") -> List[IpTablesRule]:
         native_rules: List[IpTablesRule] = []
@@ -89,8 +96,34 @@ class IpTablesFirewallService(FirewallService):
         # from_net = rule.resolved_network_to(rule.server)
         # to_net = rule.resolved_network_to(rule.server)
 
+    def _get_chain_name(self, chain_type: ChainType, server: "models.Server") -> str:
+        return f"HIDL-{chain_type.value}-{server.slug}"
+
+    def is_firewall_configured_for_server(self, server: "models.Server"):
+        server_chains = [self._get_chain_name(x, server) for x in ChainType]
+        for x in server_chains:
+            if not iptc.easy.has_chain(iptc.Table.FILTER, x):
+                return False
+        # TODO: Check jump rules
+        return True
+
+    def install_chains(self, server: "models.Server"):
+        # Input chain
+        input_hidl_chain = self._get_chain_name(ChainType.INPUT, server)
+        if not iptc.easy.has_chain(iptc.Table.FILTER, input_hidl_chain):
+            iptc.easy.add_chain(iptc.Table.FILTER, input_hidl_chain)
+        # Output chain
+        output_hidl_chain = self._get_chain_name(ChainType.OUTPUT, server)
+        if not iptc.easy.has_chain(iptc.Table.FILTER, output_hidl_chain):
+            iptc.easy.add_chain(iptc.Table.FILTER, output_hidl_chain)
+        # Input chain
+        fwd_hidl_chain = self._get_chain_name(ChainType.FORWARD, server)
+        if not iptc.easy.has_chain(iptc.Table.FILTER, fwd_hidl_chain):
+            iptc.easy.add_chain(iptc.Table.FILTER, fwd_hidl_chain)
+
     def setup_firewall_for_server(self, server: "models.Server"):
-        pass
+        if not self.is_firewall_configured_for_server(server):
+            self.install_chains(server)
         # default_routes = server.service_factory.networking_service.get_default_routes()
         # upstream_interfaces: List[NetInterface] = [x.interface for x in default_routes]
         # a = 1

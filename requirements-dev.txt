@@ -13,3 +13,4 @@ black==22.3.0
 #mypy>=0.910
 mistune<2.0.0
 wheel
+pydevd-pycharm~=212.5712.39
