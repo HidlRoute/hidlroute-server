@@ -14,6 +14,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
 from enum import Enum
 from typing import Optional, List
 
@@ -21,6 +22,8 @@ from hidlroute.core import models
 from hidlroute.core.service.firewall.base import FirewallService, NativeFirewallRule, FirewallAction
 from hidlroute.core.types import IpAddressOrNetwork
 import iptc
+
+LOGGER = logging.getLogger("hidl_core.service.firewall.iptables")
 
 
 class IpTablesFirewallAction(FirewallAction):
@@ -107,23 +110,101 @@ class IpTablesFirewallService(FirewallService):
         # TODO: Check jump rules
         return True
 
-    def install_chains(self, server: "models.Server"):
+    def _get_rule_prefix(self, server: "models.Server") -> str:
+        return f"HIDL({server.slug}):"
+
+    def _create_hidl_comment_matcher(self, comment: str, rule: iptc.Rule, server: "models.Server") -> iptc.Rule:
+        m = rule.create_match("comment")
+        m.comment = self._get_rule_prefix(server) + " " + comment
+        rule.matches.append(m)
+        return rule
+
+    def __find_hidl_rules_in_chain(self, chain: iptc.Chain, server: "models.Server"):
+        prefix = self._get_rule_prefix(server)
+        result: List[iptc.Rule] = []
+        for r in chain.rules:  # type: iptc.Rule
+            for m in r.matches:
+                if m.name == "comment" and m.parameters.get("comment", "").startswith(prefix):
+                    result.append(r)
+        return result
+
+    def __uninstall_jump_rules_for_chain(
+        self, chain_name: str, server: "models.Server", table: Optional[iptc.Table] = None
+    ):
+        if table is None:
+            table = iptc.Table(iptc.Table.FILTER)
+        chain = iptc.Chain(table, chain_name)
+        rules = self.__find_hidl_rules_in_chain(chain, server)
+        for r in rules:
+            chain.delete_rule(r)
+
+    def _uninstall_jump_rules(self, server: "models.Server"):
+        table = iptc.Table(iptc.Table.FILTER)
+        try:
+            table.autocommit = False
+            # Input chain
+            self.__uninstall_jump_rules_for_chain("INPUT", server, table)
+            # Output
+            self.__uninstall_jump_rules_for_chain("OUTPUT", server, table)
+            # Forward chain
+            self.__uninstall_jump_rules_for_chain("FORWARD", server, table)
+            table.commit()
+        finally:
+            table.autocommit = True
+
+    def _install_jump_rules(self, server: "models.Server"):
+        table = iptc.Table(iptc.Table.FILTER)
+        chain = iptc.Chain(table, "INPUT")
+        # Input chain
+        rule = iptc.Rule()
+        rule.in_interface = server.interface_name
+        rule.target = rule.create_target(self._get_chain_name(ChainType.INPUT, server))
+        self._create_hidl_comment_matcher("Jump rule for INPUT chain", rule, server)
+        chain.append_rule(rule)
+        # Output chain
+        chain = iptc.Chain(table, "OUTPUT")
+        rule = iptc.Rule()
+        rule.out_interface = server.interface_name
+        rule.target = rule.create_target(self._get_chain_name(ChainType.OUTPUT, server))
+        self._create_hidl_comment_matcher("Jump rule for OUTPUT chain", rule, server)
+        chain.append_rule(rule)
+        # Forward chain
+        chain = iptc.Chain(table, "FORWARD")
+        rule = iptc.Rule()
+        rule.out_interface = server.interface_name
+        rule.in_interface = server.interface_name
+        rule.target = rule.create_target(self._get_chain_name(ChainType.FORWARD, server))
+        self._create_hidl_comment_matcher("Jump rule for FORWARD chain", rule, server)
+        chain.append_rule(rule)
+
+    def _install_chains(self, server: "models.Server"):
         # Input chain
         input_hidl_chain = self._get_chain_name(ChainType.INPUT, server)
         if not iptc.easy.has_chain(iptc.Table.FILTER, input_hidl_chain):
             iptc.easy.add_chain(iptc.Table.FILTER, input_hidl_chain)
+            iptc.easy.set_policy(iptc.Table.FILTER, input_hidl_chain, policy="DROP")
         # Output chain
         output_hidl_chain = self._get_chain_name(ChainType.OUTPUT, server)
         if not iptc.easy.has_chain(iptc.Table.FILTER, output_hidl_chain):
             iptc.easy.add_chain(iptc.Table.FILTER, output_hidl_chain)
+            iptc.easy.set_policy(iptc.Table.FILTER, output_hidl_chain, policy="DROP")
         # Input chain
         fwd_hidl_chain = self._get_chain_name(ChainType.FORWARD, server)
         if not iptc.easy.has_chain(iptc.Table.FILTER, fwd_hidl_chain):
             iptc.easy.add_chain(iptc.Table.FILTER, fwd_hidl_chain)
+            iptc.easy.set_policy(iptc.Table.FILTER, fwd_hidl_chain, policy="DROP")
+
+    def _uninstall_chains(self, server: "models.Server"):
+        self._uninstall_jump_rules(server)
+        server_chains = [self._get_chain_name(x, server) for x in ChainType]
+        iptc.easy.batch_delete_chains(iptc.Table.FILTER, server_chains)
+        self._uninstall_jump_rules(server)
 
     def setup_firewall_for_server(self, server: "models.Server"):
         if not self.is_firewall_configured_for_server(server):
-            self.install_chains(server)
+            self._install_chains(server)
+        self._uninstall_jump_rules(server)
+        self._install_jump_rules(server)
         # default_routes = server.service_factory.networking_service.get_default_routes()
         # upstream_interfaces: List[NetInterface] = [x.interface for x in default_routes]
         # a = 1
