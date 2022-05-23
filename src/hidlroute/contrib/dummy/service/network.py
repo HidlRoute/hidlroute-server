@@ -18,7 +18,7 @@ import logging
 
 from hidlroute.core import models as core_models
 from hidlroute.core.service.firewall.base import FirewallService
-from hidlroute.core.service.routing.base import RoutingService
+from hidlroute.core.service.networking.base import NetworkingService
 
 LOGGER = logging.getLogger("hidl.contrib.dummy.net")
 
@@ -47,7 +47,7 @@ class DummyFirewallService(FirewallService):
         self.__logger.info("Finished firewall tear down for {}".format(server))
 
 
-class DummyRoutingService(RoutingService):
+class DummyNetworkingService(NetworkingService):
     def __init__(self) -> None:
         super().__init__()
         self.__logger = LOGGER.getChild(".firewall")

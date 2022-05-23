@@ -19,7 +19,7 @@ import logging
 from django.apps import AppConfig
 from django.utils.translation import gettext_lazy as _
 
-from hidlroute.contrib.dummy.dummy_factory import dummy_service_factory
+from hidlroute.contrib.dummy.factory import dummy_service_factory
 
 LOGGER = logging.Logger("hidle.contrib.dummy")
 

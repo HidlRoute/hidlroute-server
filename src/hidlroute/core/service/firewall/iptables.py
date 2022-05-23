@@ -19,6 +19,7 @@ from typing import Optional, List
 from hidlroute.core import models
 from hidlroute.core.service.firewall.base import FirewallService, NativeFirewallRule, FirewallAction
 from hidlroute.core.types import IpAddressOrNetwork
+import iptc
 
 
 class IpTablesFirewallAction(FirewallAction):
@@ -77,8 +78,18 @@ class IpTablesFirewallService(FirewallService):
                     native_rules.append(native_rule)
         return native_rules
 
+    def _get_table_for_rule(self, rule: "models.FirewallRule") -> iptc.Table:
+        # TODO: check action and return corresponding table for NAT and MANGLE
+        return iptc.Table.FILTER
+
+    def _get_chain_for_rule(self, rule: "models.FirewallRule", table: Optional[iptc.Table] = None) -> iptc.Chain:
+        pass
+
     def setup_firewall_for_server(self, server: "models.Server"):
         pass
+        # default_routes = server.service_factory.networking_service.get_default_routes()
+        # upstream_interfaces: List[NetInterface] = [x.interface for x in default_routes]
+        # a = 1
 
     def destroy_firewall_for_server(self, server: "models.Server"):
         pass

@@ -21,7 +21,7 @@ from django.utils.module_loading import import_string
 
 from hidlroute.core.service.base import WorkerService
 from hidlroute.core.service.firewall.base import FirewallService
-from hidlroute.core.service.routing.base import RoutingService
+from hidlroute.core.service.networking.base import NetworkingService
 
 if TYPE_CHECKING:
     from hidlroute.core.service.ip_allocation import IPAllocationService
@@ -98,8 +98,8 @@ class ServiceFactory(object):
         return self._instance_from_str("hidlroute.core.service.ip_allocation.IPAllocationService")
 
     @_cached_service
-    def routing_service(self) -> RoutingService:
-        return self._instance_from_str("hidlroute.core.service.routing.pyroute2.PyRoute2RoutingService")
+    def networking_service(self) -> NetworkingService:
+        return self._instance_from_str("hidlroute.core.service.networking.pyroute2.PyRoute2NetworkingService")
 
     @_cached_service
     def firewall_service(self) -> FirewallService:

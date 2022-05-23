@@ -14,18 +14,21 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import abc
-from typing import TYPE_CHECKING
+from hidlroute.core.factory import ServiceFactory, default_service_factory
 
-if TYPE_CHECKING:
-    from hidlroute.core import models
+# from hidlroute.core.service.firewall.base import FirewallService
+# from hidlroute.core.service.networking.base import NetworkingService
 
 
-class RoutingService(abc.ABC):
-    @abc.abstractmethod
-    def setup_routes_for_server(self, server: "models.Server"):
-        pass
+class DummyServiceFactory(ServiceFactory):
+    pass
+    # @ServiceFactory._cached_service
+    # def routing_service(self) -> RoutingService:
+    #     return self._instance_from_str("hidlroute.contrib.dummy.service.network.DummyRoutingService")
+    #
+    # @ServiceFactory._cached_service
+    # def firewall_service(self) -> FirewallService:
+    #     return self._instance_from_str("hidlroute.contrib.dummy.service.network.DummyFirewallService")
 
-    @abc.abstractmethod
-    def destroy_routes_for_server(self, server: "models.Server"):
-        pass
+
+dummy_service_factory = DummyServiceFactory(default_service_factory)

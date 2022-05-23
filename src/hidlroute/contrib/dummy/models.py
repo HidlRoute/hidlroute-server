@@ -18,7 +18,7 @@ from typing import Type
 
 from django.utils.translation import gettext_lazy as _
 
-from hidlroute.contrib.dummy.dummy_factory import dummy_service_factory
+from hidlroute.contrib.dummy.factory import dummy_service_factory
 from hidlroute.contrib.dummy.service.vpn import DummyLoggingVPNService
 from hidlroute.core import models as models_core
 from hidlroute.core.factory import ServiceFactory
