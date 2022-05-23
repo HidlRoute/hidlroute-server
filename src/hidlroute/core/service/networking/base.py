@@ -26,6 +26,26 @@ if TYPE_CHECKING:
     from hidlroute.core import models
 
 
+class NetworkVar(Enum):
+    Self = "self"
+    Any = "any"
+    Host = "host"
+
+    def __str__(self):
+        return "Net({})".format(self.name)
+
+    @classmethod
+    def parse_str(cls, in_str: str) -> "NetworkVar":
+        PREFIX = "$"
+        in_str = in_str.lower().strip()
+        if in_str.startswith(PREFIX):
+            try:
+                return NetworkVar[in_str[len(PREFIX) :]]
+            except KeyError:
+                raise ValueError("Unknown special var " + in_str)
+        raise ValueError("Invalid special var " + in_str)
+
+
 @dataclass
 class Route:
     network: Optional[IpNetwork] = None

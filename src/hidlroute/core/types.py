@@ -15,8 +15,12 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import ipaddress
-from typing import Union
+from typing import Union, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from hidlroute.core.service.networking.base import NetworkVar
 
 IpAddress = Union[ipaddress.IPv4Address, ipaddress.IPv6Address]
 IpNetwork = Union[ipaddress.IPv4Network, ipaddress.IPv6Network]
 IpAddressOrNetwork = Union[IpAddress, IpNetwork]
+ResolvedNetwork = Union[IpNetwork, "NetworkVar"]

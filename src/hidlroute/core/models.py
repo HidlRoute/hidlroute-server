@@ -36,7 +36,8 @@ from typing import TYPE_CHECKING
 
 from hidlroute.core.base_models import NameableIdentifiable, WithComment, Sortable, ServerRelated, WithReprCache
 from hidlroute.core.factory import ServiceFactory, default_service_factory as default_service_factory
-from hidlroute.core.types import IpAddress, IpNetwork
+from hidlroute.core.service.networking.base import NetworkVar
+from hidlroute.core.types import IpAddress, ResolvedNetwork
 
 if TYPE_CHECKING:
     from hidlroute.core.service.base import VPNService
@@ -319,17 +320,16 @@ class NetworkFilter(WithReprCache, models.Model):
     server_group = models.ForeignKey("ServerToGroup", on_delete=models.CASCADE, null=True, blank=True)
     server_member = models.ForeignKey("ServerToMember", on_delete=models.CASCADE, null=True, blank=True)
 
-    def __resolve_str(self, data: str, server: Server) -> str:
-        return data.strip().replace("$self", server.subnet.cidr)
-
-    def parse_custom(self, server: Server):
-        custom = self.__resolve_str(self.custom, server)
+    def parse_custom(self, server: Server) -> ResolvedNetwork:
         try:
-            return ipaddress.ip_network(custom, strict=True)
+            return NetworkVar.parse_str(self.custom)
         except ValueError:
-            raise ValueError(f"Network filter {custom} is invalid")
+            try:
+                return ipaddress.ip_network(self.custom, strict=True)
+            except ValueError:
+                raise ValueError(f"Network filter {self.custom} is invalid")
 
-    def to_networks(self, server: Server) -> List[IpNetwork]:
+    def to_networks(self, server: Server) -> List[ResolvedNetwork]:
         if self.server_group:
             return self.server_group.subnet.cidr
         if self.server_member:
@@ -338,8 +338,8 @@ class NetworkFilter(WithReprCache, models.Model):
         if self.subnet:
             return self.subnet.cidr
         if self.custom:
-            return self.parse_custom(server)
-        return []
+            return [self.parse_custom(server)]
+        return [NetworkVar.Any]
 
     def _get_repr(self):
         if self.server_group:
@@ -404,15 +404,15 @@ class FirewallRule(Sortable, WithComment, WithReprCache):
     def __resolve_str(self, data: str, server: Server) -> str:
         return data.strip().replace("$self", server.interface_name)
 
-    def resolved_network_to(self, server: Server) -> Optional[List[IpNetwork]]:
+    def resolved_network_to(self, server: Server) -> List[ResolvedNetwork]:
         if self.network_to:
-            return self.network_to.network_to(server)
-        return None
+            return self.network_to.to_networks(server)
+        return [NetworkVar.Any]
 
-    def resolved_network_from(self, server: Server) -> Optional[List[IpNetwork]]:
+    def resolved_network_from(self, server: Server) -> List[ResolvedNetwork]:
         if self.network_from:
-            return self.network_from.network_to(server)
-        return None
+            return self.network_from.to_networks(server)
+        return [NetworkVar.Any]
 
 
 class ServerRoutingRule(ServerRule):

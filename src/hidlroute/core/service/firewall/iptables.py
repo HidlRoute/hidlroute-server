@@ -84,6 +84,10 @@ class IpTablesFirewallService(FirewallService):
 
     def _get_chain_for_rule(self, rule: "models.FirewallRule", table: Optional[iptc.Table] = None) -> iptc.Chain:
         pass
+        # if table is None:
+        #     table = self._get_table_for_rule(rule)
+        # from_net = rule.resolved_network_to(rule.server)
+        # to_net = rule.resolved_network_to(rule.server)
 
     def setup_firewall_for_server(self, server: "models.Server"):
         pass
