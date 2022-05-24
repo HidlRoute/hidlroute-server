@@ -264,9 +264,8 @@ class BaseServerAdminImpl(ManagedRelActionsMixin, SortableAdminMixin, Polymorphi
         formset.save_m2m()
 
     def action_start_server(self, request: HttpRequest, server_id: int) -> HttpResponse:
-        obj = models.Server.objects.get(pk=server_id)
-
         try:
+            obj = models.Server.objects.get(pk=server_id)
             obj.start()
             self.message_user(request, _("Server {} is starting".format(obj)))
             wait()
@@ -279,10 +278,14 @@ class BaseServerAdminImpl(ManagedRelActionsMixin, SortableAdminMixin, Polymorphi
         return HttpResponseRedirect(request.path)
 
     def action_stop_server(self, request: HttpRequest, server_id: int) -> HttpResponse:
-        obj = models.Server.objects.get(pk=server_id)
-        self.message_user(request, _("Server {} is shutting down".format(obj)))
-        obj.stop()
-        wait()
+        try:
+            obj = models.Server.objects.get(pk=server_id)
+            obj.stop()
+            self.message_user(request, _("Server {} is shutting down".format(obj)))
+            wait()
+        except HidlNetworkingException as e:
+            messages.error(request, _("Error stopping server. Details: {}".format(e)))
+
         if request.method == "GET":
             return HttpResponseRedirect(reverse("admin:hidl_core_server_changelist"))
 
