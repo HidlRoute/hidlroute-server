@@ -88,6 +88,9 @@ class IpTablesFirewallService(FirewallService):
                     native_rules.append(native_rule)
         return native_rules
 
+    def get_default_policy(self, chain_type: ChainType, server: "models.Server") -> str:
+        return "DROP"
+
     def _get_table_for_rule(self, rule: "models.FirewallRule") -> iptc.Table:
         # TODO: check action and return corresponding table for NAT and MANGLE
         return iptc.Table.FILTER
@@ -170,29 +173,54 @@ class IpTablesFirewallService(FirewallService):
         chain.append_rule(rule)
         # Forward chain
         chain = iptc.Chain(table, "FORWARD")
+        # Input jump rule
         rule = iptc.Rule()
-        rule.out_interface = server.interface_name
         rule.in_interface = server.interface_name
         rule.target = rule.create_target(self._get_chain_name(ChainType.FORWARD, server))
-        self._create_hidl_comment_matcher("Jump rule for FORWARD chain", rule, server)
+        self._create_hidl_comment_matcher("Jump rule for FORWARD chain (inbound traffic)", rule, server)
+        chain.append_rule(rule)
+        # Output jump rule
+        rule = iptc.Rule()
+        rule.out_interface = server.interface_name
+        rule.target = rule.create_target(self._get_chain_name(ChainType.FORWARD, server))
+        self._create_hidl_comment_matcher("Jump rule for FORWARD chain (outbound traffic)", rule, server)
+        chain.append_rule(rule)
+        # Default action for FORWARD chain (inbound)
+        rule = iptc.Rule()
+        rule.in_interface = server.interface_name
+        rule.target = rule.create_target(self.get_default_policy(ChainType.FORWARD, server))
+        self._create_hidl_comment_matcher(
+            "Force default denial policy for FORWARD chain (inbound traffic)", rule, server
+        )
+        # Default action for FORWARD chain (outbound)
+        rule = iptc.Rule()
+        rule.out_interface = server.interface_name
+        rule.target = rule.create_target(self.get_default_policy(ChainType.FORWARD, server))
+        self._create_hidl_comment_matcher(
+            "Force default denial policy for FORWARD chain (inbound traffic)", rule, server
+        )
         chain.append_rule(rule)
 
     def _install_chains(self, server: "models.Server"):
         # Input chain
-        input_hidl_chain = self._get_chain_name(ChainType.INPUT, server)
+        input_hidl_chain = self._get_chain_name(ChainType.INPUT, server)  # noqa
         if not iptc.easy.has_chain(iptc.Table.FILTER, input_hidl_chain):
             iptc.easy.add_chain(iptc.Table.FILTER, input_hidl_chain)
-            iptc.easy.set_policy(iptc.Table.FILTER, input_hidl_chain, policy="DROP")
+            iptc.easy.set_policy(
+                iptc.Table.FILTER, input_hidl_chain, policy=self.get_default_policy(ChainType.INPUT, server)
+            )
         # Output chain
-        output_hidl_chain = self._get_chain_name(ChainType.OUTPUT, server)
+        output_hidl_chain = self._get_chain_name(ChainType.OUTPUT, server)  # noqa
         if not iptc.easy.has_chain(iptc.Table.FILTER, output_hidl_chain):
             iptc.easy.add_chain(iptc.Table.FILTER, output_hidl_chain)
-            iptc.easy.set_policy(iptc.Table.FILTER, output_hidl_chain, policy="DROP")
+            iptc.easy.set_policy(
+                iptc.Table.FILTER, output_hidl_chain, policy=self.get_default_policy(ChainType.OUTPUT, server)
+            )
         # Input chain
         fwd_hidl_chain = self._get_chain_name(ChainType.FORWARD, server)
         if not iptc.easy.has_chain(iptc.Table.FILTER, fwd_hidl_chain):
             iptc.easy.add_chain(iptc.Table.FILTER, fwd_hidl_chain)
-            iptc.easy.set_policy(iptc.Table.FILTER, fwd_hidl_chain, policy="DROP")
+            iptc.easy.set_policy(iptc.Table.FILTER, fwd_hidl_chain, policy="RETURN")
 
     def _uninstall_chains(self, server: "models.Server"):
         self._uninstall_jump_rules(server)
@@ -210,4 +238,5 @@ class IpTablesFirewallService(FirewallService):
         # a = 1
 
     def destroy_firewall_for_server(self, server: "models.Server"):
-        pass
+        self._uninstall_jump_rules(server)
+        self._uninstall_chains(server)
