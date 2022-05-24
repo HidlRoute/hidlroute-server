@@ -22,7 +22,7 @@ from hidlroute.contrib.wireguard.models import WireguardServer
 from hidlroute.core import models as core_models
 from hidlroute.contrib.wireguard import models
 from hidlroute.core.service.base import VPNService, ServerStateEnum, ServerStatus, HidlNetworkingException
-from hidlroute.core.service.networking.base import NetInterfaceStatus, InterfaceKind
+from hidlroute.core.service.networking.base import NetInterfaceState, InterfaceKind
 
 LOGGER = logging.getLogger("hidl_wireguard.WireguardVPNService")
 
@@ -40,7 +40,7 @@ class WireguardVPNService(VPNService):
             # Setting up common networking
             interface = net_service.create_interface(ifname=server.interface_name, kind=InterfaceKind.WIREGUARD)
             net_service.add_ip_address(interface, server.ip_address)
-            net_service.set_link_status(interface, NetInterfaceStatus.UP)
+            net_service.set_link_status(interface, NetInterfaceState.UP)
 
             wg = WireGuard()
 
@@ -53,7 +53,7 @@ class WireguardVPNService(VPNService):
             # Start routing
             net_service.setup_routes_for_server(server)
 
-            # todo: Start firewall
+            server.service_factory.firewall_service.setup_firewall_for_server(server)
         except Exception as start_exception:
             LOGGER.error(f"Error starting server, see details below:\n{start_exception}")
             LOGGER.exception(start_exception)
@@ -81,7 +81,7 @@ class WireguardVPNService(VPNService):
             net_service = server.service_factory.networking_service
             net_service.destroy_routes_for_server(server)
 
-            # todo: Stop firewall
+            server.service_factory.networking_service.destroy_routes_for_server(server)
             net_service.delete_interface(ifname=server.interface_name)
 
         except Exception as e:
@@ -98,7 +98,7 @@ class WireguardVPNService(VPNService):
             return ServerStatus(state=ServerStateEnum.STOPPED)
 
         # todo what extra checks do we need here?
-        if interface.state == NetInterfaceStatus.UP.value:
+        if interface.state == NetInterfaceState.UP.value:
             return ServerStatus(state=ServerStateEnum.RUNNING)
 
         return ServerStatus(state=ServerStateEnum.STOPPED)

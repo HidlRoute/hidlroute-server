@@ -17,6 +17,8 @@
 import abc
 from typing import TYPE_CHECKING, List, Optional
 
+from hidlroute.core.types import IpNetwork
+
 if TYPE_CHECKING:
     from hidlroute.core import models
 
@@ -74,7 +76,7 @@ class FirewallService(abc.ABC):
                     )
 
     def build_native_firewall_rule(
-        self, rule: "models.FirewallRule", server: "models.Server"
+        self, rule: "models.FirewallRule", server: "models.Server", server_networks: List[IpNetwork]
     ) -> List[NativeFirewallRule]:
         return []
 

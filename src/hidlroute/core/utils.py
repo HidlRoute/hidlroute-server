@@ -14,7 +14,9 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import ipaddress
 import time
+from typing import Any
 
 DEFAULT_WAIT_SEC = 2
 
@@ -30,3 +32,23 @@ def django_enum(cls):
     """
     cls.do_not_call_in_templates = True
     return cls
+
+
+def is_ip_address(obj: Any) -> bool:
+    if obj is None:
+        return False
+    try:
+        ipaddress.ip_address(obj)
+        return True
+    except ValueError:
+        return False
+
+
+def is_ip_network(obj: Any) -> bool:
+    if obj is None:
+        return False
+    try:
+        ipaddress.ip_network(obj)
+        return True
+    except ValueError:
+        return False

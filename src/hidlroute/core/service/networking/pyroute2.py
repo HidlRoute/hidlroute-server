@@ -30,7 +30,7 @@ from hidlroute.core.service.networking.base import (
     Route,
     NetInterface,
     InterfaceKind,
-    NetInterfaceStatus,
+    NetInterfaceState,
 )
 from hidlroute.core.types import IpAddress
 
@@ -139,6 +139,6 @@ class PyRoute2NetworkingService(NetworkingService):
                 mask=address.max_prefixlen,
             )
 
-    def set_link_status(self, interface: NetInterface, status: NetInterfaceStatus) -> None:
+    def set_link_status(self, interface: NetInterface, status: NetInterfaceState) -> None:
         with IPRoute() as ipr:
             ipr.link("set", index=self.get_interface_by_name(interface.name).index, state=status.value)

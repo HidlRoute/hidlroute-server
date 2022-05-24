@@ -36,8 +36,8 @@ from typing import TYPE_CHECKING
 
 from hidlroute.core.base_models import NameableIdentifiable, WithComment, Sortable, ServerRelated, WithReprCache
 from hidlroute.core.factory import ServiceFactory, default_service_factory as default_service_factory
-from hidlroute.core.service.networking.base import NetworkVar
-from hidlroute.core.types import IpAddress, ResolvedNetwork
+from hidlroute.core.service.networking.base import NetVar
+from hidlroute.core.types import IpAddress, NetworkDef
 
 from hidlroute.core.service.base import ServerStateEnum
 
@@ -122,7 +122,7 @@ class Server(NameableIdentifiable, WithComment, polymorphic_models.PolymorphicMo
         self.service_factory.worker_service.restart_vpn_server(self)
 
     def get_firewall_rules(self) -> QuerySet["FirewallRule"]:
-        return FirewallRule.load_related_to_server(self)
+        return self.firewallrule_set.all()
 
     def get_routing_rules(self) -> QuerySet["ServerRoutingRule"]:
         return ServerRoutingRule.load_related_to_server(self).select_related("network")
@@ -172,6 +172,12 @@ class ServerToGroup(models.Model):
 
     def __str__(self) -> str:
         return str(self.group.get_full_name())
+
+    def resolve_subnet(self) -> Subnet:
+        if self.subnet:
+            return self.subnet
+        else:
+            return self.server.subnet
 
 
 class Member(WithComment, polymorphic_models.PolymorphicModel):
@@ -338,38 +344,40 @@ class NetworkFilter(WithReprCache, models.Model):
     server_group = models.ForeignKey("ServerToGroup", on_delete=models.CASCADE, null=True, blank=True)
     server_member = models.ForeignKey("ServerToMember", on_delete=models.CASCADE, null=True, blank=True)
 
-    def parse_custom(self, server: Server) -> ResolvedNetwork:
-        try:
-            return NetworkVar.parse_str(self.custom)
-        except ValueError:
+    def parse_custom(self, server: Server) -> NetworkDef:
+        for x in self.custom.split(","):
+            x = x.strip().lower()
             try:
-                return ipaddress.ip_network(self.custom, strict=True)
+                return NetVar.parse_str(x)
             except ValueError:
-                raise ValueError(f"Network filter {self.custom} is invalid")
+                try:
+                    return ipaddress.ip_network(self.custom, strict=True)
+                except ValueError:
+                    raise ValueError(f"Network filter {x} is invalid")
 
-    def to_networks(self, server: Server) -> List[ResolvedNetwork]:
+    def to_network_defs(self, server: Server) -> List[NetworkDef]:
         if self.server_group:
-            return self.server_group.subnet.cidr
+            return [self.server_group.resolve_subnet().cidr]
         if self.server_member:
             devices = self.server_member.device_set.all()
             return [ipaddress.ip_network(str(x.ip_address) + "/32") for x in devices]
         if self.subnet:
-            return self.subnet.cidr
+            return [self.subnet.cidr]
         if self.custom:
             return [self.parse_custom(server)]
-        return [NetworkVar.Any]
+        return [NetVar.Server]
 
     def _get_repr(self):
         if self.server_group:
             return "Group({})".format(self.server_group)
         if self.server_member:
-            kind = self.server_member.member.get_real_instance()._meta.verbose_name.capitalize()
+            kind = self.server_member.member.get_real_instance()._meta.verbose_name.capitalize()  # noqa
             return f"{kind}({self.server_member.member})"
         if self.subnet:
             return str(self.subnet)
         if self.custom:
             return self.custom
-        return "<any>"
+        return "<default>"
 
 
 class FirewallRule(Sortable, WithComment, WithReprCache):
@@ -415,22 +423,22 @@ class FirewallRule(Sortable, WithComment, WithReprCache):
 
     def _get_repr(self):
         return (
-            f"{self.action} Service: {self.service or '<any>'} "
-            f"From: {self.network_from or '<any>'} To: {self.network_to or '<any>'}"
+            f"{self.action} Service: {self.service or '<server>'} "
+            f"From: {self.network_from or '<any>'} To: {self.network_to or '<server>'}"
         )
 
     def __resolve_str(self, data: str, server: Server) -> str:
         return data.strip().replace("$self", server.interface_name)
 
-    def resolved_network_to(self, server: Server) -> List[ResolvedNetwork]:
+    def get_network_to_def(self, server: Server) -> List[NetworkDef]:
         if self.network_to:
-            return self.network_to.to_networks(server)
-        return [NetworkVar.Any]
+            return self.network_to.to_network_defs(server)
+        return [NetVar.Server]
 
-    def resolved_network_from(self, server: Server) -> List[ResolvedNetwork]:
+    def get_network_from_def(self, server: Server) -> List[NetworkDef]:
         if self.network_from:
-            return self.network_from.to_networks(server)
-        return [NetworkVar.Any]
+            return self.network_from.to_network_defs(server)
+        return [NetVar.Server]
 
 
 class ServerRoutingRule(ServerRule):
