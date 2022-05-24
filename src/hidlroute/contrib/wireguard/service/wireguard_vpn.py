@@ -34,10 +34,10 @@ class WireguardVPNService(VPNService):
 
     def start(self, server: "models.WireguardServer"):
         self.__ensure_wg_server(server)
+        net_service = server.service_factory.networking_service
 
         try:
             # Setting up common networking
-            net_service = server.service_factory.networking_service
             interface = net_service.create_interface(ifname=server.interface_name, kind=InterfaceKind.WIREGUARD)
             net_service.add_ip_address(interface, server.ip_address)
             net_service.set_link_status(interface, NetInterfaceStatus.UP)
@@ -54,10 +54,25 @@ class WireguardVPNService(VPNService):
             net_service.setup_routes_for_server(server)
 
             # todo: Start firewall
-        except Exception as e:
-            LOGGER.error(f"Error starting server, see details below:\n{e}")
-            LOGGER.exception(e)
-            raise HidlNetworkingException(f"Error starting server: {str(e)}") from e
+        except Exception as start_exception:
+            LOGGER.error(f"Error starting server, see details below:\n{start_exception}")
+            LOGGER.exception(start_exception)
+            # todo: remove firewall rules:
+
+            # Rolling back routing rules
+            try:
+                net_service.destroy_routes_for_server(server)
+            except Exception as e:
+                LOGGER.warning("Encountered exception while rolling back routes.")
+                LOGGER.exception(e)
+
+            try:
+                net_service.delete_interface(ifname=server.interface_name)
+            except Exception as e:
+                LOGGER.warning("Encountered exception while destroying interface.")
+                LOGGER.exception(e)
+
+            raise HidlNetworkingException(f"Error starting server: {str(start_exception)}") from start_exception
 
     def stop(self, server: "models.WireguardServer"):
         self.__ensure_wg_server(server)
