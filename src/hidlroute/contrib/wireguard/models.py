@@ -17,6 +17,7 @@
 from typing import Type, TYPE_CHECKING
 
 from django.db import models
+from django.db.models import QuerySet
 from django.utils.translation import gettext_lazy as _
 
 from hidlroute.contrib.wireguard.factory import wireguard_service_factory, WireguardServiceFactory
@@ -96,3 +97,6 @@ class WireguardServer(models_core.Server):
         if not self.private_key:
             raise ValueError("Private key must be set for server in order to generate public key")
         return generate_public_key(self.private_key)
+
+    def get_devices(self) -> QuerySet["WireguardPeer"]:
+        return WireguardPeer.objects.filter(server_to_member__server=self)

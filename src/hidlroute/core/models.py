@@ -132,6 +132,9 @@ class Server(NameableIdentifiable, WithComment, polymorphic_models.PolymorphicMo
             "admin:%s_%s_change" % (Server._meta.app_label, Server._meta.model_name), args=(self.pk,)  # noqa
         )
 
+    def get_devices(self) -> QuerySet["Device"]:
+        return self.objects.filter(server_to_member__server=self)
+
 
 class IpAllocationMeta(models.Model):
     server = models.ForeignKey(Server, on_delete=models.CASCADE)

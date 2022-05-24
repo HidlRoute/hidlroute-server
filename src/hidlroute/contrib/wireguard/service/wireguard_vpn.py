@@ -16,11 +16,11 @@
 
 import logging
 
-from django.db.models import Q
 from pr2modules.netlink.generic.wireguard import WireGuard
 
-from hidlroute.contrib.wireguard.models import WireguardServer, WireguardPeer
-from hidlroute.core import models
+from hidlroute.contrib.wireguard.models import WireguardServer
+from hidlroute.core import models as core_models
+from hidlroute.contrib.wireguard import models
 from hidlroute.core.service.base import VPNService, ServerStateEnum, ServerStatus, HidlNetworkingException
 from hidlroute.core.service.networking.base import NetInterfaceStatus, InterfaceKind
 
@@ -29,12 +29,11 @@ LOGGER = logging.getLogger("hidl_wireguard.WireguardVPNService")
 
 class WireguardVPNService(VPNService):
     @staticmethod
-    def __raise_if_wrong_argument(server: "models.Server") -> None:
-        if not isinstance(server, WireguardServer):
-            raise ValueError("Wireguard VPN Service can only take Wireguard server as an argument.")
+    def __ensure_wg_server(server: "core_models.Server") -> None:
+        assert isinstance(server, WireguardServer), "WireguardVPNService can only take WireguardServer as an argument"
 
-    def start(self, server: "models.Server"):
-        self.__raise_if_wrong_argument(server)
+    def start(self, server: "models.WireguardServer"):
+        self.__ensure_wg_server(server)
 
         try:
             # Setting up common networking
@@ -47,7 +46,7 @@ class WireguardVPNService(VPNService):
 
             # Add a WireGuard configuration + first peer
             wg.set(interface.name, private_key=server.private_key, listen_port=server.listen_port)
-            for peer in WireguardPeer.objects.filter(Q(server_to_member__server=server)):
+            for peer in server.get_devices():
                 peer = {"public_key": peer.public_key, "allowed_ips": [str(peer.ip_address)]}
                 wg.set(interface.name, peer=peer)
 
@@ -57,8 +56,8 @@ class WireguardVPNService(VPNService):
             LOGGER.error(f"Error starting server, see details below:\n{e}")
             raise HidlNetworkingException(f"Error starting server: {str(e)}") from e
 
-    def stop(self, server: "models.Server"):
-        self.__raise_if_wrong_argument(server)
+    def stop(self, server: "models.WireguardServer"):
+        self.__ensure_wg_server(server)
 
         try:
             net_service = server.service_factory.networking_service
@@ -70,8 +69,8 @@ class WireguardVPNService(VPNService):
             LOGGER.error(f"Error stopping interface, see details below:\n{e}")
             raise HidlNetworkingException(f"Error stopping interface: {str(e)}") from e
 
-    def get_status(self, server: models.Server) -> ServerStatus:
-        self.__raise_if_wrong_argument(server)
+    def get_status(self, server: "models.WireguardServer") -> ServerStatus:
+        self.__ensure_wg_server(server)
         net_service = server.service_factory.networking_service
         interface = net_service.get_interface_by_name(server.interface_name)
 
