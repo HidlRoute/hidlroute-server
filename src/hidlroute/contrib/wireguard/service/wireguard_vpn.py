@@ -14,28 +14,73 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from pr2modules.iproute import IPRoute
+import logging
 
-from hidlroute.contrib.wireguard.models import WireguardServer
+from django.db.models import Q
+from pr2modules.netlink.generic.wireguard import WireGuard
+
+from hidlroute.contrib.wireguard.models import WireguardServer, WireguardPeer
 from hidlroute.core import models
-from hidlroute.core.service.base import VPNService, VPNServerStatus
+from hidlroute.core.service.base import VPNService, ServerStateEnum, ServerStatus, HidlNetworkingException
+from hidlroute.core.service.networking.base import NetInterfaceStatus, InterfaceKind
+
+LOGGER = logging.getLogger("hidl_wireguard.WireguardVPNService")
 
 
 class WireguardVPNService(VPNService):
-    def start(self, server: "models.Server"):
-        pass
-
-    def stop(self, server: "models.Server"):
-        pass
-
-    def get_status(self, server: models.Server) -> VPNServerStatus:
+    @staticmethod
+    def __raise_if_wrong_argument(server: "models.Server") -> None:
         if not isinstance(server, WireguardServer):
             raise ValueError("Wireguard VPN Service can only take Wireguard server as an argument.")
 
-        with IPRoute() as ipr:
-            link_index = ipr.link_lookup(ifname=server.interface_name)
-            if not len(link_index):
-                return VPNServerStatus.STOPPED
+    def start(self, server: "models.Server"):
+        self.__raise_if_wrong_argument(server)
 
-            link_detail = ipr.get_links(link_index)[0]
-            return VPNServerStatus.RUNNING if link_detail.get("state", "down") == "up" else VPNServerStatus.STOPPED
+        try:
+            # Setting up common networking
+            net_service = server.service_factory.networking_service
+            interface = net_service.create_interface(ifname=server.interface_name, kind=InterfaceKind.WIREGUARD)
+            net_service.add_ip_address(interface, server.ip_address)
+            net_service.set_link_status(interface, NetInterfaceStatus.UP)
+
+            wg = WireGuard()
+
+            # Add a WireGuard configuration + first peer
+            wg.set(interface.name, private_key=server.private_key, listen_port=server.listen_port)
+            for peer in WireguardPeer.objects.filter(Q(server_to_member__server=server)):
+                peer = {"public_key": peer.public_key, "allowed_ips": [str(peer.ip_address)]}
+                wg.set(interface.name, peer=peer)
+
+            # Start routing
+            # Start firewall
+        except Exception as e:
+            LOGGER.error(f"Error starting server, see details below:\n{e}")
+            raise HidlNetworkingException(f"Error starting server: {str(e)}") from e
+
+    def stop(self, server: "models.Server"):
+        self.__raise_if_wrong_argument(server)
+
+        try:
+            net_service = server.service_factory.networking_service
+            net_service.delete_interface(ifname=server.interface_name)
+
+            # Stop routing
+            # Stop firewall
+        except Exception as e:
+            LOGGER.error(f"Error stopping interface, see details below:\n{e}")
+            raise HidlNetworkingException(f"Error stopping interface: {str(e)}") from e
+
+    def get_status(self, server: models.Server) -> ServerStatus:
+        self.__raise_if_wrong_argument(server)
+        net_service = server.service_factory.networking_service
+        interface = net_service.get_interface_by_name(server.interface_name)
+
+        # todo how should we handle FAILED status here? some error flag/logs?
+        if not interface:
+            return ServerStatus(state=ServerStateEnum.STOPPED)
+
+        # todo what extra checks do we need here?
+        if interface.state == NetInterfaceStatus.UP.value:
+            return ServerStatus(state=ServerStateEnum.RUNNING)
+
+        return ServerStatus(state=ServerStateEnum.STOPPED)

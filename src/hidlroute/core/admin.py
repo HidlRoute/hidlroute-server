@@ -21,6 +21,7 @@ from django import forms
 from django.contrib import admin
 from django.contrib.admin.options import InlineModelAdmin
 from django.contrib.contenttypes.models import ContentType
+from django.contrib import messages
 from django.db.models import QuerySet, TextField
 from django.db.models.fields.related import RelatedField
 from django.forms import widgets, BaseModelFormSet
@@ -61,7 +62,7 @@ from hidlroute.core.forms import ServerTypeSelectForm
 # class PersonAdmin(GroupSelectAdminMixin, PolymorphicChildModelAdmin):
 #     base_model = models.Person
 #     show_in_index = False
-from hidlroute.core.service.base import VPNServerStatus
+from hidlroute.core.service.base import ServerStateEnum, HidlNetworkingException
 from hidlroute.core.utils import wait
 
 
@@ -264,9 +265,13 @@ class BaseServerAdminImpl(ManagedRelActionsMixin, SortableAdminMixin, Polymorphi
 
     def action_start_server(self, request: HttpRequest, server_id: int) -> HttpResponse:
         obj = models.Server.objects.get(pk=server_id)
-        self.message_user(request, _("Server {} is starting".format(obj)))
-        obj.start()
-        wait()
+
+        try:
+            obj.start()
+            self.message_user(request, _("Server {} is starting".format(obj)))
+            wait()
+        except HidlNetworkingException as e:
+            messages.error(request, _("Error starting server. Details: {}".format(e)))
 
         if request.method == "GET":
             return HttpResponseRedirect(reverse("admin:hidl_core_server_changelist"))
@@ -315,12 +320,10 @@ class ServerAdmin(HidlBaseModelAdmin, HidlePolymorphicParentAdmin):
     control_buttons_template = loader.get_template("admin/hidl_core/server/server_control_buttons.html")
 
     def vpn_status(self, obj: models.Server):
-        return obj.get_real_instance().status
+        return obj.get_real_instance().status.state
 
     def control_button(self, obj: models.Server):
-        return self.control_buttons_template.render(
-            context={"server": obj, "status": obj.status, "VPNServerStatus": VPNServerStatus}
-        )
+        return self.control_buttons_template.render(context={"server": obj, "ServerState": ServerStateEnum})
 
     control_button.short_description = _("Actions")
 
