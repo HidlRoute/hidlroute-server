@@ -73,10 +73,15 @@ class PyRoute2NetworkingService(NetworkingService):
         return iface
 
     def setup_routes_for_server(self, server: models.Server):
-        pass
+        with IPRoute() as ipr:
+            for route in server.get_routing_rules():
+                oif_index = self.get_interface_by_name(route.resolved_interface_name(server)).index
+                ipr.route("add", dst=str(route.network.cidr), gateway=route.gateway, oif=oif_index)
 
     def destroy_routes_for_server(self, server: models.Server):
-        pass
+        with IPRoute() as ipr:
+            for route in server.get_routing_rules():
+                ipr.route("del", dst=str(route.network.cidr))
 
     def get_default_routes(self) -> List[Route]:
         result: List[Route] = []

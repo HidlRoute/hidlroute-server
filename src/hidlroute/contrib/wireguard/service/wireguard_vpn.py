@@ -51,9 +51,12 @@ class WireguardVPNService(VPNService):
                 wg.set(interface.name, peer=peer)
 
             # Start routing
-            # Start firewall
+            net_service.setup_routes_for_server(server)
+
+            # todo: Start firewall
         except Exception as e:
             LOGGER.error(f"Error starting server, see details below:\n{e}")
+            LOGGER.exception(e)
             raise HidlNetworkingException(f"Error starting server: {str(e)}") from e
 
     def stop(self, server: "models.WireguardServer"):
@@ -61,10 +64,11 @@ class WireguardVPNService(VPNService):
 
         try:
             net_service = server.service_factory.networking_service
+            net_service.destroy_routes_for_server(server)
+
+            # todo: Stop firewall
             net_service.delete_interface(ifname=server.interface_name)
 
-            # Stop routing
-            # Stop firewall
         except Exception as e:
             LOGGER.error(f"Error stopping interface, see details below:\n{e}")
             raise HidlNetworkingException(f"Error stopping interface: {str(e)}") from e
