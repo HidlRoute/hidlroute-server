@@ -22,7 +22,7 @@ from hidlroute.contrib.wireguard.models import WireguardServer
 from hidlroute.core import models as core_models
 from hidlroute.contrib.wireguard import models
 from hidlroute.core.service.base import VPNService, ServerStateEnum, ServerStatus, HidlNetworkingException
-from hidlroute.core.service.networking.base import NetInterfaceStatus, InterfaceKind
+from hidlroute.core.service.networking.base import NetInterfaceState, InterfaceKind
 
 LOGGER = logging.getLogger("hidl_wireguard.WireguardVPNService")
 
@@ -40,7 +40,7 @@ class WireguardVPNService(VPNService):
             net_service = server.service_factory.networking_service
             interface = net_service.create_interface(ifname=server.interface_name, kind=InterfaceKind.WIREGUARD)
             net_service.add_ip_address(interface, server.ip_address)
-            net_service.set_link_status(interface, NetInterfaceStatus.UP)
+            net_service.set_link_status(interface, NetInterfaceState.UP)
 
             wg = WireGuard()
 
@@ -83,7 +83,7 @@ class WireguardVPNService(VPNService):
             return ServerStatus(state=ServerStateEnum.STOPPED)
 
         # todo what extra checks do we need here?
-        if interface.state == NetInterfaceStatus.UP.value:
+        if interface.state == NetInterfaceState.UP.value:
             return ServerStatus(state=ServerStateEnum.RUNNING)
 
         return ServerStatus(state=ServerStateEnum.STOPPED)

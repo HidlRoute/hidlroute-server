@@ -16,19 +16,18 @@
 
 from hidlroute.core.factory import ServiceFactory, default_service_factory
 
-# from hidlroute.core.service.firewall.base import FirewallService
-# from hidlroute.core.service.networking.base import NetworkingService
+from hidlroute.core.service.firewall.base import FirewallService
+from hidlroute.core.service.networking.base import NetworkingService
 
 
 class DummyServiceFactory(ServiceFactory):
-    pass
-    # @ServiceFactory._cached_service
-    # def routing_service(self) -> RoutingService:
-    #     return self._instance_from_str("hidlroute.contrib.dummy.service.network.DummyRoutingService")
-    #
-    # @ServiceFactory._cached_service
-    # def firewall_service(self) -> FirewallService:
-    #     return self._instance_from_str("hidlroute.contrib.dummy.service.network.DummyFirewallService")
+    @ServiceFactory._cached_service
+    def networking_service(self) -> NetworkingService:
+        return self._instance_from_str("hidlroute.contrib.dummy.service.network.DummyNetworkingService")
+
+    @ServiceFactory._cached_service
+    def firewall_service(self) -> FirewallService:
+        return self._instance_from_str("hidlroute.contrib.dummy.service.network.DummyFirewallService")
 
 
 dummy_service_factory = DummyServiceFactory(default_service_factory)

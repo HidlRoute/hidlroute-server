@@ -15,10 +15,18 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
+from typing import List
 
 from hidlroute.core import models as core_models
 from hidlroute.core.service.firewall.base import FirewallService
-from hidlroute.core.service.networking.base import NetworkingService
+from hidlroute.core.service.networking.base import (
+    NetworkingService,
+    NetInterface,
+    NetInterfaceState,
+    InterfaceKind,
+    Route,
+)
+from hidlroute.core.types import IpAddress
 
 LOGGER = logging.getLogger("hidl.contrib.dummy.net")
 
@@ -48,6 +56,31 @@ class DummyFirewallService(FirewallService):
 
 
 class DummyNetworkingService(NetworkingService):
+    def get_routes(self) -> List[Route]:
+        return []
+
+    def get_default_routes(self) -> List[Route]:
+        return []
+
+    def get_interfaces(self) -> List[NetInterface]:
+        return []
+
+    def create_interface(self, ifname: str, kind: InterfaceKind) -> NetInterface:
+        interface = NetInterface(ifname, index=999, state=NetInterfaceState.UP, mac_address="00:00:00:00:00")
+        self.__logger.info("Created interface: " + str(interface))
+        return interface
+
+    def delete_interface(self, ifname: str) -> None:
+        self.__logger.info("Deleted interface: " + ifname)
+
+    def add_ip_address(self, interface: NetInterface, address: IpAddress) -> None:
+        interface.ip4address = address
+        self.__logger.info(f"Added IP address {address} to interface {interface.name}: " + str(interface))
+
+    def set_link_status(self, interface: NetInterface, status: NetInterfaceState) -> None:
+        interface.state = status
+        self.__logger.info(f"Set state {status} to interface {interface.name}: " + str(interface))
+
     def __init__(self) -> None:
         super().__init__()
         self.__logger = LOGGER.getChild(".firewall")

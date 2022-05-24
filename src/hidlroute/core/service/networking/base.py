@@ -62,7 +62,7 @@ class Route:
         return self.network is None
 
 
-class NetInterfaceStatus(Enum):
+class NetInterfaceState(Enum):
     UP = "up"
     DOWN = "down"
 
@@ -71,7 +71,7 @@ class NetInterfaceStatus(Enum):
 class NetInterface:
     name: str
     index: int
-    state: NetInterfaceStatus
+    state: NetInterfaceState
     mac_address: str
     ip4address: Optional[ipaddress.IPv4Address] = None
     ip6address: Optional[ipaddress.IPv6Address] = None
@@ -81,6 +81,9 @@ class NetInterface:
         if self.ip4address:
             return self.ip4address
         return self.ip6address
+
+    def __str__(self) -> str:
+        return f"NetIface({self.name}, ip={self.address}, state={self.state}, mac={self.mac_address})"
 
 
 @dataclass
@@ -116,7 +119,7 @@ class NetworkingService(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def get_default_routes(self) -> Optional[Route]:
+    def get_default_routes(self) -> List[Route]:
         pass
 
     @abc.abstractmethod
@@ -136,7 +139,7 @@ class NetworkingService(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def set_link_status(self, interface: NetInterface, status: NetInterfaceStatus) -> None:
+    def set_link_status(self, interface: NetInterface, status: NetInterfaceState) -> None:
         pass
 
     def get_routes_for_server(self, server: "models.Server") -> List[Route]:
