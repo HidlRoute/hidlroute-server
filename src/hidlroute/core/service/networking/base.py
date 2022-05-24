@@ -16,32 +16,33 @@
 
 import abc
 import ipaddress
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from typing import TYPE_CHECKING, Optional, List
 
-from hidlroute.core.types import IpNetwork, IpAddress
+from hidlroute.core.types import IpNetwork, IpAddress, NetworkDef
 
 if TYPE_CHECKING:
     from hidlroute.core import models
 
 
-class NetworkVar(Enum):
-    Self = "self"
-    Any = "any"
-    Host = "host"
+class NetVar(Enum):
+    Self = "self"  # Ip address of the vpn server
+    Server = "server"  # All subnets routed via current server interface
+    Any = "any"  # Anything
+    Host = "host"  # Any IP address associated with the host except this vpn
 
     def __str__(self):
         return "Net({})".format(self.name)
 
     @classmethod
-    def parse_str(cls, in_str: str) -> "NetworkVar":
+    def parse_str(cls, in_str: str) -> "NetVar":
         PREFIX = "$"
         in_str = in_str.lower().strip()
         if in_str.startswith(PREFIX):
             try:
-                return NetworkVar[in_str[len(PREFIX) :]]
-            except KeyError:
+                return NetVar(in_str[len(PREFIX) :])
+            except ValueError:
                 raise ValueError("Unknown special var " + in_str)
         raise ValueError("Invalid special var " + in_str)
 
@@ -82,6 +83,25 @@ class NetInterface:
         return self.ip6address
 
 
+@dataclass
+class NetworkContext:
+    server_ip: IpAddress
+    server_networks: List[IpNetwork] = field(default_factory=list)
+    host_networks: List[IpNetwork] = field(default_factory=list)
+
+    def belongs_to_server(self, net: IpNetwork) -> bool:
+        for x in self.server_networks:
+            if net is None or (x.version == net.version and x.supernet_of(net)):
+                return True
+        return False
+
+    def belongs_to_host(self, net: IpNetwork) -> bool:
+        for x in self.host_networks:
+            if net is None or (x.version == net.version and x.supernet_of(net)):
+                return True
+        return False
+
+
 class NetworkingService(abc.ABC):
     @abc.abstractmethod
     def setup_routes_for_server(self, server: "models.Server"):
@@ -119,6 +139,16 @@ class NetworkingService(abc.ABC):
     def set_link_status(self, interface: NetInterface, status: NetInterfaceStatus) -> None:
         pass
 
+    def get_routes_for_server(self, server: "models.Server") -> List[Route]:
+        result: List[Route] = []
+        for r in self.get_routes():
+            if r.interface == server.interface_name:
+                result.append(r)
+        return result
+
+    def get_subnets_for_server(self, server: "models.Server") -> List[IpNetwork]:
+        return [r.network for r in self.get_routes_for_server(server)]
+
     def get_interface_by_name(self, iface_name: str) -> Optional[NetInterface]:
         for x in self.get_interfaces():
             if x.name == iface_name:
@@ -128,5 +158,30 @@ class NetworkingService(abc.ABC):
         result: List[NetInterface] = []
         for x in self.get_interfaces():
             if x.name.startswith(prefix):
+                result.append(x)
+        return result
+
+    def get_host_networks(self, server: "models.Server") -> List[IpNetwork]:
+        result: List[IpNetwork] = []
+        for x in self.get_interfaces():
+            if x.name != server.interface_name:
+                result.append(ipaddress.ip_network(str(x.address)))
+        return result
+
+    def resolve_subnets(self, networks: List[NetworkDef], network_context: NetworkContext) -> List[Optional[IpNetwork]]:
+        result: List[Optional[IpNetwork]] = []
+        for x in networks:
+            if isinstance(x, NetVar):
+                if x == NetVar.Self:
+                    result += ipaddress.ip_network(str(network_context.server_ip))
+                elif x == NetVar.Host:
+                    result += network_context.host_networks
+                elif x == NetVar.Server:
+                    result += network_context.server_networks
+                elif x == NetVar.Any:
+                    result.append(None)
+                else:
+                    raise ValueError("Unknown network var {}".format(x))
+            else:
                 result.append(x)
         return result
