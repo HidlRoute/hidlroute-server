@@ -26,12 +26,21 @@ if TYPE_CHECKING:
 
 
 @django_enum
-class VPNServerStatus(Enum):
+class ServerStateEnum(Enum):
     STOPPED = 1
     RUNNING = 2
     STARTING = 3
-    FAILE = 4
+    FAILED = 4
     RUNNING_CHANGES_PENDING = 5
+
+
+class HidlNetworkingException(BaseException):
+    pass
+
+
+class ServerStatus:
+    def __init__(self, state: ServerStateEnum) -> None:
+        self.state = state
 
 
 class VPNService(abc.ABC):
@@ -48,7 +57,7 @@ class VPNService(abc.ABC):
         self.start(server)
 
     @abc.abstractmethod
-    def get_status(self, server: "models.Server") -> VPNServerStatus:
+    def get_status(self, server: "models.Server") -> ServerStatus:
         raise NotImplementedError
 
 
@@ -71,5 +80,5 @@ class WorkerService(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def get_server_status(self, server: "models.Server") -> VPNServerStatus:
+    def get_server_status(self, server: "models.Server") -> ServerStateEnum:
         pass

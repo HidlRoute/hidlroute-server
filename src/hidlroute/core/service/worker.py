@@ -20,7 +20,7 @@ import uuid
 from typing import Any, NamedTuple
 
 from hidlroute.core import models
-from hidlroute.core.service.base import WorkerService, VPNServerStatus, PostedJob
+from hidlroute.core.service.base import WorkerService, ServerStateEnum, PostedJob
 
 
 class SynchronousWorkerService(WorkerService):
@@ -38,7 +38,7 @@ class SynchronousWorkerService(WorkerService):
         self.__job_registry[new_uuid] = self.JobRegistryItem(job, _result)
         return job
 
-    def get_server_status(self, server: models.Server) -> VPNServerStatus:
+    def get_server_status(self, server: models.Server) -> ServerStateEnum:
         return server.vpn_service.get_status(server)
 
     def start_vpn_server(self, server: "models.Server") -> PostedJob:

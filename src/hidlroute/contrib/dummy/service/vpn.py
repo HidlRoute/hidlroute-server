@@ -17,7 +17,7 @@
 import logging
 from typing import TYPE_CHECKING
 
-from hidlroute.core.service.base import VPNService, VPNServerStatus
+from hidlroute.core.service.base import VPNService, ServerStateEnum, ServerStatus
 
 if TYPE_CHECKING:
     from hidlroute.core import models as core_models
@@ -40,6 +40,6 @@ class DummyLoggingVPNService(VPNService):
         server.service_factory.networking_service.destroy_routes_for_server(server)
         LOGGER.info(f"VPN Server {server} is terminated")
 
-    def get_status(self, server: "core_models.Server") -> VPNServerStatus:
+    def get_status(self, server: "core_models.Server") -> ServerStatus:
         LOGGER.info(f"Get server status: {server}")
-        return VPNServerStatus.STOPPED
+        return ServerStatus(state=ServerStateEnum.STOPPED)

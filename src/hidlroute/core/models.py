@@ -39,6 +39,8 @@ from hidlroute.core.factory import ServiceFactory, default_service_factory as de
 from hidlroute.core.service.networking.base import NetworkVar
 from hidlroute.core.types import IpAddress, ResolvedNetwork
 
+from hidlroute.core.service.base import ServerStateEnum
+
 if TYPE_CHECKING:
     from hidlroute.core.service.base import VPNService
 
@@ -61,6 +63,9 @@ class Server(NameableIdentifiable, WithComment, polymorphic_models.PolymorphicMo
     def status(self):
         return self.service_factory.worker_service.get_server_status(self)
 
+    def is_running(self):
+        return self.status.state == ServerStateEnum.RUNNING
+
     def __str__(self):
         return f"S: {self.name}"
 
@@ -75,6 +80,16 @@ class Server(NameableIdentifiable, WithComment, polymorphic_models.PolymorphicMo
                 server=self, network=self.subnet, comment=_("Route main server subnet to the vpn tunnel")
             )
             self.clientroutingrule_set.add(default_client_rule)
+
+        # Create server routing rule if the admin has not created it themselves manually
+        if is_creating and self.serverroutingrule_set.all().count() == 0:
+            default_server_route = ServerRoutingRule.objects.create(
+                server=self,
+                network=self.subnet,
+                interface="$self",
+                comment=_("Default routing rule for server: send all related subnet to VPN interface "),
+            )
+            self.serverroutingrule_set.add(default_server_route)
 
     def get_or_create_member(self, member: "Member") -> "ServerToMember":
         return ServerToMember.get_or_create(self, member)

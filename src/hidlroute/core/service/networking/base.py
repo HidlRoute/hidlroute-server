@@ -46,6 +46,10 @@ class NetworkVar(Enum):
         raise ValueError("Invalid special var " + in_str)
 
 
+class InterfaceKind(Enum):
+    WIREGUARD = "wireguard"
+
+
 @dataclass
 class Route:
     network: Optional[IpNetwork] = None
@@ -58,8 +62,8 @@ class Route:
 
 
 class NetInterfaceStatus(Enum):
-    UP = "UP"
-    DOWN = "DOWN"
+    UP = "up"
+    DOWN = "down"
 
 
 @dataclass
@@ -97,6 +101,22 @@ class NetworkingService(abc.ABC):
 
     @abc.abstractmethod
     def get_interfaces(self) -> List[NetInterface]:
+        pass
+
+    @abc.abstractmethod
+    def create_interface(self, ifname: str, kind: InterfaceKind) -> NetInterface:
+        pass
+
+    @abc.abstractmethod
+    def delete_interface(self, ifname: str) -> None:
+        pass
+
+    @abc.abstractmethod
+    def add_ip_address(self, interface: NetInterface, address: IpAddress) -> None:
+        pass
+
+    @abc.abstractmethod
+    def set_link_status(self, interface: NetInterface, status: NetInterfaceStatus) -> None:
         pass
 
     def get_interface_by_name(self, iface_name: str) -> Optional[NetInterface]:

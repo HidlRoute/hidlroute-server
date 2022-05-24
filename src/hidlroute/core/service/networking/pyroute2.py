@@ -25,10 +25,16 @@ from pr2modules.netlink.rtnl.rtmsg import rtmsg as RT_MSG
 from pr2modules.iproute import IPRoute
 
 from hidlroute.core import models
-from hidlroute.core.service.networking.base import NetworkingService, Route, NetInterface
+from hidlroute.core.service.networking.base import (
+    NetworkingService,
+    Route,
+    NetInterface,
+    InterfaceKind,
+    NetInterfaceStatus,
+)
 from hidlroute.core.types import IpAddress
 
-LOGGER = logging.getLogger("hidle_core.service.routing.pyroute2")
+LOGGER = logging.getLogger("hidl_core.service.networking.pyroute2")
 
 
 class PyRoute2NetworkingService(NetworkingService):
@@ -52,7 +58,7 @@ class PyRoute2NetworkingService(NetworkingService):
         return NetInterface(
             name=ifmsg.get_attr("IFLA_IFNAME"),
             index=ifmsg.get("index"),
-            state=ifmsg.get_attr("IFLA_OPERSTATE"),
+            state=ifmsg.get("state"),
             mac_address=ifmsg.get_attr("IFLA_ADDRESS"),
         )
 
@@ -108,3 +114,25 @@ class PyRoute2NetworkingService(NetworkingService):
             if len(links) > 0:
                 return links[0]
         return None
+
+    def create_interface(self, ifname: str, kind: InterfaceKind) -> NetInterface:
+        with IPRoute() as ipr:
+            ipr.link("add", kind=kind.value, ifname=ifname)
+            return self.get_interface_by_name(ifname)
+
+    def delete_interface(self, ifname: str) -> None:
+        with IPRoute() as ipr:
+            ipr.link("del", ifname=ifname)
+
+    def add_ip_address(self, interface: NetInterface, address: IpAddress) -> None:
+        with IPRoute() as ipr:
+            ipr.addr(
+                "add",
+                index=self.get_interface_by_name(interface.name).index,
+                address=str(address.ip),
+                mask=address.max_prefixlen,
+            )
+
+    def set_link_status(self, interface: NetInterface, status: NetInterfaceStatus) -> None:
+        with IPRoute() as ipr:
+            ipr.link("set", index=self.get_interface_by_name(interface.name).index, state=status.value)
