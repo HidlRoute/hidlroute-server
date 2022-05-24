@@ -53,7 +53,7 @@ class WireguardVPNService(VPNService):
             # Start routing
             net_service.setup_routes_for_server(server)
 
-            # todo: Start firewall
+            server.service_factory.firewall_service.setup_firewall_for_server(server)
         except Exception as e:
             LOGGER.error(f"Error starting server, see details below:\n{e}")
             LOGGER.exception(e)
@@ -66,7 +66,7 @@ class WireguardVPNService(VPNService):
             net_service = server.service_factory.networking_service
             net_service.destroy_routes_for_server(server)
 
-            # todo: Stop firewall
+            server.service_factory.networking_service.destroy_routes_for_server(server)
             net_service.delete_interface(ifname=server.interface_name)
 
         except Exception as e:
