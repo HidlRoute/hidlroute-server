@@ -14,13 +14,24 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from typing import Type
+
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 from hidlroute.core import models as models_core
+from hidlroute.core.service.base import VPNService
 
 
 class OpenVPNServer(models_core.Server):
+    @classmethod
+    def get_device_model(cls) -> Type["models_core.Device"]:
+        raise NotImplementedError
+
+    @property
+    def vpn_service(self) -> "VPNService":
+        raise NotImplementedError
+
     class Meta:
         verbose_name = _("OpenVPN Server")
 

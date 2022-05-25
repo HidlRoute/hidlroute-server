@@ -25,5 +25,6 @@ from hidlroute.core.admin import ServerAdmin
 @ServerAdmin.register_implementation(models.OpenVPNServer)
 class OpenVPNServerAdmin(ServerAdmin.Impl):
     ICON = "images/server/openvpn.png"
+    base_model = models.OpenVPNServer
     verbose_name = _("OpenVPN Config")
     verbose_name_plural = verbose_name

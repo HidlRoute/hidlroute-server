@@ -17,7 +17,8 @@
 import abc
 import datetime
 from enum import Enum
-from typing import NamedTuple, TYPE_CHECKING
+from typing import NamedTuple, TYPE_CHECKING, Any, Optional
+from django.utils.translation import gettext_lazy as _
 
 from hidlroute.core.utils import django_enum
 
@@ -26,12 +27,37 @@ if TYPE_CHECKING:
 
 
 @django_enum
-class ServerStateEnum(Enum):
-    STOPPED = 1
-    RUNNING = 2
-    STARTING = 3
-    FAILED = 4
-    RUNNING_CHANGES_PENDING = 5
+class ServerState(Enum):
+    STOPPED = 0x100
+    RUNNING = 0x101
+    FAILED = 0x102
+
+    STOPPING = 0x200
+    STARTING = 0x201
+    UNKNOWN = 0xFFF  # Indicates inconsistent state
+
+    __labels__ = {
+        STOPPED: _("Stopped"),
+        RUNNING: _("Running"),
+        FAILED: _("Failed"),
+        STOPPING: _("Stopping"),
+        STARTING: _("Starting"),
+        UNKNOWN: _("Unknown"),
+    }
+
+    @property
+    def label(self) -> str:
+        if self in ServerState.__labels__:
+            return ServerState.__labels__[self]
+        return self.name
+
+    @property
+    def is_running(self) -> bool:
+        return self == self.RUNNING
+
+    @property
+    def is_transitioning(self) -> bool:
+        return self in (self.STARTING, self.STOPPING)
 
 
 class HidlNetworkingException(BaseException):
@@ -39,7 +65,7 @@ class HidlNetworkingException(BaseException):
 
 
 class ServerStatus:
-    def __init__(self, state: ServerStateEnum) -> None:
+    def __init__(self, state: ServerState) -> None:
         self.state = state
 
 
@@ -53,17 +79,33 @@ class VPNService(abc.ABC):
         pass
 
     def restart(self, server: "models.Server"):
-        self.stop(server)
-        self.start(server)
+        job = server.stop()
+        server.service_factory.worker_service.wait_for_job(job.uuid)
+        server = server.__class__.objects.get(pk=server.pk)  # Force reload from DB and new instance to clear all caches
+        job = server.start()
+        server.service_factory.worker_service.wait_for_job(job.uuid)
 
     @abc.abstractmethod
     def get_status(self, server: "models.Server") -> ServerStatus:
-        raise NotImplementedError
+        pass
+
+
+class JobStatus(Enum):
+    PENDING = "PENDING"
+    SUCCESS = "SUCCESS"
+    FAILED = "FAILED"
 
 
 class PostedJob(NamedTuple):
     uuid: str
     timestamp: datetime.datetime
+
+
+class JobResult(NamedTuple):
+    uuid: str
+    status: JobStatus
+    result: Any = None
+    timestamp: datetime.datetime = None
 
 
 class WorkerService(abc.ABC):
@@ -80,5 +122,13 @@ class WorkerService(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def get_server_status(self, server: "models.Server") -> ServerStateEnum:
+    def get_server_status(self, server: "models.Server") -> ServerState:
+        pass
+
+    @abc.abstractmethod
+    def get_job_result(self, job_uuid: str) -> JobResult:
+        pass
+
+    @abc.abstractmethod
+    def wait_for_job(self, job_uuid: str, timeout: Optional[datetime.datetime] = None) -> JobResult:
         pass

@@ -39,12 +39,7 @@
                 </div>
             {% endif %}
             <div class="card-body">
-                {% if not original.is_running %}
-                    <div class="form-group">
-                        <input type="submit" value="{% trans 'Start Server' %}"
-                               class="btn {{ jazzmin_ui.button_classes.success }} form-control" name="_start_server">
-                    </div>
-                {% else %}
+                {% if original.is_running %}
                     <div class="form-group">
                         <input type="submit" value="{% trans 'Stop Server' %}"
                                class="btn {{ jazzmin_ui.button_classes.danger }} form-control" name="_stop_server">
@@ -52,6 +47,16 @@
                     <div class="form-group">
                         <input type="submit" value="{% trans 'Restart Server' %}"
                                class="btn {{ jazzmin_ui.button_classes.danger }} form-control" name="_restart_server">
+                    </div>
+                {% elif server.status.state.name == "UNKNOWN" or server.status.state.name == "FAILED" %}
+                    <div class="form-group">
+                        <input type="submit" value="{% trans 'Restart Server' %}"
+                               class="btn {{ jazzmin_ui.button_classes.danger }} form-control" name="_restart_server">
+                    </div>
+                {% else %}
+                    <div class="form-group">
+                        <input type="submit" value="{% trans 'Start Server' %}"
+                               class="btn {{ jazzmin_ui.button_classes.success }} form-control" name="_start_server">
                     </div>
                 {% endif %}
                 {% block extra-management %}{% endblock %}

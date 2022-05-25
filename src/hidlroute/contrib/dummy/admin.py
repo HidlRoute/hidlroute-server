@@ -22,13 +22,14 @@ from hidlroute.core.admin import ServerAdmin, DeviceAdmin
 
 @DeviceAdmin.register_implementation(models.DummyDevice)
 class DummyDeviceAdmin(DeviceAdmin.Impl):
+    base_model = models.DummyDevice
     verbose_name = _("Dummy Device")
 
 
 @ServerAdmin.register_implementation(models.DummyServer)
 class DummyServerAdmin(ServerAdmin.Impl):
     ICON = "images/server/logging.png"
-
+    base_model = models.DummyServer
     verbose_name = _("Dummy Server Config")
     verbose_name_plural = verbose_name
 

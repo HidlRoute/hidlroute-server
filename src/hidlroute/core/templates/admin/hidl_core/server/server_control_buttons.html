@@ -1,14 +1,23 @@
 {% load i18n jazzmin %}
 {% get_jazzmin_ui_tweaks as jazzmin_ui %}
 <div class="btn-group-sm">
-
     {% if server.is_running %}
+        <a class="btn {{ jazzmin_ui.button_classes.success }}"
+           href="{% url "admin:restartserver_url" server_id=server.pk %}">
+            <i class="fa fa-play-circle"></i>
+            {% trans "Restart" %}
+        </a>
         <a class="btn {{ jazzmin_ui.button_classes.danger }}"
            href="{% url "admin:stopserver_url" server_id=server.pk %}">
             <i class="fa fa-stop-circle"></i>
             {% trans "Stop" %}
         </a>
-
+    {% elif server.status.state == ServerState.UNKNOWN or server.status.state == Server.FAILED %}
+        <a class="btn {{ jazzmin_ui.button_classes.success }}"
+           href="{% url "admin:restartserver_url" server_id=server.pk %}">
+            <i class="fa fa-play-circle"></i>
+            {% trans "Restart" %}
+        </a>
     {% else %}
         <a class="btn {{ jazzmin_ui.button_classes.success }}"
            href="{% url "admin:startserver_url" server_id=server.pk %}">

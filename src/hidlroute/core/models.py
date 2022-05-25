@@ -39,7 +39,7 @@ from hidlroute.core.factory import ServiceFactory, default_service_factory as de
 from hidlroute.core.service.networking.base import NetVar
 from hidlroute.core.types import IpAddress, NetworkDef
 
-from hidlroute.core.service.base import ServerStateEnum
+from hidlroute.core.service.base import ServerState, ServerStatus, JobResult, PostedJob
 
 if TYPE_CHECKING:
     from hidlroute.core.service.base import VPNService
@@ -58,13 +58,37 @@ class Server(NameableIdentifiable, WithComment, polymorphic_models.PolymorphicMo
     interface_name = models.CharField(max_length=16)
     ip_address = netfields.InetAddressField(null=False, blank=False)
     subnet = models.ForeignKey(Subnet, on_delete=models.RESTRICT)
+    desired_state_raw = models.PositiveSmallIntegerField(
+        null=False, blank=False, default=ServerState.STOPPED.value, db_column="desired_state"
+    )
+    state_change_job_id = models.CharField(max_length=100, null=True, blank=True)
+    state_change_job_logs = models.CharField(max_length=100, null=True, blank=True)
+    state_change_job_start = models.DateTimeField(null=True, blank=True)
+    changes_made_ts = models.DateTimeField(null=True, blank=True)
 
     @cached_property
-    def status(self):
+    def status(self) -> ServerStatus:
         return self.service_factory.worker_service.get_server_status(self)
 
-    def is_running(self):
-        return self.status.state == ServerStateEnum.RUNNING
+    @property
+    def is_running(self) -> bool:
+        return self.status.state == ServerState.RUNNING
+
+    @property
+    def has_pending_changes(self) -> bool:
+        if not self.is_running:
+            return False
+        return self.changes_made_ts is not None and self.changes_made_ts > self.state_change_job_start
+
+    @property
+    def desired_state(self) -> Optional[ServerState]:
+        if self.desired_state_raw is None:
+            return None
+        return ServerState(self.desired_state_raw)
+
+    @desired_state.setter
+    def desired_state(self, val: Optional[ServerState]):
+        self.desired_state_raw = str(val.value) if val is not None else None
 
     def __str__(self):
         return f"S: {self.name}"
@@ -112,14 +136,37 @@ class Server(NameableIdentifiable, WithComment, polymorphic_models.PolymorphicMo
     def vpn_service(self) -> "VPNService":
         raise NotImplementedError
 
-    def stop(self):
-        self.service_factory.worker_service.stop_vpn_server(self)
+    def stop(self, force=False) -> PostedJob:
+        if not force and self.status.state == ServerState.STOPPED:
+            raise ValueError(f"Server {self} is already stopped")
+        if self.status.state.is_transitioning:
+            raise ValueError(f"Server {self} is {self.status.state.label.lower()} now")
+        self.desired_state = ServerState.STOPPED
+        job = self.service_factory.worker_service.stop_vpn_server(self)
+        self.state_change_job_id = job.uuid
+        self.state_change_job_start = job.timestamp
+        self.save()
+        return job
 
-    def start(self):
-        self.service_factory.worker_service.start_vpn_server(self)
+    def start(self) -> PostedJob:
+        if self.is_running:
+            raise ValueError(f"Server {self} is already running")
+        if self.status.state.is_transitioning:
+            raise ValueError(f"Server {self} is {self.status.state.label.lower()} now")
 
-    def restart(self):
-        self.service_factory.worker_service.restart_vpn_server(self)
+        self.desired_state = ServerState.RUNNING
+        job = self.service_factory.worker_service.start_vpn_server(self)
+        self.state_change_job_id = job.uuid
+        self.state_change_job_start = job.timestamp
+        self.save()
+        return job
+
+    def register_transition_completed(self, job_result: JobResult):
+        self.state_change_job_logs = str(job_result.result)
+        self.save()
+
+    def restart(self) -> PostedJob:
+        return self.service_factory.worker_service.restart_vpn_server(self)
 
     def get_firewall_rules(self) -> QuerySet["FirewallRule"]:
         return self.firewallrule_set.all()
@@ -166,7 +213,7 @@ class ServerToGroup(models.Model):
         verbose_name_plural = _("Groups")
         unique_together = [("server", "group")]
 
-    server = models.ForeignKey(Server, on_delete=models.RESTRICT)
+    server = models.ForeignKey(Server, on_delete=models.CASCADE)
     group = models.ForeignKey(Group, on_delete=models.RESTRICT)
     subnet = models.ForeignKey(Subnet, on_delete=models.RESTRICT, null=True, blank=True)
 
@@ -217,7 +264,7 @@ class ServerToMember(models.Model):
         verbose_name_plural = _("Members")
         unique_together = [("server", "member")]
 
-    server = models.ForeignKey(Server, on_delete=models.CASCADE)
+    server = models.ForeignKey(Server, on_delete=models.RESTRICT)
     member = models.ForeignKey(Member, on_delete=models.RESTRICT)
     subnet = models.ForeignKey(Subnet, on_delete=models.RESTRICT, null=True, blank=True)
 

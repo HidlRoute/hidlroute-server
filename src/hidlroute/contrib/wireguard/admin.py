@@ -24,6 +24,7 @@ from hidlroute.core.admin import ServerAdmin, DeviceAdmin
 
 @DeviceAdmin.register_implementation(models.WireguardPeer)
 class WireguardPeerAdmin(DeviceAdmin.Impl):
+    base_model = models.WireguardPeer
     verbose_name = _("Wireguard Peer")
 
     def response_change(self, request, obj: models.WireguardPeer):
@@ -36,7 +37,7 @@ class WireguardPeerAdmin(DeviceAdmin.Impl):
 @ServerAdmin.register_implementation(models.WireguardServer)
 class WireguardServerAdmin(ServerAdmin.Impl):
     ICON = "images/server/wireguard.png"
-
+    base_model = models.WireguardServer
     verbose_name = _("Wireguard Config")
     verbose_name_plural = verbose_name
     fieldsets = ServerAdmin.Impl.fieldsets + [

@@ -28,6 +28,7 @@ from django.forms import widgets, BaseModelFormSet
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.template import loader
 from django.urls import path, reverse
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 from django_reverse_admin import ReverseModelAdmin
 from polymorphic.admin import PolymorphicChildModelAdmin
@@ -62,8 +63,7 @@ from hidlroute.core.forms import ServerTypeSelectForm
 # class PersonAdmin(GroupSelectAdminMixin, PolymorphicChildModelAdmin):
 #     base_model = models.Person
 #     show_in_index = False
-from hidlroute.core.service.base import ServerStateEnum, HidlNetworkingException
-from hidlroute.core.utils import wait
+from hidlroute.core.service.base import ServerState, HidlNetworkingException
 
 
 # from django.utils.translation import gettext_lazy as _
@@ -76,7 +76,7 @@ class HostAdmin(HidlBaseModelAdmin):
 
 
 class BaseChildDeviceAdmin(HidlePolymorphicChildAdmin):
-    base_model = models.Device
+    pass
 
 
 @admin.register(models.Device)
@@ -181,7 +181,6 @@ class RelatedFirewallRulesReadonlyInline(SortableInlineAdminMixin, admin.Tabular
 
 class BaseServerAdminImpl(ManagedRelActionsMixin, SortableAdminMixin, PolymorphicChildModelAdmin):
     ICON = "images/server/no-icon.png"
-    base_model = models.Server
     ordering = ["id"]
     fieldsets = [
         (
@@ -221,6 +220,11 @@ class BaseServerAdminImpl(ManagedRelActionsMixin, SortableAdminMixin, Polymorphi
             ),
             path(
                 "stopserver/<int:server_id>", self.admin_site.admin_view(self.action_stop_server), name="stopserver_url"
+            ),
+            path(
+                "restartserver/<int:server_id>",
+                self.admin_site.admin_view(self.action_restart_server),
+                name="restartserver_url",
             ),
         ]
         return custom_urls + super().get_urls()
@@ -263,43 +267,34 @@ class BaseServerAdminImpl(ManagedRelActionsMixin, SortableAdminMixin, Polymorphi
             instance.save()
         formset.save_m2m()
 
+    def __get_server_state_change_redirect_url(self, request: HttpRequest) -> str:
+        return reverse("admin:hidl_core_server_changelist") + "?server-started=1"
+
     def action_start_server(self, request: HttpRequest, server_id: int) -> HttpResponse:
         try:
             obj = models.Server.objects.get(pk=server_id)
             obj.start()
             self.message_user(request, _("Server {} is starting".format(obj)))
-            wait()
         except HidlNetworkingException as e:
             messages.error(request, _("Error starting server. Details: {}".format(e)))
 
-        if request.method == "GET":
-            return HttpResponseRedirect(reverse("admin:hidl_core_server_changelist"))
-
-        return HttpResponseRedirect(request.path)
+        return HttpResponseRedirect(self.__get_server_state_change_redirect_url(request))
 
     def action_stop_server(self, request: HttpRequest, server_id: int) -> HttpResponse:
         try:
             obj = models.Server.objects.get(pk=server_id)
             obj.stop()
             self.message_user(request, _("Server {} is shutting down".format(obj)))
-            wait()
         except HidlNetworkingException as e:
             messages.error(request, _("Error stopping server. Details: {}".format(e)))
 
-        if request.method == "GET":
-            return HttpResponseRedirect(reverse("admin:hidl_core_server_changelist"))
-
-        return HttpResponseRedirect(request.path)
+        return HttpResponseRedirect(self.__get_server_state_change_redirect_url(request))
 
     def action_restart_server(self, request: HttpRequest, server_id: int) -> HttpResponse:
         obj = models.Server.objects.get(pk=server_id)
         self.message_user(request, _("Server {} is re-starting".format(obj)))
         obj.restart()
-        wait()
-        if request.method == "GET":
-            return HttpResponseRedirect(reverse("admin:hidl_core_server_changelist"))
-
-        return HttpResponseRedirect(request.path)
+        return HttpResponseRedirect(self.__get_server_state_change_redirect_url(request))
 
     def get_changelist_instance(self, request):
         instance = super().get_changelist_instance(request)
@@ -323,10 +318,21 @@ class ServerAdmin(HidlBaseModelAdmin, HidlePolymorphicParentAdmin):
     control_buttons_template = loader.get_template("admin/hidl_core/server/server_control_buttons.html")
 
     def vpn_status(self, obj: models.Server):
-        return obj.get_real_instance().status.state
+        state = obj.status.state
+        css_class = "badge-secondary"
+        if state.is_transitioning:
+            css_class = "badge-primary"
+        elif state == ServerState.FAILED:
+            css_class = "badge-danger"
+        elif state.is_running:
+            css_class = "badge-success"
+        result = f'<span class="server-state badge {css_class}">{state.label}</span>'
+        if obj.has_pending_changes:
+            result += f'&nbsp;<span class="server-state badge badge-warning">{_("Changes Pending")}</span>'
+        return mark_safe(result)
 
     def control_button(self, obj: models.Server):
-        return self.control_buttons_template.render(context={"server": obj, "ServerState": ServerStateEnum})
+        return self.control_buttons_template.render(context={"server": obj, "ServerState": ServerState})
 
     control_button.short_description = _("Actions")
 
