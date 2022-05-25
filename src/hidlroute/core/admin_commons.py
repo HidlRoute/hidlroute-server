@@ -16,8 +16,10 @@
 
 from typing import Optional, Any
 
+import netfields
 from django import forms
 from django.contrib.admin.options import BaseModelAdmin
+from django.contrib.admin.widgets import AdminTextInputWidget
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.http import HttpRequest
@@ -49,7 +51,15 @@ class ManagedRelActionsMixin(BaseModelAdmin):
         return form_field
 
 
-class HidlBaseModelAdmin(ManagedRelActionsMixin, GroupSelectAdminMixin, admin.ModelAdmin):
+class HidlFormsMixin:
+    pass
+    formfield_overrides = {
+        netfields.InetAddressField: dict(widget=AdminTextInputWidget),
+        netfields.CidrAddressField: dict(widget=AdminTextInputWidget),
+    }
+
+
+class HidlBaseModelAdmin(ManagedRelActionsMixin, GroupSelectAdminMixin, HidlFormsMixin, admin.ModelAdmin):
     with_comment_fieldset = (_("Notes"), {"fields": ("comment",)})
     nameable_fields = [
         ("name", "slug"),

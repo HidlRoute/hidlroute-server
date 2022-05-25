@@ -20,11 +20,12 @@ from adminsortable2.admin import SortableAdminMixin, SortableInlineAdminMixin
 from django import forms
 from django.contrib import admin
 from django.contrib.admin.options import InlineModelAdmin
+from django.contrib.admin.widgets import AdminTextInputWidget
 from django.contrib.contenttypes.models import ContentType
 from django.contrib import messages
 from django.db.models import QuerySet, TextField
 from django.db.models.fields.related import RelatedField
-from django.forms import widgets, BaseModelFormSet
+from django.forms import BaseModelFormSet
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.template import loader
 from django.urls import path, reverse
@@ -42,6 +43,7 @@ from hidlroute.core.admin_commons import (
     HidlePolymorphicParentAdmin,
     HidlePolymorphicChildAdmin,
     ManagedRelActionsMixin,
+    HidlFormsMixin,
 )
 from hidlroute.core.factory import default_service_factory
 from hidlroute.core.forms import ServerTypeSelectForm
@@ -156,7 +158,7 @@ class ClientRoutingRuleAdmin(GroupSelectAdminMixin, ServerRelatedAdminMixin, adm
         "comment",
     )
     formfield_overrides = {
-        TextField: {"widget": widgets.TextInput},
+        TextField: {"widget": AdminTextInputWidget},
     }
 
 
@@ -185,7 +187,7 @@ class RelatedFirewallRulesReadonlyInline(SortableInlineAdminMixin, admin.Tabular
         return False
 
 
-class BaseServerAdminImpl(ManagedRelActionsMixin, SortableAdminMixin, PolymorphicChildModelAdmin):
+class BaseServerAdminImpl(ManagedRelActionsMixin, SortableAdminMixin, HidlFormsMixin, PolymorphicChildModelAdmin):
     ICON = "images/server/no-icon.png"
     ordering = ["id"]
     fieldsets = [

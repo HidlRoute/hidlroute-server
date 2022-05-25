@@ -11,6 +11,13 @@
     width: 100%;
 }
 
+/*  ======================= COMMON FORMS ========================= */
+.help-block .errorlist {
+    margin: 0;
+    list-style: none;
+}
+/*  ===================== END COMMON FORMS ======================= */
+
 /* ======================= SERVER ADMIN ========================= */
 .server-type-select {
     display: flex;
