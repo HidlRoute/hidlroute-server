@@ -204,7 +204,7 @@
                         <div class="user-panel mt-3 pb-3 mb-3 d-flex">
                             <div class="image">
                                 {% if jazzmin_settings|has_jazzmin_setting:"user_avatar" %}
-                                    <img src="{% get_user_avatar request.user %}" width="160px"
+                                    <img src="{% get_hidl_user_avatar request.user %}" width="160px"
                                          class="img-circle elevation-2" alt="User Image">
                                 {% else %}
                                     <i class="fas fa-inverse user-profile fa-user-circle"></i>

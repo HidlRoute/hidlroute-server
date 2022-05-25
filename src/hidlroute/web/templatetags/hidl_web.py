@@ -14,9 +14,13 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import List, Dict
+from typing import List, Dict, Optional, Union, Callable
 
+from django.contrib.auth.models import AbstractUser
 from django.template import Library
+from django.templatetags.static import static
+import jazzmin.settings
+
 from hidlroute.core import models as models_core
 
 register = Library()
@@ -30,3 +34,35 @@ def filter_child_models(apps: List[Dict]) -> List[Dict]:
             filter(lambda x: not (issubclass(x["model"], target) and x["model"] not in target), app["models"])
         )
     return list(filter(lambda x: len(x["models"]) > 0, apps))
+
+
+@register.simple_tag
+def get_hidl_user_avatar(user: AbstractUser):
+    """
+    For the given user, try to get the avatar image, which can be one of:
+
+        - ImageField on the user model
+        - URLField/Charfield on the model
+        - A callable that receives the user instance e.g lambda u: u.profile.image.url
+    """
+    no_avatar = static("vendor/adminlte/img/user2-160x160.jpg")
+    options = jazzmin.settings.get_settings()
+    avatar_field_name: Optional[Union[str, Callable]] = options.get("user_avatar")
+
+    if not avatar_field_name:
+        return no_avatar
+
+    if callable(avatar_field_name):
+        return avatar_field_name(user)
+
+    # If we find the property directly on the user model (imagefield or URLfield)
+    avatar_field = getattr(user, avatar_field_name, None)
+    if avatar_field:
+        if type(avatar_field) == str:
+            return avatar_field
+        elif hasattr(avatar_field, "url"):
+            return avatar_field.url
+        elif callable(avatar_field):
+            return avatar_field(user)
+
+    return no_avatar

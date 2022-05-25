@@ -64,3 +64,16 @@
 }
 
 /* ======================= END FIREWALL INLINE ADMIN ========================= */
+
+/* ======================= AUTH USER ADMIN ============================ */
+.field-profile_picture_img {
+    white-space: nowrap;
+}
+.field-profile_picture_img img {
+    width: 50px;
+    border-radius: 100%;
+    margin: 0 5px 0 0;
+    display: inline-block;
+}
+
+/* ======================= END AUTH USER ADMIN ========================= */

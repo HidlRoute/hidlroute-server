@@ -18,9 +18,11 @@ from django.contrib import admin
 from django.contrib.auth.models import Group as DjangoGroup
 from django.contrib.auth.admin import GroupAdmin as DjangoGroupAdmin
 from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
 from hidlroute.auth.models import User, Role
+from hidlroute.web.templatetags.hidl_web import get_hidl_user_avatar
 
 admin.site.unregister(DjangoGroup)
 
@@ -32,6 +34,8 @@ class RoleAdmin(DjangoGroupAdmin):
 
 @admin.register(User)
 class UserAdmin(DjangoUserAdmin):
+    list_display = ("profile_picture_img", "first_name", "last_name", "email")
+    readonly_fields = ("profile_picture_img",)
     fieldsets = (
         (None, {"fields": ("username", "password")}),
         (_("Personal info"), {"fields": ("first_name", "last_name", "email", "profile_picture")}),
@@ -58,3 +62,11 @@ class UserAdmin(DjangoUserAdmin):
             },
         ),
     )
+
+    def profile_picture_img(self, obj: User) -> str:
+        profile_pic_url = get_hidl_user_avatar(obj)
+        return mark_safe(
+            f'<img class="" src="{profile_pic_url}" title="user {obj.get_full_name()}"/> <span class"username">{obj.username}</span>'
+        )
+
+    profile_picture_img.short_description = _("Username")
