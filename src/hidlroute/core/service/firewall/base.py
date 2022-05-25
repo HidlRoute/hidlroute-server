@@ -44,7 +44,7 @@ class FirewallProtocol(object):
 class NativeFirewallRule(abc.ABC):
     """Base class for native firewall rule"""
 
-    def __init__(self, original_rule: Optional["models.FirewallRule"] = None) -> None:
+    def __init__(self, original_rule: Optional["models.BaseFirewallRule"] = None) -> None:
         self.original_rule = original_rule
 
 
@@ -65,7 +65,7 @@ class FirewallService(abc.ABC):
             return False
         return protocol.strip().upper() in self.get_supported_protocols()
 
-    def ensure_rule_supported(self, rule: "models.FirewallRule"):
+    def ensure_rule_supported(self, rule: "models.BaseFirewallRule"):
         if not self.if_action_supported(rule.action):
             raise ValueError(f"Invalid firewall rule {rule}: Action {rule.action} is not supported by iptables")
         if rule.service:
@@ -76,7 +76,7 @@ class FirewallService(abc.ABC):
                     )
 
     def build_native_firewall_rule(
-        self, rule: "models.FirewallRule", server: "models.Server", server_networks: List[IpNetwork]
+        self, rule: "models.BaseFirewallRule", server: "models.Server", server_networks: List[IpNetwork]
     ) -> List[NativeFirewallRule]:
         return []
 

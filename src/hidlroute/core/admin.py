@@ -89,11 +89,15 @@ class DeviceAdmin(HidlBaseModelAdmin, HidlePolymorphicParentAdmin):
 class ServerToMemberAdmin(ManagedRelActionsMixin, admin.TabularInline):
     model = models.ServerToMember
     extra = 0
+    verbose_name = _("Member")
+    verbose_name_plural = _("Members")
 
 
 class ServerToGroupAdmin(GroupSelectAdminMixin, ManagedRelActionsMixin, admin.TabularInline):
     model = models.ServerToGroup
     extra = 0
+    verbose_name = _("Group")
+    verbose_name_plural = _("Groups")
 
 
 class ServerRelatedAdminMixin:
@@ -164,7 +168,7 @@ class ServerRoutingRulesInlineAdmin(GroupSelectAdminMixin, ServerRelatedAdminMix
 
 class RelatedFirewallRulesReadonlyInline(SortableInlineAdminMixin, admin.TabularInline):
     ordering = ["order"]
-    model = models.FirewallRule
+    model = models.VpnFirewallRule
     fields = [
         "order",
         "description",
@@ -174,6 +178,8 @@ class RelatedFirewallRulesReadonlyInline(SortableInlineAdminMixin, admin.Tabular
     ]
     extra = 0
     template = "admin/hidl_core/server/firewall_inline.html"
+    verbose_name = _("Firewall Rule")
+    verbose_name_plural = _("Firewall Rules")
 
     def has_add_permission(self, request: HttpRequest, obj=None) -> bool:
         return False
@@ -400,7 +406,7 @@ class ServerFirewallRuleForm(forms.ModelForm):
 
 
 class NetworkFilterInline(ManagedRelActionsMixin, admin.TabularInline):
-    model = models.NetworkFilter
+    model = models.VpnNetworkFilter
     template = "admin/hidl_core/network_filter/tabular_inline.html"
     extra = 0
     fields = ["server_group", "server_member", "custom", "subnet"]
@@ -408,7 +414,7 @@ class NetworkFilterInline(ManagedRelActionsMixin, admin.TabularInline):
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.parent_instance: Optional[models.FirewallRule] = None
+        self.parent_instance: Optional[models.VpnFirewallRule] = None
         self.template = self.__class__.template
         self.can_delete = False
 
@@ -426,7 +432,7 @@ class NetworkFilterInline(ManagedRelActionsMixin, admin.TabularInline):
         return qs
 
 
-@admin.register(models.FirewallRule)
+@admin.register(models.VpnFirewallRule)
 class ServerFirewallRuleAdmin(SortableAdminMixin, HidlBaseModelAdmin, ReverseModelAdmin):
     ordering = ["order"]
     list_display = ["order", "__str__"]
@@ -458,14 +464,14 @@ class ServerFirewallRuleAdmin(SortableAdminMixin, HidlBaseModelAdmin, ReverseMod
         return instances
 
     def response_add(
-        self, request: HttpRequest, obj: models.FirewallRule, post_url_continue: Optional[str] = None
+        self, request: HttpRequest, obj: models.VpnFirewallRule, post_url_continue: Optional[str] = None
     ) -> HttpResponse:
         original_response = super().response_add(request, obj, post_url_continue)
         if "_continue" not in request.POST:
             return HttpResponseRedirect(obj.server.get_admin_url() + "#firewall-rules-tab")
         return original_response
 
-    def response_change(self, request: HttpRequest, obj: models.FirewallRule) -> HttpResponse:
+    def response_change(self, request: HttpRequest, obj: models.VpnFirewallRule) -> HttpResponse:
         original_response = super().response_change(request, obj)
         if "_continue" not in request.POST:
             return HttpResponseRedirect(obj.server.get_admin_url() + "#firewall-rules-tab")

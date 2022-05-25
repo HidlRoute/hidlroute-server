@@ -36,7 +36,7 @@ class IpTablesFirewallAction(FirewallAction):
 
 
 class IpTablesRule(NativeFirewallRule):
-    def __init__(self, original_rule: Optional["models.FirewallRule"] = None) -> None:
+    def __init__(self, original_rule: Optional["models.BaseFirewallRule"] = None) -> None:
         super().__init__(original_rule)
         self.source_port: Optional[str] = None
         self.protocol: Optional[str] = None
@@ -73,7 +73,7 @@ class ChainType(Enum):
 
 class IpTablesFirewallService(FirewallService):
     def build_native_firewall_rule(
-        self, rule: "models.FirewallRule", server: "models.Server", network_context: NetworkContext
+        self, rule: "models.BaseFirewallRule", server: "models.Server", network_context: NetworkContext
     ) -> List[IpTablesRule]:
         networking_service: NetworkingService = server.service_factory.networking_service  # noqa
         native_rules: List[IpTablesRule] = []
@@ -103,7 +103,7 @@ class IpTablesFirewallService(FirewallService):
     def get_default_policy(self, chain_type: ChainType, server: "models.Server") -> str:
         return "DROP"
 
-    def _get_table_for_rule(self, rule: "models.FirewallRule") -> iptc.Table:
+    def _get_table_for_rule(self, rule: "models.BaseFirewallRule") -> iptc.Table:
         # TODO: check action and return corresponding table for NAT and MANGLE
         return iptc.Table(iptc.Table.FILTER)
 
@@ -121,7 +121,7 @@ class IpTablesFirewallService(FirewallService):
         return False
 
     def _get_chains_for_filter_rule(
-        self, rule: "models.FirewallRule", network_context: NetworkContext, table: Optional[iptc.Table]
+        self, rule: "models.BaseFirewallRule", network_context: NetworkContext, table: Optional[iptc.Table]
     ) -> List[iptc.Chain]:
         assert table.name == iptc.Table.FILTER
         networking_service: NetworkingService = rule.server.service_factory.networking_service  # noqa

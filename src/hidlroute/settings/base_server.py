@@ -129,7 +129,7 @@ JAZZMIN_SETTINGS: Dict[str, Any] = {
     # Hide these apps when generating side menu e.g (auth)
     "hide_apps": ["django_otp", "two_factor", "otp_static", "otp_totp", "social_django"],
     # Hide these models when generating side menu (e.g auth.user)
-    "hide_models": ["hidl_core.firewallrule", "hidl_core.serverroutingrule"],
+    "hide_models": ["hidl_core.vpnfirewallrule", "hidl_core.serverroutingrule"],
     "icons": {
         "auth": "fas fa-users-cog",
         AUTH_USER_MODEL: "fas fa-user",
@@ -166,7 +166,7 @@ JAZZMIN_SETTINGS: Dict[str, Any] = {
     "changeform_format": "horizontal_tabs",
     # override change forms on a per modeladmin basis
     "changeform_format_overrides": {
-        "hidl_core.firewallrule": "single",
+        "hidl_core.vpnfirewallrule": "single",
         "hidl_core.serverroutingrule": "single",
         "hidl_core.firewallservice": "single",
     },

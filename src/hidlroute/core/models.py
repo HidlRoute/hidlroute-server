@@ -168,7 +168,7 @@ class Server(NameableIdentifiable, WithComment, polymorphic_models.PolymorphicMo
     def restart(self) -> PostedJob:
         return self.service_factory.worker_service.restart_vpn_server(self)
 
-    def get_firewall_rules(self) -> QuerySet["FirewallRule"]:
+    def get_firewall_rules(self) -> QuerySet["VpnFirewallRule"]:
         return self.firewallrule_set.all()
 
     def get_routing_rules(self) -> QuerySet["ServerRoutingRule"]:
@@ -194,7 +194,6 @@ class IpAllocationMeta(models.Model):
 
 class Group(NameableIdentifiable, WithComment, mp_tree.MP_Node):
     DEFAULT_GROUP_SLUG = "x-default"
-    servers = models.ManyToManyField(Server, through="ServerToGroup")
 
     def __str__(self):
         return f"{self.name}"
@@ -209,8 +208,8 @@ class Group(NameableIdentifiable, WithComment, mp_tree.MP_Node):
 
 class ServerToGroup(models.Model):
     class Meta:
-        verbose_name = _("Group")
-        verbose_name_plural = _("Groups")
+        verbose_name = _("Server Group")
+        verbose_name_plural = _("Server Groups")
         unique_together = [("server", "group")]
 
     server = models.ForeignKey(Server, on_delete=models.CASCADE)
@@ -229,7 +228,6 @@ class ServerToGroup(models.Model):
 
 class Member(WithComment, polymorphic_models.PolymorphicModel):
     group = models.ForeignKey(Group, on_delete=models.RESTRICT)
-    servers = models.ManyToManyField(Server, through="ServerToMember")
 
     def __str__(self) -> str:
         return str(self.get_real_instance())
@@ -260,11 +258,11 @@ class Host(Member):
 
 class ServerToMember(models.Model):
     class Meta:
-        verbose_name = _("Member")
-        verbose_name_plural = _("Members")
+        verbose_name = _("Server Member")
+        verbose_name_plural = _("Server Members")
         unique_together = [("server", "member")]
 
-    server = models.ForeignKey(Server, on_delete=models.RESTRICT)
+    server = models.ForeignKey(Server, on_delete=models.CASCADE)
     member = models.ForeignKey(Member, on_delete=models.RESTRICT)
     subnet = models.ForeignKey(Subnet, on_delete=models.RESTRICT, null=True, blank=True)
 
@@ -385,7 +383,7 @@ class FirewallService(WithComment, NameableIdentifiable):
     pass
 
 
-class NetworkFilter(WithReprCache, models.Model):
+class VpnNetworkFilter(WithReprCache, models.Model):
     subnet = models.ForeignKey(Subnet, null=True, blank=True, on_delete=models.RESTRICT, related_name="network_from")
     custom = models.CharField(max_length=100, null=True, blank=True)
     server_group = models.ForeignKey("ServerToGroup", on_delete=models.CASCADE, null=True, blank=True)
@@ -427,35 +425,12 @@ class NetworkFilter(WithReprCache, models.Model):
         return "<default>"
 
 
-class FirewallRule(Sortable, WithComment, WithReprCache):
+class BaseFirewallRule(Sortable, WithComment, WithReprCache):
     class Meta:
-        verbose_name = _("Firewall Rule")
-
-    #     constraints = ServerRule.Meta.constraints + [
-    #         models.CheckConstraint(
-    #             check=~models.Q(network_from__isnull=False, network_from_override__isnull=False),
-    #             name="check_firewallrule_network_from_xor_override",
-    #         ),
-    #         models.CheckConstraint(
-    #             check=~models.Q(network_to__isnull=False, network_to_override__isnull=False),
-    #             name="check_firewallrule_network_to_xor_override",
-    #         ),
-    #     ]
+        abstract = True
 
     action = models.CharField(max_length=20)
     service = models.ForeignKey(FirewallService, null=True, blank=True, on_delete=models.RESTRICT)
-    server = models.ForeignKey(Server, null=False, blank=False, on_delete=models.CASCADE)
-    network_from = models.OneToOneField(
-        NetworkFilter,
-        null=True,
-        blank=True,
-        on_delete=models.RESTRICT,
-        related_name="network_from",
-        verbose_name=_("From"),
-    )
-    network_to = models.ForeignKey(
-        NetworkFilter, null=True, blank=True, on_delete=models.RESTRICT, related_name="network_to", verbose_name=_("To")
-    )
 
     @property
     def description(self) -> str:
@@ -463,7 +438,38 @@ class FirewallRule(Sortable, WithComment, WithReprCache):
             return self.comment
         if self.repr_cache:
             return self.repr_cache
-        return f"Rule {self.pk}"
+        return str(self)
+
+    @abc.abstractmethod
+    def get_network_to_def(self, server: Server) -> List[NetworkDef]:
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def get_network_from_def(self, server: Server) -> List[NetworkDef]:
+        raise NotImplementedError
+
+
+class VpnFirewallRule(BaseFirewallRule):
+    class Meta:
+        verbose_name = _("Server Firewall Rule")
+
+    server = models.ForeignKey(Server, null=False, blank=False, on_delete=models.CASCADE)
+    network_from = models.OneToOneField(
+        VpnNetworkFilter,
+        null=True,
+        blank=True,
+        on_delete=models.RESTRICT,
+        related_name="network_from",
+        verbose_name=_("From"),
+    )
+    network_to = models.ForeignKey(
+        VpnNetworkFilter,
+        null=True,
+        blank=True,
+        on_delete=models.RESTRICT,
+        related_name="network_to",
+        verbose_name=_("To"),
+    )
 
     def __str__(self):
         return f"Rule {self.pk}"
@@ -471,11 +477,8 @@ class FirewallRule(Sortable, WithComment, WithReprCache):
     def _get_repr(self):
         return (
             f"{self.action} Service: {self.service or '<server>'} "
-            f"From: {self.network_from or '<any>'} To: {self.network_to or '<server>'}"
+            f"From: {self.network_from or '<server-net>'} To: {self.network_to or '<server-net>'}"
         )
-
-    def __resolve_str(self, data: str, server: Server) -> str:
-        return data.strip().replace("$self", server.interface_name)
 
     def get_network_to_def(self, server: Server) -> List[NetworkDef]:
         if self.network_to:
