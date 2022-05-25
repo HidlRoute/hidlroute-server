@@ -39,7 +39,7 @@ class DummyDevice(models_core.Device):
         return peer
 
 
-class DummyServer(models_core.Server):
+class DummyVpnServer(models_core.VpnServer):
     class Meta:
         verbose_name = _("Dummy Server")
 

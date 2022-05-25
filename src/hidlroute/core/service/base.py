@@ -71,14 +71,14 @@ class ServerStatus:
 
 class VPNService(abc.ABC):
     @abc.abstractmethod
-    def start(self, server: "models.Server"):
+    def start(self, server: "models.VpnServer"):
         pass
 
     @abc.abstractmethod
-    def stop(self, server: "models.Server"):
+    def stop(self, server: "models.VpnServer"):
         pass
 
-    def restart(self, server: "models.Server"):
+    def restart(self, server: "models.VpnServer"):
         job = server.stop()
         server.service_factory.worker_service.wait_for_job(job.uuid)
         server = server.__class__.objects.get(pk=server.pk)  # Force reload from DB and new instance to clear all caches
@@ -86,7 +86,7 @@ class VPNService(abc.ABC):
         server.service_factory.worker_service.wait_for_job(job.uuid)
 
     @abc.abstractmethod
-    def get_status(self, server: "models.Server") -> ServerStatus:
+    def get_status(self, server: "models.VpnServer") -> ServerStatus:
         pass
 
 
@@ -110,19 +110,19 @@ class JobResult(NamedTuple):
 
 class WorkerService(abc.ABC):
     @abc.abstractmethod
-    def start_vpn_server(self, server: "models.Server") -> PostedJob:
+    def start_vpn_server(self, server: "models.VpnServer") -> PostedJob:
         pass
 
     @abc.abstractmethod
-    def stop_vpn_server(self, server: "models.Server") -> PostedJob:
+    def stop_vpn_server(self, server: "models.VpnServer") -> PostedJob:
         pass
 
     @abc.abstractmethod
-    def restart_vpn_server(self, server: "models.Server") -> PostedJob:
+    def restart_vpn_server(self, server: "models.VpnServer") -> PostedJob:
         pass
 
     @abc.abstractmethod
-    def get_server_status(self, server: "models.Server") -> ServerState:
+    def get_server_status(self, server: "models.VpnServer") -> ServerState:
         pass
 
     @abc.abstractmethod

@@ -23,7 +23,7 @@ from hidlroute.core import models as models_core
 from hidlroute.core.service.base import VPNService
 
 
-class OpenVPNServer(models_core.Server):
+class OpenVPNServer(models_core.VpnServer):
     @classmethod
     def get_device_model(cls) -> Type["models_core.Device"]:
         raise NotImplementedError

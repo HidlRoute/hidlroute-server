@@ -27,18 +27,18 @@ LOGGER = logging.getLogger("hidl_core.service.ip_allocation")
 
 
 class IPAllocationService(object):
-    def is_ip_available(self, ip_address: Union[str, IpAddress], server: models.Server) -> bool:
+    def is_ip_available(self, ip_address: Union[str, IpAddress], server: models.VpnServer) -> bool:
         """
         Returns true if given address is available for allocation.
         """
         entities_count = (
             models.Device.objects.filter(ip_address=ip_address).count()
-            + models.Server.objects.filter(ip_address=ip_address).count()
+            + models.VpnServer.objects.filter(ip_address=ip_address).count()
         )
         return entities_count == 0
 
     @transaction.atomic
-    def pick_ip_from_subnet(self, server: models.Server, subnet: models.Subnet, allocate: bool = False) -> IpAddress:
+    def pick_ip_from_subnet(self, server: models.VpnServer, subnet: models.Subnet, allocate: bool = False) -> IpAddress:
         """
         Returns the next available IP for the server subnet.
         If allocate is True, IPAllocationMeta will be updated.
@@ -61,7 +61,7 @@ class IPAllocationService(object):
         except Exception as e:
             raise IpAddressUnavailable("Unable to allocate ip for server {} subnet {}".format(server, subnet)) from e
 
-    def allocate_ip(self, server: models.Server, member: models.Member) -> IpAddress:
+    def allocate_ip(self, server: models.VpnServer, member: models.Member) -> IpAddress:
         """
         Allocates ip address for given member. IPAllocationMeta will be updated accordingly.
         """

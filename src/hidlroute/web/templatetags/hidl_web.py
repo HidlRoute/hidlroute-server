@@ -24,7 +24,7 @@ register = Library()
 
 @register.filter
 def filter_child_models(apps: List[Dict]) -> List[Dict]:
-    target = (models_core.Server, models_core.Device)
+    target = (models_core.VpnServer, models_core.Device)
     for app in apps:
         app["models"] = list(
             filter(lambda x: not (issubclass(x["model"], target) and x["model"] not in target), app["models"])

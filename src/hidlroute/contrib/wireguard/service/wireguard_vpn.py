@@ -37,7 +37,7 @@ LOGGER = logging.getLogger("hidl_wireguard.WireguardVPNService")
 
 class WireguardVPNService(VPNService):
     @staticmethod
-    def __ensure_wg_server(server: "core_models.Server") -> None:
+    def __ensure_wg_server(server: "core_models.VpnServer") -> None:
         assert isinstance(server, WireguardServer), "WireguardVPNService can only take WireguardServer as an argument"
 
     def start(self, server: "models.WireguardServer"):

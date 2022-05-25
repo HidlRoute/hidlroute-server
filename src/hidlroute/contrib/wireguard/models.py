@@ -56,7 +56,7 @@ class WireguardPeer(models_core.Device):
         return config
 
 
-class WireguardServer(models_core.Server):
+class WireguardServer(models_core.VpnServer):
     class Meta:
         verbose_name = _("Wireguard Server")
 

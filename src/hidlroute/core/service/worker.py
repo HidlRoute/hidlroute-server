@@ -43,22 +43,22 @@ class SynchronousWorkerService(WorkerService):
         )
         return job
 
-    def get_server_status(self, server: models.Server) -> ServerStatus:
+    def get_server_status(self, server: models.VpnServer) -> ServerStatus:
         return server.vpn_service.get_status(server)
 
-    def start_vpn_server(self, server: "models.Server") -> PostedJob:
+    def start_vpn_server(self, server: "models.VpnServer") -> PostedJob:
         try:
             return self.__register_job_result(server.vpn_service.start(server))
         except Exception as e:
             return self.__register_job_result(None, e)
 
-    def stop_vpn_server(self, server: "models.Server") -> PostedJob:
+    def stop_vpn_server(self, server: "models.VpnServer") -> PostedJob:
         try:
             return self.__register_job_result(server.vpn_service.stop(server))
         except Exception as e:
             return self.__register_job_result(None, e)
 
-    def restart_vpn_server(self, server: "models.Server") -> PostedJob:
+    def restart_vpn_server(self, server: "models.VpnServer") -> PostedJob:
         try:
             self.__register_job_result(server.vpn_service.restart(server))
         except Exception as e:

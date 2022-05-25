@@ -72,13 +72,13 @@ class PyRoute2NetworkingService(NetworkingService):
                 iface.ip6address = addr
         return iface
 
-    def setup_routes_for_server(self, server: models.Server):
+    def setup_routes_for_server(self, server: models.VpnServer):
         with IPRoute() as ipr:
             for route in server.get_routing_rules():
                 oif_index = self.get_interface_by_name(route.resolved_interface_name(server)).index
                 ipr.route("add", dst=str(route.network.cidr), gateway=route.gateway, oif=oif_index)
 
-    def destroy_routes_for_server(self, server: models.Server):
+    def destroy_routes_for_server(self, server: models.VpnServer):
         with IPRoute() as ipr:
             for route in server.get_routing_rules():
                 oif_index = self.get_interface_by_name(route.resolved_interface_name(server)).index

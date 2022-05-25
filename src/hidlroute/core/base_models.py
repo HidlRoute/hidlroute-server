@@ -103,7 +103,7 @@ class ServerRelated(models.Model):
             ),
         ]
 
-    server = models.ForeignKey("Server", on_delete=models.CASCADE, null=True, blank=True)
+    server = models.ForeignKey("VpnServer", on_delete=models.CASCADE, null=True, blank=True)
     server_group = models.ForeignKey("ServerToGroup", on_delete=models.CASCADE, null=True, blank=True)
     server_member = models.ForeignKey("ServerToMember", on_delete=models.CASCADE, null=True, blank=True)
 
@@ -118,7 +118,7 @@ class ServerRelated(models.Model):
         return cls.objects.filter(query).distinct()
 
     @classmethod
-    def load_related_to_server(cls, server: "models_core.Server") -> models.QuerySet:
+    def load_related_to_server(cls, server: "models_core.VpnServer") -> models.QuerySet:
         return cls.objects.filter(
             Q(server=server) | Q(server_group__server=server) | Q(server_member__server=server)
         ).distinct()

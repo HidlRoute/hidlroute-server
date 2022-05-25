@@ -26,20 +26,20 @@ LOGGER = logging.getLogger("hidl.contrib.dummy.vpn")
 
 
 class DummyLoggingVPNService(VPNService):
-    def start(self, server: "core_models.Server"):
+    def start(self, server: "core_models.VpnServer"):
         LOGGER.info(f"Setting up VPN server: {server}")
         LOGGER.info(f"Creating network interface {server.interface_name}")
         server.service_factory.networking_service.setup_routes_for_server(server)
         server.service_factory.firewall_service.setup_firewall_for_server(server)
         LOGGER.info(f"VPN Server {server} is up and running")
 
-    def stop(self, server: "core_models.Server"):
+    def stop(self, server: "core_models.VpnServer"):
         LOGGER.info(f"Shutting down VPN server: {server}")
         LOGGER.info(f"Destroying network interface {server.interface_name}")
         server.service_factory.firewall_service.destroy_firewall_for_server(server)
         server.service_factory.networking_service.destroy_routes_for_server(server)
         LOGGER.info(f"VPN Server {server} is terminated")
 
-    def get_status(self, server: "core_models.Server") -> ServerStatus:
+    def get_status(self, server: "core_models.VpnServer") -> ServerStatus:
         LOGGER.info(f"Get server status: {server}")
         return ServerStatus(state=ServerState.STOPPED)

@@ -103,7 +103,7 @@ class ServerToGroupAdmin(GroupSelectAdminMixin, ManagedRelActionsMixin, admin.Ta
 class ServerRelatedAdminMixin:
     def __init__(self, parent_model, admin_site) -> None:
         super().__init__(parent_model, admin_site)
-        self.parent_obj: Optional[models.Server] = None
+        self.parent_obj: Optional[models.VpnServer] = None
 
     def get_formset(self, request, obj=None, **kwargs):
         if self.parent_obj is None and obj:
@@ -210,7 +210,7 @@ class BaseServerAdminImpl(ManagedRelActionsMixin, SortableAdminMixin, Polymorphi
     ]
     create_inlines = [ServerToGroupAdmin]
 
-    def get_inlines(self, request: HttpRequest, obj: Optional[models.Server] = None) -> List[Type[InlineModelAdmin]]:
+    def get_inlines(self, request: HttpRequest, obj: Optional[models.VpnServer] = None) -> List[Type[InlineModelAdmin]]:
         is_create = obj is None
         if is_create and self.create_inlines is not None:
             return self.create_inlines
@@ -239,7 +239,7 @@ class BaseServerAdminImpl(ManagedRelActionsMixin, SortableAdminMixin, Polymorphi
     def get_icon(cls) -> str:
         return cls.ICON
 
-    def response_add(self, request: HttpRequest, obj: models.Server, post_url_continue=None) -> HttpResponse:
+    def response_add(self, request: HttpRequest, obj: models.VpnServer, post_url_continue=None) -> HttpResponse:
         # We should allow further modification of the user just added i.e. the
         # 'Save' button should behave like the 'Save and continue editing'
         # button except of:
@@ -249,7 +249,7 @@ class BaseServerAdminImpl(ManagedRelActionsMixin, SortableAdminMixin, Polymorphi
             request.POST["_continue"] = 1  # noqa
         return super().response_add(request, obj, post_url_continue)
 
-    def response_change(self, request: HttpRequest, obj: models.Server) -> HttpResponse:
+    def response_change(self, request: HttpRequest, obj: models.VpnServer) -> HttpResponse:
         # Stay on the edit page unless Add Another button is pressed
         if "_addanother" not in request.POST:
             request.POST = request.POST.copy()  # noqa
@@ -274,11 +274,11 @@ class BaseServerAdminImpl(ManagedRelActionsMixin, SortableAdminMixin, Polymorphi
         formset.save_m2m()
 
     def __get_server_state_change_redirect_url(self, request: HttpRequest) -> str:
-        return reverse("admin:hidl_core_server_changelist") + "?server-started=1"
+        return reverse("admin:hidl_core_vpnserver_changelist") + "?server-started=1"
 
     def action_start_server(self, request: HttpRequest, server_id: int) -> HttpResponse:
         try:
-            obj = models.Server.objects.get(pk=server_id)
+            obj = models.VpnServer.objects.get(pk=server_id)
             obj.start()
             self.message_user(request, _("Server {} is starting".format(obj)))
         except HidlNetworkingException as e:
@@ -288,7 +288,7 @@ class BaseServerAdminImpl(ManagedRelActionsMixin, SortableAdminMixin, Polymorphi
 
     def action_stop_server(self, request: HttpRequest, server_id: int) -> HttpResponse:
         try:
-            obj = models.Server.objects.get(pk=server_id)
+            obj = models.VpnServer.objects.get(pk=server_id)
             obj.stop()
             self.message_user(request, _("Server {} is shutting down".format(obj)))
         except HidlNetworkingException as e:
@@ -297,7 +297,7 @@ class BaseServerAdminImpl(ManagedRelActionsMixin, SortableAdminMixin, Polymorphi
         return HttpResponseRedirect(self.__get_server_state_change_redirect_url(request))
 
     def action_restart_server(self, request: HttpRequest, server_id: int) -> HttpResponse:
-        obj = models.Server.objects.get(pk=server_id)
+        obj = models.VpnServer.objects.get(pk=server_id)
         self.message_user(request, _("Server {} is re-starting".format(obj)))
         obj.restart()
         return HttpResponseRedirect(self.__get_server_state_change_redirect_url(request))
@@ -311,10 +311,10 @@ class BaseServerAdminImpl(ManagedRelActionsMixin, SortableAdminMixin, Polymorphi
         return super(PolymorphicChildModelAdmin, self).get_list_display(request)
 
 
-@admin.register(models.Server)
+@admin.register(models.VpnServer)
 class ServerAdmin(HidlBaseModelAdmin, HidlePolymorphicParentAdmin):
     Impl = BaseServerAdminImpl
-    base_model = models.Server
+    base_model = models.VpnServer
     child_models = []
     add_type_form = ServerTypeSelectForm
     ordering = ["id"]
@@ -323,7 +323,7 @@ class ServerAdmin(HidlBaseModelAdmin, HidlePolymorphicParentAdmin):
     polymorphic_list = True
     control_buttons_template = loader.get_template("admin/hidl_core/server/server_control_buttons.html")
 
-    def vpn_status(self, obj: models.Server):
+    def vpn_status(self, obj: models.VpnServer):
         state = obj.status.state
         css_class = "badge-secondary"
         if state.is_transitioning:
@@ -337,7 +337,7 @@ class ServerAdmin(HidlBaseModelAdmin, HidlePolymorphicParentAdmin):
             result += f'&nbsp;<span class="server-state badge badge-warning">{_("Changes Pending")}</span>'
         return mark_safe(result)
 
-    def control_button(self, obj: models.Server):
+    def control_button(self, obj: models.VpnServer):
         return self.control_buttons_template.render(context={"server": obj, "ServerState": ServerState})
 
     control_button.short_description = _("Actions")

@@ -26,10 +26,10 @@ class DummyDeviceAdmin(DeviceAdmin.Impl):
     verbose_name = _("Dummy Device")
 
 
-@ServerAdmin.register_implementation(models.DummyServer)
+@ServerAdmin.register_implementation(models.DummyVpnServer)
 class DummyServerAdmin(ServerAdmin.Impl):
     ICON = "images/server/logging.png"
-    base_model = models.DummyServer
+    base_model = models.DummyVpnServer
     verbose_name = _("Dummy Server Config")
     verbose_name_plural = verbose_name
 

@@ -73,7 +73,7 @@ class ChainType(Enum):
 
 class IpTablesFirewallService(FirewallService):
     def build_native_firewall_rule(
-        self, rule: "models.BaseFirewallRule", server: "models.Server", network_context: NetworkContext
+        self, rule: "models.BaseFirewallRule", server: "models.VpnServer", network_context: NetworkContext
     ) -> List[IpTablesRule]:
         networking_service: NetworkingService = server.service_factory.networking_service  # noqa
         native_rules: List[IpTablesRule] = []
@@ -100,7 +100,7 @@ class IpTablesFirewallService(FirewallService):
                     native_rules.append(native_rule)
         return native_rules
 
-    def get_default_policy(self, chain_type: ChainType, server: "models.Server") -> str:
+    def get_default_policy(self, chain_type: ChainType, server: "models.VpnServer") -> str:
         return "DROP"
 
     def _get_table_for_rule(self, rule: "models.BaseFirewallRule") -> iptc.Table:
@@ -139,10 +139,10 @@ class IpTablesFirewallService(FirewallService):
             LOGGER.warning("Rule {} doesn't belong to any chain".format(rule.description))
         return result
 
-    def _get_chain_name(self, chain_type: ChainType, server: "models.Server") -> str:
+    def _get_chain_name(self, chain_type: ChainType, server: "models.VpnServer") -> str:
         return f"HIDL-{chain_type.value}-{server.slug}"
 
-    def is_firewall_configured_for_server(self, server: "models.Server"):
+    def is_firewall_configured_for_server(self, server: "models.VpnServer"):
         server_chains = [self._get_chain_name(x, server) for x in ChainType]
         for x in server_chains:
             if not iptc.easy.has_chain(iptc.Table.FILTER, x):
@@ -150,13 +150,13 @@ class IpTablesFirewallService(FirewallService):
         # TODO: Check jump rules
         return True
 
-    def _get_rule_prefix(self, server: Optional["models.Server"] = None) -> str:
+    def _get_rule_prefix(self, server: Optional["models.VpnServer"] = None) -> str:
         if server is not None:
             return f"HIDL({server.slug}):"
         else:  # No server means HOST rule
             return "HIDL_HOST:"
 
-    def _create_hidl_comment_matcher(self, comment: str, rule: iptc.Rule, server: "models.Server") -> iptc.Rule:
+    def _create_hidl_comment_matcher(self, comment: str, rule: iptc.Rule, server: "models.VpnServer") -> iptc.Rule:
         m = rule.create_match("comment")
         m.comment = self._get_rule_prefix(server) + " " + comment
         rule.matches.append(m)
@@ -180,7 +180,7 @@ class IpTablesFirewallService(FirewallService):
         rule.matches.append(port_matcher)
         return rule
 
-    def __find_hidl_rules_in_chain(self, chain: iptc.Chain, server: Optional["models.Server"] = None):
+    def __find_hidl_rules_in_chain(self, chain: iptc.Chain, server: Optional["models.VpnServer"] = None):
         prefix = self._get_rule_prefix(server)
         result: List[iptc.Rule] = []
         for r in chain.rules:  # type: iptc.Rule
@@ -190,7 +190,7 @@ class IpTablesFirewallService(FirewallService):
         return result
 
     def __uninstall_server_rules_for_chain(
-        self, chain_name: str, server: "models.Server", table: Optional[iptc.Table] = None
+        self, chain_name: str, server: "models.VpnServer", table: Optional[iptc.Table] = None
     ):
         if table is None:
             table = iptc.Table(iptc.Table.FILTER)
@@ -199,7 +199,7 @@ class IpTablesFirewallService(FirewallService):
         for r in rules:
             chain.delete_rule(r)
 
-    def _uninstall_server_rules(self, server: "models.Server"):
+    def _uninstall_server_rules(self, server: "models.VpnServer"):
         table = iptc.Table(iptc.Table.FILTER)
         table.refresh()
         try:
@@ -215,7 +215,7 @@ class IpTablesFirewallService(FirewallService):
             table.autocommit = True
             table.refresh()
 
-    def _install_jump_rules(self, server: "models.Server"):
+    def _install_jump_rules(self, server: "models.VpnServer"):
         table = iptc.Table(iptc.Table.FILTER)
         table.autocommit = True
         chain = iptc.Chain(table, "INPUT")
@@ -238,7 +238,7 @@ class IpTablesFirewallService(FirewallService):
         self._create_hidl_comment_matcher("JUMP Jump rule for FORWARD chain (inbound traffic)", rule, server)
         chain.append_rule(rule)
 
-    def _install_chains(self, server: "models.Server"):
+    def _install_chains(self, server: "models.VpnServer"):
         # Input chain
         input_hidl_chain = self._get_chain_name(ChainType.INPUT, server)
         if not iptc.easy.has_chain(iptc.Table.FILTER, input_hidl_chain):
@@ -252,7 +252,7 @@ class IpTablesFirewallService(FirewallService):
         if not iptc.easy.has_chain(iptc.Table.FILTER, fwd_hidl_chain):
             iptc.easy.add_chain(iptc.Table.FILTER, fwd_hidl_chain)
 
-    def _create_default_rules(self, server: "models.Server"):
+    def _create_default_rules(self, server: "models.VpnServer"):
         output_chain = iptc.Chain(iptc.Table(iptc.Table.FILTER), self._get_chain_name(ChainType.OUTPUT, server))
         rule = iptc.Rule()
         match = rule.create_match("state")
@@ -262,7 +262,7 @@ class IpTablesFirewallService(FirewallService):
         self._create_hidl_comment_matcher("Allow established and related", rule, server)
         output_chain.append_rule(rule)
 
-    def _uninstall_chains(self, server: "models.Server"):
+    def _uninstall_chains(self, server: "models.VpnServer"):
         self._uninstall_server_rules(server)
         server_chains = [self._get_chain_name(x, server) for x in ChainType]
         iptc.easy.batch_delete_chains(iptc.Table.FILTER, server_chains)
@@ -271,18 +271,20 @@ class IpTablesFirewallService(FirewallService):
         chain = iptc.Chain(iptc.Table(iptc.Table.FILTER), chain_name)
         chain.flush()
 
-    def _ensure_empty_chains(self, server: "models.Server"):
+    def _ensure_empty_chains(self, server: "models.VpnServer"):
         if not self.is_firewall_configured_for_server(server):
             self._install_chains(server)
         server_chains = [self._get_chain_name(x, server) for x in ChainType]
         for x in server_chains:
             self._clear_chain(x)
 
-    def _ensure_jump_rules(self, server: "models.Server"):
+    def _ensure_jump_rules(self, server: "models.VpnServer"):
         self._uninstall_server_rules(server)
         self._install_jump_rules(server)
 
-    def _append_native_rule(self, native_rule: IpTablesRule, chain: iptc.Chain, server: "models.Server") -> iptc.Rule:
+    def _append_native_rule(
+        self, native_rule: IpTablesRule, chain: iptc.Chain, server: "models.VpnServer"
+    ) -> iptc.Rule:
         rule = iptc.Rule()
         if native_rule.scr_net:
             rule.src = str(native_rule.scr_net)
@@ -298,7 +300,7 @@ class IpTablesFirewallService(FirewallService):
         chain.append_rule(rule)
         return rule
 
-    def _install_server_rules(self, server: "models.Server"):
+    def _install_server_rules(self, server: "models.VpnServer"):
         self._create_default_rules(server)
         network_context = NetworkContext(
             server_ip=server.ip_address,
@@ -314,11 +316,11 @@ class IpTablesFirewallService(FirewallService):
                     for c in chains:
                         self._append_native_rule(nr, c, server)
 
-    def setup_firewall_for_server(self, server: "models.Server"):
+    def setup_firewall_for_server(self, server: "models.VpnServer"):
         self._ensure_empty_chains(server)
         self._ensure_jump_rules(server)
         self._install_server_rules(server)
 
-    def destroy_firewall_for_server(self, server: "models.Server"):
+    def destroy_firewall_for_server(self, server: "models.VpnServer"):
         self._uninstall_server_rules(server)
         self._uninstall_chains(server)

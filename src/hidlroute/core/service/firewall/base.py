@@ -76,14 +76,14 @@ class FirewallService(abc.ABC):
                     )
 
     def build_native_firewall_rule(
-        self, rule: "models.BaseFirewallRule", server: "models.Server", server_networks: List[IpNetwork]
+        self, rule: "models.BaseFirewallRule", server: "models.VpnServer", server_networks: List[IpNetwork]
     ) -> List[NativeFirewallRule]:
         return []
 
     @abc.abstractmethod
-    def setup_firewall_for_server(self, server: "models.Server"):
+    def setup_firewall_for_server(self, server: "models.VpnServer"):
         pass
 
     @abc.abstractmethod
-    def destroy_firewall_for_server(self, server: "models.Server"):
+    def destroy_firewall_for_server(self, server: "models.VpnServer"):
         pass

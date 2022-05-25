@@ -107,11 +107,11 @@ class NetworkContext:
 
 class NetworkingService(abc.ABC):
     @abc.abstractmethod
-    def setup_routes_for_server(self, server: "models.Server"):
+    def setup_routes_for_server(self, server: "models.VpnServer"):
         pass
 
     @abc.abstractmethod
-    def destroy_routes_for_server(self, server: "models.Server"):
+    def destroy_routes_for_server(self, server: "models.VpnServer"):
         pass
 
     @abc.abstractmethod
@@ -142,14 +142,14 @@ class NetworkingService(abc.ABC):
     def set_link_status(self, interface: NetInterface, status: NetInterfaceState) -> None:
         pass
 
-    def get_routes_for_server(self, server: "models.Server") -> List[Route]:
+    def get_routes_for_server(self, server: "models.VpnServer") -> List[Route]:
         result: List[Route] = []
         for r in self.get_routes():
             if r.interface == server.interface_name:
                 result.append(r)
         return result
 
-    def get_subnets_for_server(self, server: "models.Server") -> List[IpNetwork]:
+    def get_subnets_for_server(self, server: "models.VpnServer") -> List[IpNetwork]:
         return [r.network for r in self.get_routes_for_server(server)]
 
     def get_interface_by_name(self, iface_name: str) -> Optional[NetInterface]:
@@ -164,7 +164,7 @@ class NetworkingService(abc.ABC):
                 result.append(x)
         return result
 
-    def get_host_networks(self, server: "models.Server") -> List[IpNetwork]:
+    def get_host_networks(self, server: "models.VpnServer") -> List[IpNetwork]:
         result: List[IpNetwork] = []
         for x in self.get_interfaces():
             if x.name != server.interface_name:

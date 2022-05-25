@@ -54,7 +54,7 @@ class Subnet(NameableIdentifiable, WithComment, models.Model):
         return f"{self.name} ({self.cidr})"
 
 
-class Server(NameableIdentifiable, WithComment, polymorphic_models.PolymorphicModel):
+class VpnServer(NameableIdentifiable, WithComment, polymorphic_models.PolymorphicModel):
     interface_name = models.CharField(max_length=16)
     ip_address = netfields.InetAddressField(null=False, blank=False)
     subnet = models.ForeignKey(Subnet, on_delete=models.RESTRICT)
@@ -176,7 +176,7 @@ class Server(NameableIdentifiable, WithComment, polymorphic_models.PolymorphicMo
 
     def get_admin_url(self):
         return reverse(
-            "admin:%s_%s_change" % (Server._meta.app_label, Server._meta.model_name), args=(self.pk,)  # noqa
+            "admin:%s_%s_change" % (VpnServer._meta.app_label, VpnServer._meta.model_name), args=(self.pk,)  # noqa
         )
 
     def get_devices(self) -> QuerySet["Device"]:
@@ -184,7 +184,7 @@ class Server(NameableIdentifiable, WithComment, polymorphic_models.PolymorphicMo
 
 
 class IpAllocationMeta(models.Model):
-    server = models.ForeignKey(Server, on_delete=models.CASCADE)
+    server = models.ForeignKey(VpnServer, on_delete=models.CASCADE)
     subnet = models.ForeignKey(Subnet, on_delete=models.RESTRICT)
     last_allocated_ip = netfields.InetAddressField(null=True, blank=True)
 
@@ -212,7 +212,7 @@ class ServerToGroup(models.Model):
         verbose_name_plural = _("Server Groups")
         unique_together = [("server", "group")]
 
-    server = models.ForeignKey(Server, on_delete=models.CASCADE)
+    server = models.ForeignKey(VpnServer, on_delete=models.CASCADE)
     group = models.ForeignKey(Group, on_delete=models.RESTRICT)
     subnet = models.ForeignKey(Subnet, on_delete=models.RESTRICT, null=True, blank=True)
 
@@ -262,7 +262,7 @@ class ServerToMember(models.Model):
         verbose_name_plural = _("Server Members")
         unique_together = [("server", "member")]
 
-    server = models.ForeignKey(Server, on_delete=models.CASCADE)
+    server = models.ForeignKey(VpnServer, on_delete=models.CASCADE)
     member = models.ForeignKey(Member, on_delete=models.RESTRICT)
     subnet = models.ForeignKey(Subnet, on_delete=models.RESTRICT, null=True, blank=True)
 
@@ -273,7 +273,7 @@ class ServerToMember(models.Model):
             Device.create_device_for_host(self.member.get_real_instance(), self.server)
 
     @classmethod
-    def is_valid_member(cls, server: Server, member: Member) -> bool:
+    def is_valid_member(cls, server: VpnServer, member: Member) -> bool:
         if ServerToMember.objects.filter(server=server, member=member).exists():
             return True
         if server.servertogroup_set.filter(group=member.group).exists():
@@ -281,7 +281,7 @@ class ServerToMember(models.Model):
         return False
 
     @classmethod
-    def get_or_create(cls, server: Server, member: Member) -> "ServerToMember":
+    def get_or_create(cls, server: VpnServer, member: Member) -> "ServerToMember":
         if cls.is_valid_member(server, member):
             return cls.objects.get_or_create(server=server, member=member)[0]
         raise PermissionDenied("{} is not allowed at server {}".format(member, server.name))
@@ -343,7 +343,7 @@ class Device(NameableIdentifiable, WithComment, polymorphic_models.PolymorphicMo
 
     @classmethod
     @transaction.atomic
-    def create_device_for_host(cls, host: Host, server: Server) -> "Device":
+    def create_device_for_host(cls, host: Host, server: VpnServer) -> "Device":
         server_to_member = ServerToMember.get_or_create(server=server, member=host)
         ip = server.service_factory.ip_allocation_service.allocate_ip(server_to_member.server, server_to_member.member)
         device = server.get_device_model().create_default(server_to_member=server_to_member, ip_address=ip)
@@ -354,7 +354,7 @@ class Device(NameableIdentifiable, WithComment, polymorphic_models.PolymorphicMo
         raise NotImplementedError
 
     @classmethod
-    def generate_name(cls, server: Server, member: Member) -> str:
+    def generate_name(cls, server: VpnServer, member: Member) -> str:
         return slugify("-".join((member.get_real_instance().get_name(), server.slug)))
 
     def generate_config(self) -> DeviceConfig:
@@ -389,7 +389,7 @@ class VpnNetworkFilter(WithReprCache, models.Model):
     server_group = models.ForeignKey("ServerToGroup", on_delete=models.CASCADE, null=True, blank=True)
     server_member = models.ForeignKey("ServerToMember", on_delete=models.CASCADE, null=True, blank=True)
 
-    def parse_custom(self, server: Server) -> NetworkDef:
+    def parse_custom(self, server: VpnServer) -> NetworkDef:
         for x in self.custom.split(","):
             x = x.strip().lower()
             try:
@@ -400,7 +400,7 @@ class VpnNetworkFilter(WithReprCache, models.Model):
                 except ValueError:
                     raise ValueError(f"Network filter {x} is invalid")
 
-    def to_network_defs(self, server: Server) -> List[NetworkDef]:
+    def to_network_defs(self, server: VpnServer) -> List[NetworkDef]:
         if self.server_group:
             return [self.server_group.resolve_subnet().cidr]
         if self.server_member:
@@ -441,11 +441,11 @@ class BaseFirewallRule(Sortable, WithComment, WithReprCache):
         return str(self)
 
     @abc.abstractmethod
-    def get_network_to_def(self, server: Server) -> List[NetworkDef]:
+    def get_network_to_def(self, server: VpnServer) -> List[NetworkDef]:
         raise NotImplementedError
 
     @abc.abstractmethod
-    def get_network_from_def(self, server: Server) -> List[NetworkDef]:
+    def get_network_from_def(self, server: VpnServer) -> List[NetworkDef]:
         raise NotImplementedError
 
 
@@ -453,7 +453,7 @@ class VpnFirewallRule(BaseFirewallRule):
     class Meta:
         verbose_name = _("Server Firewall Rule")
 
-    server = models.ForeignKey(Server, null=False, blank=False, on_delete=models.CASCADE)
+    server = models.ForeignKey(VpnServer, null=False, blank=False, on_delete=models.CASCADE)
     network_from = models.OneToOneField(
         VpnNetworkFilter,
         null=True,
@@ -480,12 +480,12 @@ class VpnFirewallRule(BaseFirewallRule):
             f"From: {self.network_from or '<server-net>'} To: {self.network_to or '<server-net>'}"
         )
 
-    def get_network_to_def(self, server: Server) -> List[NetworkDef]:
+    def get_network_to_def(self, server: VpnServer) -> List[NetworkDef]:
         if self.network_to:
             return self.network_to.to_network_defs(server)
         return [NetVar.Server]
 
-    def get_network_from_def(self, server: Server) -> List[NetworkDef]:
+    def get_network_from_def(self, server: VpnServer) -> List[NetworkDef]:
         if self.network_from:
             return self.network_from.to_network_defs(server)
         return [NetVar.Server]
@@ -501,7 +501,7 @@ class ServerRoutingRule(ServerRule):
         help_text=_("Use special keyword $self to reference interface of the VPN server this route is attached to"),
     )
 
-    def resolved_interface_name(self, server: Server) -> Optional[str]:
+    def resolved_interface_name(self, server: VpnServer) -> Optional[str]:
         if self.interface is not None and self.interface.strip().lower() == "$self":
             return server.interface_name
         else:
