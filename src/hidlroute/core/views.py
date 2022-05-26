@@ -17,13 +17,9 @@
 # from django.shortcuts import render
 
 # Create your views here.
-from django import apps
 from django.http import HttpResponse
-import datetime
 
 from django.shortcuts import render
-from django.contrib import admin
-from jazzmin import utils as jazzmin_utils
 
 
 def device_list(request):

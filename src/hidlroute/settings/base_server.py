@@ -101,7 +101,7 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
                 "social_django.context_processors.backends",
                 "social_django.context_processors.login_redirect",
-                "hidlroute.core.context_processors.admin_menu"
+                "hidlroute.core.context_processors.admin_menu",
             ],
         },
     },
@@ -164,6 +164,7 @@ JAZZMIN_SETTINGS: Dict[str, Any] = {
         {"name": _("Two-Factor Authentication"), "url": "two_factor:profile", "new_window": False},
     ],
     "custom_links": {
+        "easyaudit": [{"name": _("Blocked Users"), "url": "defender_blocks_view", "new_window": False}],
         "hidl_core": [
             {"name": _("Self-service"), "url": "selfservice:devices_list", "new_window": False},
         ],
