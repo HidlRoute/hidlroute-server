@@ -26,6 +26,9 @@ from hidlroute.core.models import Person, Group
 class User(WithComment, DjangoUser):
     class Meta:
         db_table = "auth_user"
+        permissions = [
+            ("can_manage_defender", "Can manage defender"),
+        ]
 
     profile_picture = models.URLField(null=True, blank=True)
     external_id = models.CharField(

@@ -20,76 +20,91 @@
 {% endblock %}
 
 {% block content_title %} {% trans 'Blocked Users and IPs' %} {% endblock %}
+{% block content_description %}{% trans "Here is a list of IP's and usernames that are blocked" %}{% endblock %}
 
 {% block content %}
-    <div class="card card-primary card-outline">
-        <div class="card-header with-border">
-            <h4 class="card-title">
-                {% blocktrans %}Here is a list of IP's and usernames that are blocked{% endblocktrans %}
-            </h4>
+    <div class="col-6">
+        <div class="card card-primary card-outline">
+            <div class="card-header with-border">
+                <h4 class="card-title">
+                    {% blocktrans %}Blocked IP's{% endblocktrans %}
+                </h4>
+            </div>
+            <div class="card-body">
+                <div id="content-main">
+                    <div class="module">
+                        <table>
+                            <thead>
+                            <tr>
+                                <th style="width: 70%">{% trans "IP" %}</th>
+                                <th class="text-right">{% trans "Action" %}</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for block in blocked_ip_list %}
+                                <tr class="{% cycle "row2" "row1" %}">
+                                    <td>{{ block }}</td>
+                                    <td class="text-right">
+                                        <form method='POST' action="{% url 'defender:unblock_ip' block %}">
+                                            {% csrf_token %}
+                                            <input class="btn btn-sm btn-success" type='submit'
+                                                   value='{% trans "Unblock" %}'/>
+                                        </form>
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="2" class="text-center">No IP's</td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
+    </div>
+    <div class="col-6">
+        <div class="card card-primary card-outline">
+            <div class="card-header with-border">
+                <h4 class="card-title">
+                    {% blocktrans %}Blocked Users{% endblocktrans %}
+                </h4>
+            </div>
 
-        <div class="card-body">
-            <div id="content-main">
-                <div class="module">
+            <div class="card-body">
+                <div id="content-main">
+                    <div class="module">
+                        <table>
+                            <thead>
+                            <tr>
+                                <th style="width: 70%">{% trans "IP" %}</th>
+                                <th class="text-right">{% trans "Action" %}</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for block in blocked_username_list %}
+                                <tr class="{% cycle "row2" "row1" %}">
+                                    <td>{{ block }}</td>
+                                    <td class="text-right">
+                                        <form method='POST' action="{% url 'defender:unblock_username' block %}">
+                                            {% csrf_token %}
+                                            <input class="btn btn-sm btn-success" type='submit'
+                                                   value='{% trans "Unblock" %}'/>
+                                        </form>
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan='2' class="text-center">No Username's</td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
 
-                    <table>
-                        <caption>Blocked IP's</caption>
-                        <thead>
-                        <tr>
-                            <th>IP</th>
-                            <th>Action</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        {% for block in blocked_ip_list %}
-                            <tr class="{% cycle "row2" "row1" %}">
-                                <td>{{ block }}</td>
-                                <td>
-                                    <form method='POST' action="{% url 'defender_unblock_ip_view' block %}">
-                                        {% csrf_token %}
-                                        <input type='submit' value='unblock'/>
-                                    </form>
-                                </td>
-                            </tr>
-                        {% empty %}
-                            <tr>
-                                <td colspan='2'>No IP's</td>
-                            </tr>
-                        {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                <div class="module">
-                    <table>
-                        <caption>Blocked Usernames</caption>
-                        <thead>
-                        <tr>
-                            <th>Usernames</th>
-                            <th>Action</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        {% for block in blocked_username_list %}
-                            <tr class="{% cycle "row2" "row1" %}">
-                                <td>{{ block }}</td>
-                                <td>
-                                    <form method='POST' action="{% url 'defender_unblock_username_view' block %}">
-                                        {% csrf_token %}
-                                        <input type='submit' value='unblock'/>
-                                    </form>
-                                </td>
-                            </tr>
-                        {% empty %}
-                            <tr>
-                                <td colspan='2'>No Username's</td>
-                            </tr>
-                        {% endfor %}
-                        </tbody>
-                    </table>
+                    </div>
 
                 </div>
-
             </div>
         </div>
     </div>

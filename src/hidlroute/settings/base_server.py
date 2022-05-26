@@ -80,7 +80,8 @@ TWO_FACTOR_REMEMBER_COOKIE_PREFIX = "rmb_2fa_"
 TWO_FACTOR_REMEMBER_COOKIE_AGE = 24 * 3600
 TWO_FACTOR_REMEMBER_COOKIE_SAMESITE = "Strict"
 
-#
+# Brute force prevention (by django-defender)
+# See config docs here: https://django-defender.readthedocs.io/en/latest/#customizing-django-defender
 DEFENDER_LOGIN_FAILURE_LIMIT = env.int("DEFENDER_LOGIN_FAILURE_LIMIT", 5)
 DEFENDER_COOLOFF_TIME = env.int("DEFENDER_COOLOFF_TIME", 300)
 DEFENDER_BEHIND_REVERSE_PROXY = env.bool("BEHIND_PROXY", False)
@@ -164,9 +165,14 @@ JAZZMIN_SETTINGS: Dict[str, Any] = {
         {"name": _("Two-Factor Authentication"), "url": "two_factor:profile", "new_window": False},
     ],
     "custom_links": {
-        "easyaudit": [{"name": _("Blocked Users"), "url": "defender_blocks_view", "new_window": False}],
+        "easyaudit": [{"name": _("Blocked Users"), "url": "defender:blocks", "new_window": False}],
         "hidl_core": [
-            {"name": _("Self-service"), "url": "selfservice:devices_list", "new_window": False},
+            {
+                "name": _("Self-service"),
+                "url": "selfservice:devices_list",
+                "new_window": False,
+                "permissions": ["can_manage_defender"],
+            },
         ],
     },
     #############

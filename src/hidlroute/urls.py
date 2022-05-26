@@ -49,7 +49,7 @@ if settings.DEBUG_TOOLBAR:
 
 if settings.BRUTE_FORCE_PROTECTION:
     urlpatterns += [
-        path("defender/", include("defender.urls")),
+        path("defender/", include("hidlroute.web.urls_defender", namespace="defender")),
     ]
 
 urlpatterns += [
