@@ -147,7 +147,16 @@ JAZZMIN_SETTINGS: Dict[str, Any] = {
     "icons": {
         "auth": "fas fa-users-cog",
         AUTH_USER_MODEL: "fas fa-user",
-        "auth.Group": "fas fa-users",
+        "hidl_auth.role": "fas fa-user-tag",
+        "easyaudit.requestevent": "fas fa-exchange-alt",
+        "easyaudit.loginevent": "fas fa-signature",
+        "easyaudit.crudevent": "fas fa-file",
+        "hidl_core.device": "fas fa-mobile-alt",
+        "hidl_core.vpnserver": "fas fa-server",
+        "hidl_core.host": "fas fa-desktop",
+        "hidl_core.group": "fas fa-users",
+        "hidl_core.subnet": "fas fa-network-wired",
+        "hidl_core.firewallservice": "fas fa-fire",
     },
     # Icons that are used when one is not manually specified
     "default_icon_parents": "fas fa-chevron-circle-right",
@@ -162,16 +171,27 @@ JAZZMIN_SETTINGS: Dict[str, Any] = {
     #############
     # Additional links to include in the user menu on the top right ("app" url type is not allowed)
     "usermenu_links": [
-        {"name": _("Two-Factor Authentication"), "url": "two_factor:profile", "new_window": False},
+        {
+            "name": _("Two-Factor Authentication"),
+            "url": "two_factor:profile",
+            "icon": "fas fa-mobile-alt",
+        },
     ],
     "custom_links": {
-        "easyaudit": [{"name": _("Blocked Users"), "url": "defender:blocks", "new_window": False}],
+        "easyaudit": [
+            {
+                "name": _("Blocked Users"),
+                "url": "defender:blocks",
+                "icon": "fas fa-user-slash",
+                "permissions": ["hidl_auth.can_manage_defender"],
+            }
+        ],
         "hidl_core": [
             {
                 "name": _("Self-service"),
                 "url": "selfservice:devices_list",
-                "new_window": False,
-                "permissions": ["can_manage_defender"],
+                "icon": "fas fa-laptop",
+                "permissions": ["hidl_vpn.can_manage_own_devices"],
             },
         ],
     },
