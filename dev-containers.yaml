@@ -14,7 +14,6 @@ services:
 
   redis:
     image: redis:7.0-alpine
-    restart: always
     ports:
       - '7279:6379'
     command: redis-server --save 20 1 --loglevel warning --requirepass w8vfpGTA2KPvvfMbFEnt6
@@ -23,7 +22,6 @@ services:
 
   flower:
     image: mher/flower:0.9.7
-    restart: always
     command: flower --port=5555
     environment:
       CELERY_BROKER_URL: redis://:w8vfpGTA2KPvvfMbFEnt6@redis:7279/0

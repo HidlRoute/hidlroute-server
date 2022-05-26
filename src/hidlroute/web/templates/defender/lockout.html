@@ -1,0 +1,12 @@
+{% extends "registration/base.html" %}
+{% load i18n %}
+
+{% block content %}
+    <h2>{% trans "Locked out" %}</h2>
+    <p>
+    {% blocktrans %}
+        You have attempted to login {{ failure_limit }} times, with no success.
+        Your account is locked for {{ cooloff_time_seconds }} seconds
+    {% endblocktrans %}
+    </p>
+{% endblock %}

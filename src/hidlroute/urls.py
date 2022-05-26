@@ -33,11 +33,12 @@ from django.conf import settings
 from django.conf.urls import include
 from django.contrib import admin
 from django.urls import path
-from two_factor.admin import AdminSiteOTPRequired
 from two_factor.urls import urlpatterns as tf_urls
 
-if settings.TWO_FACTOR_FORCE:
-    admin.site.__class__ = AdminSiteOTPRequired
+from hidlroute.web.admin import HidlAdminSite
+
+admin.site = HidlAdminSite()
+admin.autodiscover()
 
 urlpatterns = [
     path("sso-social/", include("social_django.urls", namespace="social")),
@@ -48,6 +49,11 @@ urlpatterns = [
 if settings.DEBUG_TOOLBAR:
     urlpatterns += [
         path("__debug__/", include("debug_toolbar.urls")),
+    ]
+
+if settings.BRUTE_FORCE_PROTECTION:
+    urlpatterns += [
+        path("defender/", include("defender.urls")),
     ]
 
 urlpatterns += [

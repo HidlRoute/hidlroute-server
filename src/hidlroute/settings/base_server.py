@@ -27,6 +27,7 @@ from .helper import *
 from .base import *
 
 DEBUG_TOOLBAR = env.bool("DEBUG_TOOLBAR", False)
+BRUTE_FORCE_PROTECTION = env.bool("BRUTE_FORCE_PROTECTION", True)
 
 # Application definition
 INSTALLED_APPS = filter_none(
@@ -38,6 +39,7 @@ INSTALLED_APPS = filter_none(
         "treebeard",
         "adminsortable2",
         "debug_toolbar" if DEBUG_TOOLBAR else None,
+        "defender" if BRUTE_FORCE_PROTECTION else None,
     ]
     + BASE_APPS
     + ["social_django"]
@@ -58,6 +60,7 @@ MIDDLEWARE = filter_none(
         "django.middleware.csrf.CsrfViewMiddleware",
         "django.contrib.auth.middleware.AuthenticationMiddleware",
         "django_otp.middleware.OTPMiddleware",
+        "hidlroute.core.midleware.PreventBruteforceOnLoginMiddleware" if BRUTE_FORCE_PROTECTION else None,
         "django.contrib.messages.middleware.MessageMiddleware",
         "django.middleware.clickjacking.XFrameOptionsMiddleware",
         "easyaudit.middleware.easyaudit.EasyAuditMiddleware",
@@ -70,11 +73,20 @@ ROOT_URLCONF = "hidlroute.urls"
 LOGIN_URL = "two_factor:login"
 LOGIN_REDIRECT_URL = "two_factor:profile"
 
+# 2FA
 TWO_FACTOR_FORCE = env.bool("TWO_FACTOR_FORCE", False)
 TWO_FACTOR_PATCH_ADMIN = True
 TWO_FACTOR_REMEMBER_COOKIE_PREFIX = "rmb_2fa_"
 TWO_FACTOR_REMEMBER_COOKIE_AGE = 24 * 3600
 TWO_FACTOR_REMEMBER_COOKIE_SAMESITE = "Strict"
+
+#
+DEFENDER_LOGIN_FAILURE_LIMIT = env.int("DEFENDER_LOGIN_FAILURE_LIMIT", 5)
+DEFENDER_COOLOFF_TIME = env.int("DEFENDER_COOLOFF_TIME", 300)
+DEFENDER_BEHIND_REVERSE_PROXY = env.bool("BEHIND_PROXY", False)
+DEFENDER_REDIS_URL = env.bool("DEFENDER_REDIS_URL", False)
+DEFENDER_STORE_ACCESS_ATTEMPTS = False
+DEFENDER_LOCKOUT_TEMPLATE = "defender/lockout.html"
 
 TEMPLATES = [
     {
@@ -127,7 +139,7 @@ JAZZMIN_SETTINGS: Dict[str, Any] = {
         "easyaudit",
     ],
     # Hide these apps when generating side menu e.g (auth)
-    "hide_apps": ["django_otp", "two_factor", "otp_static", "otp_totp", "social_django"],
+    "hide_apps": ["django_otp", "two_factor", "otp_static", "otp_totp", "social_django", "defender"],
     # Hide these models when generating side menu (e.g auth.user)
     "hide_models": ["hidl_core.vpnfirewallrule", "hidl_core.serverroutingrule"],
     "icons": {

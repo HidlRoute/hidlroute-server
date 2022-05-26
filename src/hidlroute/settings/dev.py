@@ -19,6 +19,8 @@ import os
 os.environ.setdefault("DEBUG", "True")
 os.environ.setdefault("ENABLE_DUMMY", "True")
 os.environ.setdefault("DEBUG_TOOLBAR", "True")
+os.environ.setdefault("BRUTE_FORCE_PROTECTION", "True")
+
 from .base_server import *
 
 SECRET_KEY = "django-insecure-56=tojj)c&&vurqvd=afvhqzxc095cub@hxf7dd$^iqpm=h$_k"
@@ -45,3 +47,7 @@ TWO_FACTOR_SMS_GATEWAY = "two_factor.gateways.fake.Fake"
 # Email
 EMAIL_CONFIG = env.email_url_config("smtp://user:password@localhost:1025")
 vars().update(EMAIL_CONFIG)
+
+DEFENDER_REDIS_URL = "redis://:w8vfpGTA2KPvvfMbFEnt6@localhost:7279/1"
+DEFENDER_LOGIN_FAILURE_LIMIT = 2
+DEFENDER_COOLOFF_TIME = 20
