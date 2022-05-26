@@ -32,10 +32,9 @@ BRUTE_FORCE_PROTECTION = env.bool("BRUTE_FORCE_PROTECTION", True)
 # Application definition
 INSTALLED_APPS = filter_none(
     [
-        "hidlroute.web",
+        "hidlroute.web.apps.WebConfig",
         "jazzmin",
-        "django.contrib.admin",
-        # "hidlroute.web.apps.WebConfig"
+        "hidlroute.apps.HidlAdminConfig",
         "crispy_forms",
         "treebeard",
         "adminsortable2",

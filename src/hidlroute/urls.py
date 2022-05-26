@@ -35,8 +35,6 @@ from django.contrib import admin
 from django.urls import path
 from two_factor.urls import urlpatterns as tf_urls
 
-# from hidlroute.web.admin import HidlAdminSite
-
 urlpatterns = [
     path("sso-social/", include("social_django.urls", namespace="social")),
     path("i18n/", include("django.conf.urls.i18n")),

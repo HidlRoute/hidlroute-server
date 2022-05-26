@@ -13,23 +13,22 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-# from django.contrib.admin.apps import AdminConfig
+
 from django.utils.translation import gettext_lazy as _
-
-
 from django.apps import AppConfig
 
 from easyaudit.apps import EasyAuditConfig
 
 
 class EasyAuditApp(EasyAuditConfig):
-    verbose_name = _("Audit")
+    verbose_name = _("Security & Audit")
 
 
 class WebConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
-    # default_site = "hidlroute.web.admin.HidlAdminSite"
-    # default = False
     name = "hidlroute.web"
     label = "hidl_web"
     verbose_name = _("Hidl Route Web")
+
+    def ready(self) -> None:
+        super().ready()
