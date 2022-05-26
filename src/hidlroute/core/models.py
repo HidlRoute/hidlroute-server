@@ -137,69 +137,59 @@ class VpnServer(NameableIdentifiable, WithComment, polymorphic_models.Polymorphi
         except Person.DoesNotExist:
             return []
 
+    @property
+    def service_factory(self) -> ServiceFactory:
+        return default_service_factory
 
-@property
-def service_factory(self) -> ServiceFactory:
-    return default_service_factory
+    @property
+    def vpn_service(self) -> "VPNService":
+        raise NotImplementedError
 
+    def stop(self, force=False) -> PostedJob:
+        if not force and self.status.state == ServerState.STOPPED:
+            raise ValueError(f"Server {self} is already stopped")
+        if self.status.state.is_transitioning:
+            raise ValueError(f"Server {self} is {self.status.state.label.lower()} now")
+        self.desired_state = ServerState.STOPPED
+        job = self.service_factory.worker_service.stop_vpn_server(self)
+        self.state_change_job_id = job.uuid
+        self.state_change_job_start = job.timestamp
+        self.save()
+        return job
 
-@property
-def vpn_service(self) -> "VPNService":
-    raise NotImplementedError
+    def start(self) -> PostedJob:
+        if self.is_running:
+            raise ValueError(f"Server {self} is already running")
+        if self.status.state.is_transitioning:
+            raise ValueError(f"Server {self} is {self.status.state.label.lower()} now")
 
+        self.desired_state = ServerState.RUNNING
+        job = self.service_factory.worker_service.start_vpn_server(self)
+        self.state_change_job_id = job.uuid
+        self.state_change_job_start = job.timestamp
+        self.save()
+        return job
 
-def stop(self, force=False) -> PostedJob:
-    if not force and self.status.state == ServerState.STOPPED:
-        raise ValueError(f"Server {self} is already stopped")
-    if self.status.state.is_transitioning:
-        raise ValueError(f"Server {self} is {self.status.state.label.lower()} now")
-    self.desired_state = ServerState.STOPPED
-    job = self.service_factory.worker_service.stop_vpn_server(self)
-    self.state_change_job_id = job.uuid
-    self.state_change_job_start = job.timestamp
-    self.save()
-    return job
+    def register_transition_completed(self, job_result: JobResult):
+        self.state_change_job_logs = str(job_result.result)
+        self.save()
 
+    def restart(self) -> PostedJob:
+        return self.service_factory.worker_service.restart_vpn_server(self)
 
-def start(self) -> PostedJob:
-    if self.is_running:
-        raise ValueError(f"Server {self} is already running")
-    if self.status.state.is_transitioning:
-        raise ValueError(f"Server {self} is {self.status.state.label.lower()} now")
+    def get_firewall_rules(self) -> QuerySet["VpnFirewallRule"]:
+        return self.firewallrule_set.all()
 
-    self.desired_state = ServerState.RUNNING
-    job = self.service_factory.worker_service.start_vpn_server(self)
-    self.state_change_job_id = job.uuid
-    self.state_change_job_start = job.timestamp
-    self.save()
-    return job
+    def get_routing_rules(self) -> QuerySet["ServerRoutingRule"]:
+        return ServerRoutingRule.load_related_to_server(self).select_related("network")
 
+    def get_admin_url(self):
+        return reverse(
+            "admin:%s_%s_change" % (VpnServer._meta.app_label, VpnServer._meta.model_name), args=(self.pk,)  # noqa
+        )
 
-def register_transition_completed(self, job_result: JobResult):
-    self.state_change_job_logs = str(job_result.result)
-    self.save()
-
-
-def restart(self) -> PostedJob:
-    return self.service_factory.worker_service.restart_vpn_server(self)
-
-
-def get_firewall_rules(self) -> QuerySet["VpnFirewallRule"]:
-    return self.firewallrule_set.all()
-
-
-def get_routing_rules(self) -> QuerySet["ServerRoutingRule"]:
-    return ServerRoutingRule.load_related_to_server(self).select_related("network")
-
-
-def get_admin_url(self):
-    return reverse(
-        "admin:%s_%s_change" % (VpnServer._meta.app_label, VpnServer._meta.model_name), args=(self.pk,)  # noqa
-    )
-
-
-def get_devices(self) -> QuerySet["Device"]:
-    return self.objects.filter(server_to_member__server=self)
+    def get_devices(self) -> QuerySet["Device"]:
+        return self.objects.filter(server_to_member__server=self)
 
 
 class IpAllocationMeta(models.Model):
