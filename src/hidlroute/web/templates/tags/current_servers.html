@@ -5,7 +5,7 @@
         {% for s in servers %}
             <div style="background:yellow; width: 200px; margin: 0 15px;">
                 {{ s.name }}{{ s.interface_name }}
-                <a href="{% url "selfservice_devices_list" s.pk %} ">Edit devices</a>
+                <a href="{% url "selfservice:devices_list" %} ">Edit devices</a>
             </div>
         {% endfor %}
     </div>

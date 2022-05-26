@@ -28,6 +28,7 @@ from django.core.exceptions import PermissionDenied
 from django.db import models, transaction
 from django.db.models import QuerySet
 from django.urls import reverse
+from django.contrib.auth.models import AbstractUser as DjangoUser
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from polymorphic import models as polymorphic_models
@@ -128,59 +129,77 @@ class VpnServer(NameableIdentifiable, WithComment, polymorphic_models.Polymorphi
     def get_device_model(cls) -> Type["Device"]:
         raise NotImplementedError
 
-    @property
-    def service_factory(self) -> ServiceFactory:
-        return default_service_factory
+    @staticmethod
+    def get_servers_for_user(user: DjangoUser) -> List["VpnServer"]:
+        try:
+            person = Person.objects.get(user__pk=user.pk)
+            return VpnServer.objects.filter(servertomember__member=person)
+        except Person.DoesNotExist:
+            return []
 
-    @property
-    def vpn_service(self) -> "VPNService":
-        raise NotImplementedError
 
-    def stop(self, force=False) -> PostedJob:
-        if not force and self.status.state == ServerState.STOPPED:
-            raise ValueError(f"Server {self} is already stopped")
-        if self.status.state.is_transitioning:
-            raise ValueError(f"Server {self} is {self.status.state.label.lower()} now")
-        self.desired_state = ServerState.STOPPED
-        job = self.service_factory.worker_service.stop_vpn_server(self)
-        self.state_change_job_id = job.uuid
-        self.state_change_job_start = job.timestamp
-        self.save()
-        return job
+@property
+def service_factory(self) -> ServiceFactory:
+    return default_service_factory
 
-    def start(self) -> PostedJob:
-        if self.is_running:
-            raise ValueError(f"Server {self} is already running")
-        if self.status.state.is_transitioning:
-            raise ValueError(f"Server {self} is {self.status.state.label.lower()} now")
 
-        self.desired_state = ServerState.RUNNING
-        job = self.service_factory.worker_service.start_vpn_server(self)
-        self.state_change_job_id = job.uuid
-        self.state_change_job_start = job.timestamp
-        self.save()
-        return job
+@property
+def vpn_service(self) -> "VPNService":
+    raise NotImplementedError
 
-    def register_transition_completed(self, job_result: JobResult):
-        self.state_change_job_logs = str(job_result.result)
-        self.save()
 
-    def restart(self) -> PostedJob:
-        return self.service_factory.worker_service.restart_vpn_server(self)
+def stop(self, force=False) -> PostedJob:
+    if not force and self.status.state == ServerState.STOPPED:
+        raise ValueError(f"Server {self} is already stopped")
+    if self.status.state.is_transitioning:
+        raise ValueError(f"Server {self} is {self.status.state.label.lower()} now")
+    self.desired_state = ServerState.STOPPED
+    job = self.service_factory.worker_service.stop_vpn_server(self)
+    self.state_change_job_id = job.uuid
+    self.state_change_job_start = job.timestamp
+    self.save()
+    return job
 
-    def get_firewall_rules(self) -> QuerySet["VpnFirewallRule"]:
-        return self.firewallrule_set.all()
 
-    def get_routing_rules(self) -> QuerySet["ServerRoutingRule"]:
-        return ServerRoutingRule.load_related_to_server(self).select_related("network")
+def start(self) -> PostedJob:
+    if self.is_running:
+        raise ValueError(f"Server {self} is already running")
+    if self.status.state.is_transitioning:
+        raise ValueError(f"Server {self} is {self.status.state.label.lower()} now")
 
-    def get_admin_url(self):
-        return reverse(
-            "admin:%s_%s_change" % (VpnServer._meta.app_label, VpnServer._meta.model_name), args=(self.pk,)  # noqa
-        )
+    self.desired_state = ServerState.RUNNING
+    job = self.service_factory.worker_service.start_vpn_server(self)
+    self.state_change_job_id = job.uuid
+    self.state_change_job_start = job.timestamp
+    self.save()
+    return job
 
-    def get_devices(self) -> QuerySet["Device"]:
-        return self.objects.filter(server_to_member__server=self)
+
+def register_transition_completed(self, job_result: JobResult):
+    self.state_change_job_logs = str(job_result.result)
+    self.save()
+
+
+def restart(self) -> PostedJob:
+    return self.service_factory.worker_service.restart_vpn_server(self)
+
+
+def get_firewall_rules(self) -> QuerySet["VpnFirewallRule"]:
+    return self.firewallrule_set.all()
+
+
+def get_routing_rules(self) -> QuerySet["ServerRoutingRule"]:
+    return ServerRoutingRule.load_related_to_server(self).select_related("network")
+
+
+def get_admin_url(self):
+    return reverse(
+        "admin:%s_%s_change" % (VpnServer._meta.app_label, VpnServer._meta.model_name), args=(self.pk,)  # noqa
+    )
+
+
+def get_devices(self) -> QuerySet["Device"]:
+    return self.objects.filter(server_to_member__server=self)
 
 
 class IpAllocationMeta(models.Model):
@@ -356,6 +375,14 @@ class Device(NameableIdentifiable, WithComment, polymorphic_models.PolymorphicMo
     @classmethod
     def generate_name(cls, server: VpnServer, member: Member) -> str:
         return slugify("-".join((member.get_real_instance().get_name(), server.slug)))
+
+    @staticmethod
+    def get_devices_for_user(user: DjangoUser) -> List["Device"]:
+        try:
+            person = Person.objects.get(user__pk=user.pk)
+            return Device.objects.filter(server_to_member__member=person).select_related("server_to_member__server")
+        except Person.DoesNotExist:
+            return []
 
     def generate_config(self) -> DeviceConfig:
         raise NotImplementedError

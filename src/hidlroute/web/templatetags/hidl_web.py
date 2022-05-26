@@ -22,7 +22,7 @@ from django.templatetags.static import static
 import jazzmin.settings
 
 from hidlroute.core import models as models_core
-from hidlroute.core.models import VpnServer, Person
+from hidlroute.core.models import VpnServer
 
 register = Library()
 
@@ -43,13 +43,7 @@ def filter_child_models(apps: List[Dict]) -> List[Dict]:
 @register.inclusion_tag("tags/current_servers.html", takes_context=True)
 def current_servers(context):
     request = context["request"]
-    servers = []
-    try:
-        person = Person.objects.get(user__pk=request.user.pk)
-        servers = VpnServer.objects.filter(servertomember__member=person)
-    except Person.DoesNotExist:
-        servers = []
-    return {"servers": servers}
+    return {"servers": VpnServer.get_servers_for_user(request.user)}
 
 
 @register.simple_tag
