@@ -1,5 +1,5 @@
 {% extends "admin/base_site.html" %}
-{% load i18n static jazzmin %}
+{% load i18n static jazzmin hidl_web%}
 {% get_jazzmin_ui_tweaks as jazzmin_ui %}
 
 {% block bodyclass %}{{ block.super }} dashboard{% endblock %}
@@ -19,7 +19,9 @@
     {% if dashboard_list %}
         {% widthratio dashboard_list|length 2 1 as middle %}
     {% endif %}
-
+    <div class="col-12">
+        {% current_servers %}
+    </div>
     <div class="col-lg-9 col-12">
         <div class="row">
             <div class="col-md-6 col-sm-12">
@@ -34,12 +36,14 @@
                                 {% for model in app.models %}
                                     <tr>
                                         <td>
-                                            {% if model.url %}<a href="{{ model.url }}">{{ model.name }}</a>{% else %}{{ model.name }}{% endif %}
+                                            {% if model.url %}<a href="{{ model.url }}">{{ model.name }}</a>{% else %}
+                                                {{ model.name }}{% endif %}
                                         </td>
                                         <td>
                                             <div class="btn-group float-right">
                                                 {% if model.add_url %}
-                                                    <a href="{{ model.add_url }}" class="btn btn-sm {{ jazzmin_ui.button_classes.success }} btn-flat addlink">{% trans 'Add' %}</a>
+                                                    <a href="{{ model.add_url }}"
+                                                       class="btn btn-sm {{ jazzmin_ui.button_classes.success }} btn-flat addlink">{% trans 'Add' %}</a>
                                                 {% endif %}
                                             </div>
                                         </td>

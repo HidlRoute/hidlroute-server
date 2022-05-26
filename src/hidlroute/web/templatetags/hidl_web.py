@@ -22,6 +22,7 @@ from django.templatetags.static import static
 import jazzmin.settings
 
 from hidlroute.core import models as models_core
+from hidlroute.core.models import Server, Person
 
 register = Library()
 
@@ -31,9 +32,21 @@ def filter_child_models(apps: List[Dict]) -> List[Dict]:
     target = (models_core.VpnServer, models_core.Device)
     for app in apps:
         app["models"] = list(
-            filter(lambda x: not (issubclass(x["model"], target) and x["model"] not in target), app["models"])
+            filter(lambda x: not ("model" in x and issubclass(x["model"], target) and x["model"] not in target), app["models"])
         )
     return list(filter(lambda x: len(x["models"]) > 0, apps))
+
+
+@register.inclusion_tag("tags/current_servers.html", takes_context=True)
+def current_servers(context):
+    request = context["request"]
+    servers = []
+    try:
+        person = Person.objects.get(user__pk=request.user.pk)
+        servers = Server.objects.filter(servertomember__member=person)
+    except Person.DoesNotExist:
+        servers = []
+    return {"servers": servers}
 
 
 @register.simple_tag
