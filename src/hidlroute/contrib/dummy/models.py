@@ -18,19 +18,20 @@ from typing import Type
 
 from django.utils.translation import gettext_lazy as _
 
+import hidlroute.vpn.models
 from hidlroute.contrib.dummy.factory import dummy_service_factory
 from hidlroute.contrib.dummy.service.vpn import DummyLoggingVPNService
-from hidlroute.core import models as models_core
+from hidlroute.vpn import models as models_vpn
 from hidlroute.core.factory import ServiceFactory
-from hidlroute.core.service.base import VPNService
+from hidlroute.vpn.service.base import VPNService
 from hidlroute.core.types import IpAddress
 
 _dummy_logging_VPN_service = DummyLoggingVPNService()
 
 
-class DummyDevice(models_core.Device):
+class DummyDevice(hidlroute.vpn.models.Device):
     @classmethod
-    def create_default(cls, server_to_member: models_core.ServerToMember, ip_address: IpAddress) -> "DummyDevice":
+    def create_default(cls, server_to_member: models_vpn.ServerToMember, ip_address: IpAddress) -> "DummyDevice":
         peer = cls.objects.create(
             name=cls.generate_name(server_to_member.server, server_to_member.member),
             server_to_member=server_to_member,
@@ -39,7 +40,7 @@ class DummyDevice(models_core.Device):
         return peer
 
 
-class DummyVpnServer(models_core.VpnServer):
+class DummyVpnServer(models_vpn.VpnServer):
     class Meta:
         verbose_name = _("Dummy Server")
 

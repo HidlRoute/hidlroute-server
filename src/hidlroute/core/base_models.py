@@ -14,13 +14,8 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import TYPE_CHECKING
 from autoslug import AutoSlugField
 from django.db import models
-from django.db.models import Q
-
-if TYPE_CHECKING:
-    from hidlroute.core import models as models_core
 
 
 class Identifiable(models.Model):
@@ -85,40 +80,3 @@ class Sortable(models.Model):
         abstract = True
 
     order = models.PositiveIntegerField(default=0, null=False, blank=False)
-
-
-class ServerRelated(models.Model):
-    """
-    Base class to associate an entity with either server or server member
-    """
-
-    class Meta:
-        abstract = True
-        constraints = [
-            models.CheckConstraint(
-                check=models.Q(server_group__isnull=False, server_member__isnull=True, server__isnull=True)
-                | models.Q(server_group__isnull=True, server_member__isnull=False, server__isnull=True)
-                | models.Q(server_group__isnull=True, server_member__isnull=True, server__isnull=False),
-                name="check_%(app_label)s_%(class)s_member_xor_group_xor_server",
-            ),
-        ]
-
-    server = models.ForeignKey("VpnServer", on_delete=models.CASCADE, null=True, blank=True)
-    server_group = models.ForeignKey("ServerToGroup", on_delete=models.CASCADE, null=True, blank=True)
-    server_member = models.ForeignKey("ServerToMember", on_delete=models.CASCADE, null=True, blank=True)
-
-    @classmethod
-    def load_related_to_servermember(cls, server_to_member: "models_core.ServerToMember") -> models.QuerySet:
-        group = server_to_member.member.group
-        target_ids = [x.pk for x in list(group.get_ancestors()) + [group]]
-        server_groups = server_to_member.server.servertogroup_set.filter(pk__in=target_ids)
-        query = Q(server=server_to_member.server) | Q(server_member=server_to_member)
-        if len(server_groups) > 0:
-            query |= Q(server_group__in=server_groups)
-        return cls.objects.filter(query).distinct()
-
-    @classmethod
-    def load_related_to_server(cls, server: "models_core.VpnServer") -> models.QuerySet:
-        return cls.objects.filter(
-            Q(server=server) | Q(server_group__server=server) | Q(server_member__server=server)
-        ).distinct()

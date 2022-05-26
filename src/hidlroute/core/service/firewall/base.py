@@ -21,6 +21,7 @@ from hidlroute.core.types import IpNetwork
 
 if TYPE_CHECKING:
     from hidlroute.core import models
+    from hidlroute.vpn import models as vpn_models
 
 
 class FirewallAction(object):
@@ -76,14 +77,14 @@ class FirewallService(abc.ABC):
                     )
 
     def build_native_firewall_rule(
-        self, rule: "models.BaseFirewallRule", server: "models.VpnServer", server_networks: List[IpNetwork]
+        self, rule: "models.BaseFirewallRule", server: "vpn_models.VpnServer", server_networks: List[IpNetwork]
     ) -> List[NativeFirewallRule]:
         return []
 
     @abc.abstractmethod
-    def setup_firewall_for_server(self, server: "models.VpnServer"):
+    def setup_firewall_for_server(self, server: "vpn_models.VpnServer"):
         pass
 
     @abc.abstractmethod
-    def destroy_firewall_for_server(self, server: "models.VpnServer"):
+    def destroy_firewall_for_server(self, server: "vpn_models.VpnServer"):
         pass

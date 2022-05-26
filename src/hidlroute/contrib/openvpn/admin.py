@@ -19,7 +19,7 @@
 from django.utils.translation import gettext_lazy as _
 
 from hidlroute.contrib.openvpn import models
-from hidlroute.core.admin import ServerAdmin
+from hidlroute.vpn.admin import ServerAdmin
 
 
 @ServerAdmin.register_implementation(models.OpenVPNServer)

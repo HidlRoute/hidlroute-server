@@ -17,7 +17,7 @@
 import logging
 from typing import List
 
-from hidlroute.core import models as core_models
+from hidlroute.vpn import models as vpn_models
 from hidlroute.core.service.firewall.base import FirewallService
 from hidlroute.core.service.networking.base import (
     NetworkingService,
@@ -36,17 +36,17 @@ class DummyFirewallService(FirewallService):
         super().__init__()
         self.__logger = LOGGER.getChild(".firewall")
 
-    def _log_rule(self, rule: core_models.VpnFirewallRule):
+    def _log_rule(self, rule: vpn_models.VpnFirewallRule):
         self.__logger.info(rule.repr)
 
-    def setup_firewall_for_server(self, server: core_models.VpnServer):
+    def setup_firewall_for_server(self, server: vpn_models.VpnServer):
         self.__logger.info("Setup Firewall for {}".format(server))
         self.__logger.info("Adding rules: ")
         for rule in server.get_firewall_rules():
             self._log_rule(rule)
         self.__logger.info("Finished firewall configuration for {}".format(server))
 
-    def destroy_firewall_for_server(self, server: core_models.VpnServer):
+    def destroy_firewall_for_server(self, server: vpn_models.VpnServer):
         self.__logger.info("Destroy Firewall for {}".format(server))
         self.__logger.info("Deleting rules: ")
 
@@ -85,20 +85,20 @@ class DummyNetworkingService(NetworkingService):
         super().__init__()
         self.__logger = LOGGER.getChild(".firewall")
 
-    def _log_rule(self, rule: core_models.ServerRoutingRule, server: core_models.VpnServer):
+    def _log_rule(self, rule: vpn_models.ServerRoutingRule, server: vpn_models.VpnServer):
         self.__logger.info(
             f"\t {rule.network.cidr} gw: {rule.gateway or 'n/a'} "
             f"iface: {rule.resolved_interface_name(server) or 'n/a'}"
         )
 
-    def setup_routes_for_server(self, server: core_models.VpnServer):
+    def setup_routes_for_server(self, server: vpn_models.VpnServer):
         self.__logger.info("Setup Routes for {}".format(server))
         self.__logger.info("Adding routes: ")
         for rule in server.get_routing_rules():
             self._log_rule(rule, server)
         self.__logger.info("Finished routes configuration for {}".format(server))
 
-    def destroy_routes_for_server(self, server: core_models.VpnServer):
+    def destroy_routes_for_server(self, server: vpn_models.VpnServer):
         self.__logger.info("Destroy Routes for {}".format(server))
         self.__logger.info("Deleting routes: ")
         for rule in server.get_routing_rules():

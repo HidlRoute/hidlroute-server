@@ -21,15 +21,14 @@ from django.template import Library
 from django.templatetags.static import static
 import jazzmin.settings
 
-from hidlroute.core import models as models_core
-from hidlroute.core.models import VpnServer
+from hidlroute.vpn import models as models_vpn
 
 register = Library()
 
 
 @register.filter
 def filter_child_models(apps: List[Dict]) -> List[Dict]:
-    target = (models_core.VpnServer, models_core.Device)
+    target = (models_vpn.VpnServer, models_vpn.Device)
     for app in apps:
         app["models"] = list(
             filter(
@@ -43,7 +42,7 @@ def filter_child_models(apps: List[Dict]) -> List[Dict]:
 @register.inclusion_tag("tags/current_servers.html", takes_context=True)
 def current_servers(context):
     request = context["request"]
-    return {"servers": VpnServer.get_servers_for_user(request.user)}
+    return {"servers": models_vpn.VpnServer.get_servers_for_user(request.user)}
 
 
 @register.simple_tag

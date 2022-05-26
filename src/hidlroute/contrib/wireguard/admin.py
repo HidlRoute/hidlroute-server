@@ -19,7 +19,7 @@ from django.utils.translation import gettext_lazy as _
 
 from hidlroute.contrib.wireguard import models
 from hidlroute.contrib.wireguard.service.key import generate_private_key
-from hidlroute.core.admin import ServerAdmin, DeviceAdmin
+from hidlroute.vpn.admin import DeviceAdmin, ServerAdmin
 
 
 @DeviceAdmin.register_implementation(models.WireguardPeer)

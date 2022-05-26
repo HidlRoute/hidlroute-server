@@ -23,23 +23,22 @@ from django.utils.translation import gettext_lazy as _
 from hidlroute.contrib.wireguard.factory import wireguard_service_factory, WireguardServiceFactory
 from hidlroute.contrib.wireguard.service.key import generate_keypair, generate_private_key, generate_public_key
 from hidlroute.contrib.wireguard.service.peer import generate_new_peer_config
-from hidlroute.core import models as models_core
-from hidlroute.core.models import DeviceConfig, SimpleTextDeviceConfig
+from hidlroute.vpn import models as vpn_models
 from hidlroute.core.types import IpAddress
 
 if TYPE_CHECKING:
     from hidlroute.contrib.wireguard.service.wireguard_vpn import WireguardVPNService
 
 
-class WireGuardPeerConfig(SimpleTextDeviceConfig):
+class WireGuardPeerConfig(vpn_models.SimpleTextDeviceConfig):
     pass
 
 
-class WireguardPeer(models_core.Device):
+class WireguardPeer(vpn_models.Device):
     public_key = models.CharField(max_length=1024)
 
     @classmethod
-    def create_default(cls, server_to_member: models_core.ServerToMember, ip_address: IpAddress) -> "WireguardPeer":
+    def create_default(cls, server_to_member: vpn_models.ServerToMember, ip_address: IpAddress) -> "WireguardPeer":
         private_key, public_key = generate_keypair()
         peer = WireguardPeer.objects.create(
             name=cls.generate_name(server_to_member.server, server_to_member.member),
@@ -49,14 +48,14 @@ class WireguardPeer(models_core.Device):
         )
         return peer
 
-    def generate_config(self) -> DeviceConfig:
+    def generate_config(self) -> vpn_models.DeviceConfig:
         private_key, public_key = generate_keypair()
         config_name = self.name + ".conf"
         config = WireGuardPeerConfig(generate_new_peer_config(self, private_key), config_name)
         return config
 
 
-class WireguardServer(models_core.VpnServer):
+class WireguardServer(vpn_models.VpnServer):
     class Meta:
         verbose_name = _("Wireguard Server")
 

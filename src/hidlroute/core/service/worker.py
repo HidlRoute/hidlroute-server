@@ -19,8 +19,9 @@ import json
 import uuid
 from typing import Any, NamedTuple, Optional, Dict
 
-from hidlroute.core import models
-from hidlroute.core.service.base import WorkerService, PostedJob, ServerStatus, JobStatus, JobResult
+from hidlroute.vpn import models as vpn_models
+from hidlroute.core.service.base import WorkerService, PostedJob, JobStatus, JobResult
+from hidlroute.vpn.service.base import ServerStatus
 
 
 class SynchronousWorkerService(WorkerService):
@@ -43,22 +44,22 @@ class SynchronousWorkerService(WorkerService):
         )
         return job
 
-    def get_server_status(self, server: models.VpnServer) -> ServerStatus:
+    def get_server_status(self, server: vpn_models.VpnServer) -> ServerStatus:
         return server.vpn_service.get_status(server)
 
-    def start_vpn_server(self, server: "models.VpnServer") -> PostedJob:
+    def start_vpn_server(self, server: "vpn_models.VpnServer") -> PostedJob:
         try:
             return self.__register_job_result(server.vpn_service.start(server))
         except Exception as e:
             return self.__register_job_result(None, e)
 
-    def stop_vpn_server(self, server: "models.VpnServer") -> PostedJob:
+    def stop_vpn_server(self, server: "vpn_models.VpnServer") -> PostedJob:
         try:
             return self.__register_job_result(server.vpn_service.stop(server))
         except Exception as e:
             return self.__register_job_result(None, e)
 
-    def restart_vpn_server(self, server: "models.VpnServer") -> PostedJob:
+    def restart_vpn_server(self, server: "vpn_models.VpnServer") -> PostedJob:
         try:
             self.__register_job_result(server.vpn_service.restart(server))
         except Exception as e:

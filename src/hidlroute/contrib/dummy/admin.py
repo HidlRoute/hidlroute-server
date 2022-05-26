@@ -17,7 +17,7 @@
 from django.utils.translation import gettext_lazy as _
 
 from hidlroute.contrib.dummy import models
-from hidlroute.core.admin import ServerAdmin, DeviceAdmin
+from hidlroute.vpn.admin import DeviceAdmin, ServerAdmin
 
 
 @DeviceAdmin.register_implementation(models.DummyDevice)

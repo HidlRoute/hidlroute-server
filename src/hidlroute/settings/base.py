@@ -36,6 +36,7 @@ BASE_APPS = filter_none(
         # HidlRoute
         "hidlroute.auth",
         "hidlroute.core",
+        "hidlroute.vpn",
         if_env_set("hidlroute.contrib.wireguard", "ENABLE_WIREGUARD", True),
         if_env_set("hidlroute.contrib.openvpn", "ENABLE_OPENVPN", True),
         if_env_set("hidlroute.contrib.dummy", "ENABLE_DUMMY", False),

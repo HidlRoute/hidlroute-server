@@ -18,14 +18,14 @@
 
 # Create your views here.
 
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpRequest
 
 from django.shortcuts import render
 
-from hidlroute.core.models import VpnServer, Device
+from hidlroute.vpn.models import VpnServer, Device
 
 
-def device_list(request):
+def device_list(request: HttpRequest):
     servers = VpnServer.get_servers_for_user(request.user)
     devices = Device.get_devices_for_user(request.user)
     context = {
@@ -38,9 +38,9 @@ def device_list(request):
     return render(request, "selfservice/device_list.html", context=context)
 
 
-def device_add(request):
+def device_add(request: HttpRequest):
     return HttpResponse("Device add")
 
 
-def device_edit(request, device_id: int):
+def device_edit(request: HttpRequest, device_id: int):
     return HttpResponse("device_edit")

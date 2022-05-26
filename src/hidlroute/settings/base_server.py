@@ -138,12 +138,25 @@ JAZZMIN_SETTINGS: Dict[str, Any] = {
     # List of apps (and/or models) to base side menu ordering off of (does not need to contain all apps/models)
     "order_with_respect_to": [
         "hidl_auth",
+        "hidl_vpn",
+        "hidl_core",
         "easyaudit",
     ],
     # Hide these apps when generating side menu e.g (auth)
-    "hide_apps": ["django_otp", "two_factor", "otp_static", "otp_totp", "social_django", "defender"],
+    "hide_apps": [
+        "django_otp",
+        "two_factor",
+        "otp_static",
+        "otp_totp",
+        "social_django",
+        "defender",
+    ],
     # Hide these models when generating side menu (e.g auth.user)
-    "hide_models": ["hidl_core.vpnfirewallrule", "hidl_core.serverroutingrule"],
+    "hide_models": [
+        "hidl_vpn.vpnfirewallrule",
+        "hidl_vpn.serverroutingrule",
+        # "easyaudit.requestevent", "easyaudit.loginevent", "easyaudit.crudevent"
+    ],
     "icons": {
         "auth": "fas fa-users-cog",
         AUTH_USER_MODEL: "fas fa-user",
@@ -151,8 +164,8 @@ JAZZMIN_SETTINGS: Dict[str, Any] = {
         "easyaudit.requestevent": "fas fa-exchange-alt",
         "easyaudit.loginevent": "fas fa-signature",
         "easyaudit.crudevent": "fas fa-file",
-        "hidl_core.device": "fas fa-mobile-alt",
-        "hidl_core.vpnserver": "fas fa-server",
+        "hidl_vpn.device": "fas fa-mobile-alt",
+        "hidl_vpn.vpnserver": "fas fa-server",
         "hidl_core.host": "fas fa-desktop",
         "hidl_core.group": "fas fa-users",
         "hidl_core.subnet": "fas fa-network-wired",
@@ -184,7 +197,7 @@ JAZZMIN_SETTINGS: Dict[str, Any] = {
                 "url": "defender:blocks",
                 "icon": "fas fa-user-slash",
                 "permissions": ["hidl_auth.can_manage_defender"],
-            }
+            },
         ],
         "hidl_core": [
             {
@@ -211,8 +224,8 @@ JAZZMIN_SETTINGS: Dict[str, Any] = {
     "changeform_format": "horizontal_tabs",
     # override change forms on a per modeladmin basis
     "changeform_format_overrides": {
-        "hidl_core.vpnfirewallrule": "single",
-        "hidl_core.serverroutingrule": "single",
+        "hidl_vpn.vpnfirewallrule": "single",
+        "hidl_vpn.serverroutingrule": "single",
         "hidl_core.firewallservice": "single",
     },
     # Add a language dropdown into the admin

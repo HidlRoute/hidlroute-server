@@ -159,9 +159,16 @@
                     </li>
                 {% endif %}
 
-                <li class="nav-item dropdown">
+                <li class="profile-nav-item nav-item dropdown">
                     <a class="nav-link btn" data-toggle="dropdown" href="#" title="{{ request.user }}">
-                        <i class="far fa-user" aria-hidden="true"></i>
+                        <div class="image">
+                            {% if jazzmin_settings|has_jazzmin_setting:"user_avatar" %}
+                                <img src="{% get_hidl_user_avatar request.user %}" width="160px"
+                                     class="img-circle" alt="User Image">
+                            {% else %}
+                                <i class="fas fa-inverse user-profile fa-user-circle"></i>
+                            {% endif %}
+                        </div>
                     </a>
                     <div class="dropdown-menu dropdown-menu-lg dropdown-menu-left" id="jazzy-usermenu">
                         <span class="dropdown-header">{% trans 'Account' %}</span>
@@ -203,6 +210,7 @@
                     </a>
 
                     <div class="sidebar">
+                        {% comment %}
                         <div class="user-panel mt-3 pb-3 mb-3 d-flex">
                             <div class="image">
                                 {% if jazzmin_settings|has_jazzmin_setting:"user_avatar" %}
@@ -221,7 +229,7 @@
                                 {% endif %}
                             </div>
                         </div>
-
+                        {% endcomment %}
                         <nav class="mt-2">
                             <ul class="nav nav-pills nav-sidebar flex-column {{ jazzmin_ui.sidebar_list_classes }}"
                                 data-widget="treeview" role="menu" data-collapsible="false">
@@ -262,7 +270,8 @@
                                             <ul class="nav nav-treeview" style="display: none;">
                                                 {% for model in app.models %}
                                                     <li class="nav-item">
-                                                        <a href="{% if model.url %}{{ model.url }}{% else %}javascript:void(0){% endif %}"
+                                                        <a href="
+                                                                {% if model.url %}{{ model.url }}{% else %}javascript:void(0){% endif %}"
                                                            class="nav-link">
                                                             <i class="nav-icon {{ model.icon }}"></i>
                                                             <p>{{ model.name }}</p>

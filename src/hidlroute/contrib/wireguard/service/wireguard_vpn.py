@@ -22,13 +22,11 @@ from hidlroute.contrib.wireguard.models import WireguardServer
 from hidlroute.core import models as core_models
 from hidlroute.contrib.wireguard import models
 from hidlroute.core.service.base import (
-    VPNService,
-    ServerState,
-    ServerStatus,
     HidlNetworkingException,
     WorkerService,
     JobStatus,
 )
+from hidlroute.vpn.service.base import ServerState, ServerStatus, VPNService
 from hidlroute.core.service.firewall.base import FirewallService
 from hidlroute.core.service.networking.base import NetInterfaceState, InterfaceKind, NetworkingService
 

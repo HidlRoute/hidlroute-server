@@ -13,27 +13,3 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-from typing import Type
-
-from django.db import models
-from django.utils.translation import gettext_lazy as _
-
-from hidlroute.vpn import models as models_vpn
-from hidlroute.vpn.service.base import VPNService
-
-
-class OpenVPNServer(models_vpn.VpnServer):
-    @classmethod
-    def get_device_model(cls) -> Type["models_vpn.Device"]:
-        raise NotImplementedError
-
-    @property
-    def vpn_service(self) -> "VPNService":
-        raise NotImplementedError
-
-    class Meta:
-        verbose_name = _("OpenVPN Server")
-
-    cert_storage_dir = models.CharField(max_length=1024, null=False, blank=True)
-    extra_config = models.TextField(null=False, blank=True)

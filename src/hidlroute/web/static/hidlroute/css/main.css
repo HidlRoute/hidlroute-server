@@ -11,11 +11,30 @@
     width: 100%;
 }
 
+.profile-nav-item {
+    padding: 0;
+}
+
+.profile-nav-item .image {
+    width: 50px;
+}
+
+.profile-nav-item .nav-link {
+    padding: 0;
+    margin-top: -7px;
+    padding-right: 2px !important;
+}
+
+.profile-nav-item .image img {
+    width: 100%;
+}
+
 /*  ======================= COMMON FORMS ========================= */
 .help-block .errorlist {
     margin: 0;
     list-style: none;
 }
+
 /*  ===================== END COMMON FORMS ======================= */
 
 /* ======================= SERVER ADMIN ========================= */
@@ -76,6 +95,7 @@
 .field-profile_picture_img {
     white-space: nowrap;
 }
+
 .field-profile_picture_img img {
     width: 50px;
     border-radius: 100%;

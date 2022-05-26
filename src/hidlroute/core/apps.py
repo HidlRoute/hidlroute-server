@@ -24,7 +24,7 @@ class CoreConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "hidlroute.core"
     label = "hidl_core"
-    verbose_name = _("Hidl Route Core")
+    verbose_name = _("Core")
 
     def ready(self):
         from . import signals  # noqa: F401
