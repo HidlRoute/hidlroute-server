@@ -35,6 +35,7 @@ INSTALLED_APPS = filter_none(
         "hidlroute.web",
         "jazzmin",
         "django.contrib.admin",
+        # "hidlroute.web.apps.WebConfig"
         "crispy_forms",
         "treebeard",
         "adminsortable2",
