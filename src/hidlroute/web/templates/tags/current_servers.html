@@ -1,0 +1,12 @@
+{% load i18n %}
+<div class="card card-primary">
+    <div class="card-header">{% trans "My Servers" %}</div>
+    <div class="card-body" style="display:flex; flex-direction: row;">
+        {% for s in servers %}
+            <div style="background:yellow; width: 200px; margin: 0 15px;">
+                {{ s.name }}{{ s.interface_name }}
+                <a href="{% url "selfservice_devices_list" s.pk %} ">Edit devices</a>
+            </div>
+        {% endfor %}
+    </div>
+</div>

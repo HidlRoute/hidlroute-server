@@ -102,6 +102,7 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
                 "social_django.context_processors.backends",
                 "social_django.context_processors.login_redirect",
+                "hidlroute.core.context_processors.admin_menu"
             ],
         },
     },
@@ -163,6 +164,11 @@ JAZZMIN_SETTINGS: Dict[str, Any] = {
     "usermenu_links": [
         {"name": _("Two-Factor Authentication"), "url": "two_factor:profile", "new_window": False},
     ],
+    "custom_links": {
+        "hidl_core": [
+            {"name": _("Self-service"), "url": "selfservice:devices_list", "new_window": False},
+        ],
+    },
     #############
     # UI Tweaks #
     #############
