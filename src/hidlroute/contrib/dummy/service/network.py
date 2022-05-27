@@ -56,6 +56,12 @@ class DummyFirewallService(FirewallService):
 
 
 class DummyNetworkingService(NetworkingService):
+    def create_route(self, route: Route) -> Route:
+        return route
+
+    def delete_route(self, route: Route):
+        pass
+
     def get_routes(self) -> List[Route]:
         return []
 
@@ -90,17 +96,3 @@ class DummyNetworkingService(NetworkingService):
             f"\t {rule.network.cidr} gw: {rule.gateway or 'n/a'} "
             f"iface: {rule.resolved_interface_name(server) or 'n/a'}"
         )
-
-    def setup_routes_for_server(self, server: vpn_models.VpnServer):
-        self.__logger.info("Setup Routes for {}".format(server))
-        self.__logger.info("Adding routes: ")
-        for rule in server.get_routing_rules():
-            self._log_rule(rule, server)
-        self.__logger.info("Finished routes configuration for {}".format(server))
-
-    def destroy_routes_for_server(self, server: vpn_models.VpnServer):
-        self.__logger.info("Destroy Routes for {}".format(server))
-        self.__logger.info("Deleting routes: ")
-        for rule in server.get_routing_rules():
-            self._log_rule(rule, server)
-        self.__logger.info("Deleted routes for {}".format(server))

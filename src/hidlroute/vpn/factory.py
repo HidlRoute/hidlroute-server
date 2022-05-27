@@ -14,21 +14,18 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from hidlroute.core.factory import cached_service
+from typing import TYPE_CHECKING
 
-from hidlroute.core.service.firewall.base import FirewallService
-from hidlroute.core.service.networking.base import NetworkingService
-from hidlroute.vpn.factory import VPNServiceFactory, default_vpn_service_factory
+from hidlroute.core.factory import ServiceFactory, cached_service, default_service_factory
+
+if TYPE_CHECKING:
+    from hidlroute.vpn.service.ip_allocation import IPAllocationService
 
 
-class DummyServiceFactory(VPNServiceFactory):
+class VPNServiceFactory(ServiceFactory):
     @cached_service
-    def networking_service(self) -> NetworkingService:
-        return self._instance_from_str("hidlroute.contrib.dummy.service.network.DummyNetworkingService")
-
-    @cached_service
-    def firewall_service(self) -> FirewallService:
-        return self._instance_from_str("hidlroute.contrib.dummy.service.network.DummyFirewallService")
+    def ip_allocation_service(self) -> "IPAllocationService":
+        return self._instance_from_str("hidlroute.vpn.service.ip_allocation.IPAllocationService")
 
 
-dummy_service_factory = DummyServiceFactory(default_vpn_service_factory)
+default_vpn_service_factory = VPNServiceFactory(default_service_factory)

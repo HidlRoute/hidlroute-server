@@ -22,7 +22,7 @@ import netfields
 from django.conf import settings
 from django.db import models
 
-# from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from polymorphic import models as polymorphic_models
 from treebeard import mp_tree
 
@@ -92,6 +92,23 @@ class FirewallPortRange(models.Model):
     start = models.PositiveIntegerField(null=False, blank=False)
     end = models.PositiveIntegerField(null=True, blank=True)
     service = models.ForeignKey(FirewallService, on_delete=models.CASCADE)
+
+
+class BaseRoutingRule(models.Model):
+    class Meta:
+        abstract = True
+
+    network = models.ForeignKey(Subnet, null=True, blank=True, on_delete=models.CASCADE)
+    gateway = netfields.InetAddressField(null=True, blank=True)
+    interface = models.CharField(
+        max_length=16,
+        null=True,
+        blank=True,
+        help_text=_("Use special keyword $self to reference interface of the VPN server this route is attached to"),
+    )
+
+    def __str__(self) -> str:
+        return f"{self.network.cidr} gw: {self.gateway or 'n/a'} iface: {self.interface or 'n/a'}"
 
 
 class BaseFirewallRule(Sortable, WithComment, WithReprCache):

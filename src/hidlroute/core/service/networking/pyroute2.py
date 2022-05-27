@@ -24,7 +24,6 @@ from pr2modules.netlink.rtnl.ifaddrmsg import ifaddrmsg as IF_ADDR
 from pr2modules.netlink.rtnl.rtmsg import rtmsg as RT_MSG
 from pr2modules.iproute import IPRoute
 
-from hidlroute.vpn import models as vpn_models
 from hidlroute.core.service.networking.base import (
     NetworkingService,
     Route,
@@ -72,17 +71,16 @@ class PyRoute2NetworkingService(NetworkingService):
                 iface.ip6address = addr
         return iface
 
-    def setup_routes_for_server(self, server: vpn_models.VpnServer):
+    def create_route(self, route: Route) -> Route:
         with IPRoute() as ipr:
-            for route in server.get_routing_rules():
-                oif_index = self.get_interface_by_name(route.resolved_interface_name(server)).index
-                ipr.route("add", dst=str(route.network.cidr), gateway=route.gateway, oif=oif_index)
+            oif_index = self.get_interface_by_name(route.interface).index
+            ipr.route("add", dst=str(route.network), gateway=route.gateway, oif=oif_index)
+            return route
 
-    def destroy_routes_for_server(self, server: vpn_models.VpnServer):
+    def delete_route(self, route: Route):
         with IPRoute() as ipr:
-            for route in server.get_routing_rules():
-                oif_index = self.get_interface_by_name(route.resolved_interface_name(server)).index
-                ipr.route("del", dst=str(route.network.cidr), gateway=route.gateway, oif=oif_index)
+            oif_index = self.get_interface_by_name(route.interface).index
+            ipr.route("del", dst=str(route.network), gateway=route.gateway, oif=oif_index)
 
     def get_default_routes(self) -> List[Route]:
         result: List[Route] = []

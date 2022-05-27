@@ -16,16 +16,17 @@
 
 from typing import TYPE_CHECKING
 
-from hidlroute.core.factory import ServiceFactory, default_service_factory
+from hidlroute.core.factory import cached_service
+from hidlroute.vpn.factory import VPNServiceFactory, default_vpn_service_factory
 
 if TYPE_CHECKING:
     from hidlroute.contrib.wireguard.service.wireguard_vpn import WireguardVPNService
 
 
-class WireguardServiceFactory(ServiceFactory):
-    @ServiceFactory._cached_service
+class WireguardServiceFactory(VPNServiceFactory):
+    @cached_service
     def wireguard_vpn_service(self) -> "WireguardVPNService":
         return self._instance_from_str("hidlroute.contrib.wireguard.service.wireguard_vpn.WireguardVPNService")
 
 
-wireguard_service_factory = WireguardServiceFactory(default_service_factory)
+wireguard_service_factory = WireguardServiceFactory(default_vpn_service_factory)

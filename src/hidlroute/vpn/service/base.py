@@ -15,11 +15,14 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import abc
+import ipaddress
 from enum import Enum
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 
 from django.utils.translation import gettext_lazy as _
 
+from hidlroute.core.service.networking.base import Route
+from hidlroute.core.types import IpNetwork
 from hidlroute.core.utils import django_enum
 
 if TYPE_CHECKING:
@@ -84,3 +87,46 @@ class VPNService(abc.ABC):
     @abc.abstractmethod
     def get_status(self, server: "models.VpnServer") -> ServerStatus:
         pass
+
+    def _server_routing_rule_to_route(
+        self, routing_rule: "models.ServerRoutingRule", server: "models.VpnServer"
+    ) -> Route:
+        return Route(
+            network=routing_rule.network.cidr,
+            gateway=routing_rule.gateway,
+            interface=routing_rule.resolved_interface_name(server),
+        )
+
+    def setup_routes_for_server(self, server: "models.VpnServer"):
+        networking_service = server.service_factory.networking_service
+        for routing_rule in server.get_routing_rules():
+            route = self._server_routing_rule_to_route(routing_rule, server)
+            networking_service.create_route(route)
+
+    @abc.abstractmethod
+    def destroy_routes_for_server(self, server: "models.VpnServer"):
+        networking_service = server.service_factory.networking_service
+        for routing_rule in server.get_routing_rules():
+            route = self._server_routing_rule_to_route(routing_rule, server)
+            networking_service.delete_route(route)
+
+    def get_routes_for_server(self, server: "models.VpnServer") -> List[Route]:
+        networking_service = server.service_factory.networking_service
+        result: List[Route] = []
+        for r in networking_service.get_routes():
+            if r.interface == server.interface_name:
+                result.append(r)
+        return result
+
+    def get_subnets_for_server(self, server: "models.VpnServer") -> List[IpNetwork]:
+        networking_service = server.service_factory.networking_service
+        return [r.network for r in networking_service.get_routes_for_server(server)]
+
+    # TODO: Remove me to get_non_server_networks
+    def get_host_networks(self, server: "models.VpnServer") -> List[IpNetwork]:
+        networking_service = server.service_factory.networking_service
+        result: List[IpNetwork] = []
+        for x in networking_service.get_interfaces():
+            if x.name != server.interface_name:
+                result.append(ipaddress.ip_network(str(x.address)))
+        return result

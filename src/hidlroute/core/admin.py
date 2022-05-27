@@ -23,34 +23,11 @@ from treebeard.admin import TreeAdmin
 from treebeard.forms import movenodeform_factory
 
 import hidlroute.core.models
-import hidlroute.vpn.models
 from hidlroute.core import models
 from hidlroute.core.admin_commons import (
     HidlBaseModelAdmin,
 )
 from hidlroute.core.factory import default_service_factory
-
-
-# @admin.register(models.Member)
-# class MemberAdmin(GroupSelectAdminMixin, PolymorphicParentModelAdmin):
-#     base_model = models.Member
-#     child_models = (
-#         models.Person,
-#         models.Host,
-#     )
-#     list_filter = (PolymorphicChildModelFilter,)
-#
-#     def get_child_type_choices(self, request, action):
-#         return [(k, v.capitalize()) for k, v, in super().get_child_type_choices(request, action)]
-#
-#
-# @admin.register(models.Person)
-# class PersonAdmin(GroupSelectAdminMixin, PolymorphicChildModelAdmin):
-#     base_model = models.Person
-#     show_in_index = False
-
-
-# from django.utils.translation import gettext_lazy as _
 
 
 @admin.register(models.Host)

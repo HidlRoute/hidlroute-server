@@ -15,7 +15,7 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-from typing import TYPE_CHECKING, Callable, Dict, Union, Any, Optional
+from typing import Callable, Dict, Union, Any, Optional, TypeVar
 
 from django.utils.module_loading import import_string
 
@@ -23,20 +23,39 @@ from hidlroute.core.service.base import WorkerService
 from hidlroute.core.service.firewall.base import FirewallService
 from hidlroute.core.service.networking.base import NetworkingService
 
-if TYPE_CHECKING:
-    from hidlroute.core.service.ip_allocation import IPAllocationService
-
-__all__ = ["default_service_factory", "ServiceFactory"]
+__all__ = ["default_service_factory", "ServiceFactory", "cached_service"]
 
 _SERVICE_METHOD_MARK = "_service_method"
 
 LOGGER = logging.getLogger("hidl_core.factory")
 
+T = TypeVar("T")
+
+
+def cached_service(service_method: Callable[[Any], T], override=True):
+    def wrapper(self) -> T:
+        if isinstance(service_method, property):
+            method_name = str(id(service_method))
+        elif isinstance(service_method, Callable):
+            method_name = service_method.__name__
+        else:
+            raise ValueError("_register_service decorator must be applied either on method or property")
+
+        from_cache = self._get_from_cache(method_name, not override)
+        if from_cache is None:
+            result = self._invoke_prop_or_method(service_method)
+            self.cache[method_name] = result
+
+        return self.cache[method_name]
+
+    setattr(wrapper, _SERVICE_METHOD_MARK, True)
+    return property(wrapper)
+
 
 class ServiceFactory(object):
     def __init__(self, parent: "ServiceFactory" = None) -> None:
-        self.parent_cache = parent.cache if parent is not None else {}
         self.cache: Dict[str, Callable] = {}
+        self.parent_cache = parent.cache if parent is not None else {}
 
     def bootstrap(self):
         factory_name = self.__class__.__name__
@@ -74,38 +93,15 @@ class ServiceFactory(object):
             return self.parent_cache.get(identity)
         return None
 
-    def _cached_service(service_method, override=True):
-        def wrapper(self):
-            if isinstance(service_method, property):
-                method_name = str(id(service_method))
-            elif isinstance(service_method, Callable):
-                method_name = service_method.__name__
-            else:
-                raise ValueError("_register_service decorator must be applied either on method or property")
-
-            from_cache = self._get_from_cache(method_name, not override)
-            if from_cache is None:
-                result = self._invoke_prop_or_method(service_method)
-                self.cache[method_name] = result
-
-            return self.cache[method_name]
-
-        setattr(wrapper, _SERVICE_METHOD_MARK, True)
-        return property(wrapper)
-
-    @_cached_service
-    def ip_allocation_service(self) -> "IPAllocationService":
-        return self._instance_from_str("hidlroute.core.service.ip_allocation.IPAllocationService")
-
-    @_cached_service
+    @cached_service
     def networking_service(self) -> NetworkingService:
         return self._instance_from_str("hidlroute.core.service.networking.pyroute2.PyRoute2NetworkingService")
 
-    @_cached_service
+    @cached_service
     def firewall_service(self) -> FirewallService:
         return self._instance_from_str("hidlroute.core.service.firewall.iptables.IpTablesFirewallService")
 
-    @_cached_service
+    @cached_service
     def worker_service(self) -> WorkerService:
         return self._instance_from_str("hidlroute.core.service.worker.SynchronousWorkerService")
 

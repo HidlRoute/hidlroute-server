@@ -18,12 +18,9 @@ import abc
 import ipaddress
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import TYPE_CHECKING, Optional, List
+from typing import Optional, List
 
 from hidlroute.core.types import IpNetwork, IpAddress, NetworkDef
-
-if TYPE_CHECKING:
-    from hidlroute.vpn import models as vpn_models
 
 
 class NetVar(Enum):
@@ -107,11 +104,11 @@ class NetworkContext:
 
 class NetworkingService(abc.ABC):
     @abc.abstractmethod
-    def setup_routes_for_server(self, server: "vpn_models.VpnServer"):
+    def create_route(self, route: Route) -> Route:
         pass
 
     @abc.abstractmethod
-    def destroy_routes_for_server(self, server: "vpn_models.VpnServer"):
+    def delete_route(self, route: Route):
         pass
 
     @abc.abstractmethod
@@ -142,16 +139,6 @@ class NetworkingService(abc.ABC):
     def set_link_status(self, interface: NetInterface, status: NetInterfaceState) -> None:
         pass
 
-    def get_routes_for_server(self, server: "vpn_models.VpnServer") -> List[Route]:
-        result: List[Route] = []
-        for r in self.get_routes():
-            if r.interface == server.interface_name:
-                result.append(r)
-        return result
-
-    def get_subnets_for_server(self, server: "vpn_models.VpnServer") -> List[IpNetwork]:
-        return [r.network for r in self.get_routes_for_server(server)]
-
     def get_interface_by_name(self, iface_name: str) -> Optional[NetInterface]:
         for x in self.get_interfaces():
             if x.name == iface_name:
@@ -162,13 +149,6 @@ class NetworkingService(abc.ABC):
         for x in self.get_interfaces():
             if x.name.startswith(prefix):
                 result.append(x)
-        return result
-
-    def get_host_networks(self, server: "vpn_models.VpnServer") -> List[IpNetwork]:
-        result: List[IpNetwork] = []
-        for x in self.get_interfaces():
-            if x.name != server.interface_name:
-                result.append(ipaddress.ip_network(str(x.address)))
         return result
 
     def resolve_subnets(self, networks: List[NetworkDef], network_context: NetworkContext) -> List[Optional[IpNetwork]]:

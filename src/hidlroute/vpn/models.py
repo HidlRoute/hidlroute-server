@@ -32,17 +32,17 @@ from typing import io, List, Optional, Type
 from social_core.utils import slugify
 
 from hidlroute.core.base_models import WithReprCache, WithComment, NameableIdentifiable
+from hidlroute.core.models import BaseRoutingRule
 from hidlroute.vpn.base_models import ServerRelated
 from hidlroute.core import models as core_models
-from hidlroute.core.factory import ServiceFactory, default_service_factory
 
 from hidlroute.core.service.networking.base import NetVar
 from hidlroute.core.types import NetworkDef, IpAddress
 from polymorphic import models as polymorphic_models
 from django.contrib.auth.models import AbstractUser as DjangoUser
 from hidlroute.core.service.base import PostedJob, JobResult
+from hidlroute.vpn.factory import default_vpn_service_factory, VPNServiceFactory
 from hidlroute.vpn.service.base import ServerState, ServerStatus, VPNService
-
 
 LOGGER = logging.getLogger("hidl_vpn.models")
 
@@ -201,24 +201,12 @@ class ServerRule(WithComment, ServerRelated):
         abstract = True
 
 
-class ServerRoutingRule(ServerRule):
-    network = models.ForeignKey(core_models.Subnet, null=True, blank=True, on_delete=models.CASCADE)
-    gateway = netfields.InetAddressField(null=True, blank=True)
-    interface = models.CharField(
-        max_length=16,
-        null=True,
-        blank=True,
-        help_text=_("Use special keyword $self to reference interface of the VPN server this route is attached to"),
-    )
-
+class ServerRoutingRule(BaseRoutingRule, ServerRule):
     def resolved_interface_name(self, server: "VpnServer") -> Optional[str]:
         if self.interface is not None and self.interface.strip().lower() == "$self":
             return server.interface_name
         else:
             return self.interface
-
-    def __str__(self) -> str:
-        return f"{self.network.cidr} gw: {self.gateway or 'n/a'} iface: {self.interface or 'n/a'}"
 
 
 class ClientRule(WithComment, ServerRelated):
@@ -358,7 +346,7 @@ class VpnServer(NameableIdentifiable, WithComment, polymorphic_models.Polymorphi
         self.desired_state_raw = str(val.value) if val is not None else None
 
     def __str__(self):
-        return f"S: {self.name}"
+        return f"{self.name}"
 
     @transaction.atomic
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None) -> None:
@@ -404,8 +392,8 @@ class VpnServer(NameableIdentifiable, WithComment, polymorphic_models.Polymorphi
             return []
 
     @property
-    def service_factory(self) -> ServiceFactory:
-        return default_service_factory
+    def service_factory(self) -> VPNServiceFactory:
+        return default_vpn_service_factory
 
     @property
     def vpn_service(self) -> "VPNService":
