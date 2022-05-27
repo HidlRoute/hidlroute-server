@@ -13,6 +13,7 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 import datetime
 import logging
 
@@ -137,12 +138,11 @@ class WireguardVPNService(VPNService):
             elif job_result.status == JobStatus.FAILED:
                 state = ServerState.FAILED
             elif job_result.status == JobStatus.SUCCESS:
-                if desired_state == ServerState.RUNNING:
-                    state = ServerState.RUNNING
-                elif desired_state == ServerState.STOPPED:
-                    state = ServerState.STOPPED
+                state = iface_state
 
-        if state is (ServerState.RUNNING, ServerState.STOPPED) and state != iface_state:
+        if (state is (ServerState.RUNNING, ServerState.STOPPED) and state != iface_state) or (
+            state == ServerState.FAILED and iface_state == ServerState.RUNNING
+        ):
             state = ServerState.UNKNOWN
         else:
             if state == ServerState.UNKNOWN:

@@ -267,7 +267,7 @@ class BaseServerAdminImpl(ManagedRelActionsMixin, SortableAdminMixin, HidlFormsM
     def action_stop_server(self, request: HttpRequest, server_id: int) -> HttpResponse:
         try:
             obj = vpn_models.VpnServer.objects.get(pk=server_id)
-            obj.do_vpn_server_stop()
+            obj.stop()
             self.message_user(request, _("Server {} is shutting down".format(obj)))
         except HidlNetworkingException as e:
             messages.error(request, _("Error stopping server. Details: {}".format(e)))
@@ -309,8 +309,8 @@ class ServerAdmin(HidlBaseModelAdmin, HidlePolymorphicParentAdmin):
             css_class = "badge-primary"
         elif state == ServerState.FAILED:
             css_class = "badge-danger"
-            if obj.state_change_job_logs:
-                tooltip = obj.state_change_job_logs.replace("\n", " ")
+            if obj.state_change_job_msg:
+                tooltip = obj.state_change_job_msg.replace("\n", " ")
         elif state.is_running:
             css_class = "badge-success"
         result = f'<span title="{tooltip}" class="server-state badge {css_class}">{state.label}</span>'

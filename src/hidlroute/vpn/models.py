@@ -349,7 +349,7 @@ class VpnServer(NameableIdentifiable, WithComment, polymorphic_models.Polymorphi
     def register_state_change_message(self, msg: str, log: str = None):
         trimmed_message = msg
         trim_suffix = "..."
-        max_len = self.__class__.state_change_job_msg.max_length
+        max_len = self.__class__.state_change_job_msg.field.max_length
         if len(msg) > max_len:
             trimmed_message = msg[: max_len - len(trim_suffix)] + trim_suffix
         self.state_change_job_msg = trimmed_message

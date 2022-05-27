@@ -17,10 +17,7 @@
 import abc
 import datetime
 from enum import Enum
-from typing import NamedTuple, TYPE_CHECKING, Any, Optional, Dict
-
-if TYPE_CHECKING:
-    from hidlroute.core import models
+from typing import NamedTuple, Any, Optional
 
 
 class HidlNetworkingException(Exception):
@@ -46,22 +43,6 @@ class JobResult(NamedTuple):
 
 
 class WorkerService(abc.ABC):
-    # @abc.abstractmethod
-    # def start_vpn_server(self, server: "models.VpnServer") -> PostedJob:
-    #     pass
-    #
-    # @abc.abstractmethod
-    # def stop_vpn_server(self, server: "models.VpnServer") -> PostedJob:
-    #     pass
-    #
-    # @abc.abstractmethod
-    # def restart_vpn_server(self, server: "models.VpnServer") -> PostedJob:
-    #     pass
-    #
-    # @abc.abstractmethod
-    # def get_server_status(self, server: "models.VpnServer") -> ServerState:
-    #     pass
-
     def prepare_for_serialization(self, obj: Any) -> Any:
         if hasattr("to_dict", obj):
             return obj.to_dict()

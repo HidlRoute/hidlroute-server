@@ -91,12 +91,9 @@ class VPNService(abc.ABC):
     def do_get_status(self, server: "models.VpnServer") -> ServerStatus:
         pass
 
-    def restart(self, server: "models.VpnServer"):
-        job = server.stop()
-        server.service_factory.worker_service.wait_for_job(job.uuid)
-        server = server.__class__.objects.get(pk=server.pk)  # Force reload from DB and new instance to clear all caches
-        job = server.start()
-        server.service_factory.worker_service.wait_for_job(job.uuid)
+    def do_vpn_server_restart(self, server: "models.VpnServer"):
+        self.do_vpn_server_stop(server)
+        self.do_vpn_server_start(server)
 
     def _server_routing_rule_to_route(
         self, routing_rule: "models.ServerRoutingRule", server: "models.VpnServer"
@@ -156,4 +153,9 @@ class VPNService(abc.ABC):
 
     def restart_vpn_server(self, server: "models.VpnServer") -> PostedJob:
         worker_service: WorkerService = server.service_factory.worker_service  # noqa
-        return worker_service.post_job(const.JOB_ID_RESTART_VPN_SERVER, server.pk)
+        server.desired_state = ServerState.RUNNING
+        job = worker_service.post_job(const.JOB_ID_RESTART_VPN_SERVER, server.pk)
+        server.state_change_job_id = job.uuid
+        server.state_change_job_start = job.timestamp
+        server.save()
+        return job
