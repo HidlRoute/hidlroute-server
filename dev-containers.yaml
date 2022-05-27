@@ -24,7 +24,7 @@ services:
     image: mher/flower:0.9.7
     command: flower --port=5555
     environment:
-      CELERY_BROKER_URL: redis://:w8vfpGTA2KPvvfMbFEnt6@redis:7279/0
+      CELERY_BROKER_URL: redis://:w8vfpGTA2KPvvfMbFEnt6@redis:6379/0
     ports:
       - "50555:5555"
 

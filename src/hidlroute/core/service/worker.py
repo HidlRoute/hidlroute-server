@@ -13,19 +13,22 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
 import datetime
 import json
+import logging
 import uuid
-from typing import Any, NamedTuple, Optional, Dict
+from dataclasses import dataclass
+from typing import Any, Optional, Dict
 
-from hidlroute.vpn import models as vpn_models
+from celery import Celery
+from celery.result import AsyncResult
+
 from hidlroute.core.service.base import WorkerService, PostedJob, JobStatus, JobResult
-from hidlroute.vpn.service.base import ServerStatus
 
 
 class SynchronousWorkerService(WorkerService):
-    class JobRegistryItem(NamedTuple):
+    @dataclass
+    class JobRegistryItem:
         posted_job: PostedJob
         status: JobStatus
         result: Any
@@ -33,37 +36,27 @@ class SynchronousWorkerService(WorkerService):
     def __init__(self) -> None:
         self.__job_registry: Dict[str, SynchronousWorkerService.JobRegistryItem] = {}
 
-    def __register_job_result(self, result: Any, exc: Optional[Exception] = None) -> PostedJob:
-        _result = json.loads(json.dumps(result)) if exc is None else dict(error=str(exc))
+    def __register_new_job(self) -> PostedJob:
         new_uuid = uuid.uuid4().hex
         job = PostedJob(new_uuid, datetime.datetime.now())
         self.__job_registry[new_uuid] = self.JobRegistryItem(
             job,
-            JobStatus.SUCCESS if exc is None else JobStatus.FAILED,
-            _result,
+            JobStatus.PENDING,
+            None,
         )
         return job
 
-    def get_server_status(self, server: vpn_models.VpnServer) -> ServerStatus:
-        return server.vpn_service.get_status(server)
-
-    def start_vpn_server(self, server: "vpn_models.VpnServer") -> PostedJob:
-        try:
-            return self.__register_job_result(server.vpn_service.start(server))
-        except Exception as e:
-            return self.__register_job_result(None, e)
-
-    def stop_vpn_server(self, server: "vpn_models.VpnServer") -> PostedJob:
-        try:
-            return self.__register_job_result(server.vpn_service.stop(server))
-        except Exception as e:
-            return self.__register_job_result(None, e)
-
-    def restart_vpn_server(self, server: "vpn_models.VpnServer") -> PostedJob:
-        try:
-            self.__register_job_result(server.vpn_service.restart(server))
-        except Exception as e:
-            return self.__register_job_result(None, e)
+    def __register_job_result(self, job_uuid: str, result: Any, exc: Optional[Exception] = None) -> JobResult:
+        if job_uuid in self.__job_registry:
+            record = self.__job_registry[job_uuid]
+            record.status = JobStatus.SUCCESS if exc is None else JobStatus.FAILED
+            _result = (
+                json.loads(json.dumps(self.prepare_for_serialization(result))) if exc is None else dict(error=str(exc))
+            )
+            record.result = _result
+            return JobResult(job_uuid, record.status, record.result, record.posted_job.timestamp)
+        else:
+            raise ValueError(f"Job {job_uuid} doesn't exist")
 
     def get_job_result(self, job_uuid: str, fail_if_not_exist=False) -> Optional[JobResult]:
         if job_uuid in self.__job_registry:
@@ -75,3 +68,44 @@ class SynchronousWorkerService(WorkerService):
 
     def wait_for_job(self, job_uuid: str, timeout: Optional[datetime.datetime] = None) -> JobResult:
         return self.get_job_result(job_uuid, True)
+
+    def post_job(self, name: str, **params: Dict[str, Any]) -> PostedJob:
+        posted_job = self.__register_new_job()
+        return posted_job
+
+
+class CeleryWorkerService(WorkerService):
+    def __init__(self) -> None:
+        super().__init__()
+        self.celery = Celery("hidl")
+        self.celery.config_from_object("django.conf:settings", namespace="CELERY")
+        self.celery.log.setup(logging.root.level, redirect_stdouts=False)
+
+        self.__celery_status_to_job_status = {
+            "FAILURE": JobStatus.FAILED,
+            "SUCCESS": JobStatus.SUCCESS,
+            "PENDING": JobStatus.PENDING,
+            "RETRY": JobStatus.FAILED,
+        }
+
+    def __celery_result_to_job_result(self, celery_result: AsyncResult) -> JobResult:
+        return JobResult(
+            celery_result.id,
+            status=self.__celery_status_to_job_status[celery_result.status],
+            timestamp=datetime.datetime.now(),
+            result=celery_result.result,
+        )
+
+    def get_job_result(self, job_uuid: str) -> JobResult:
+        res = AsyncResult(job_uuid)
+        return self.__celery_result_to_job_result(res)
+
+    def wait_for_job(self, job_uuid: str, timeout: Optional[datetime.timedelta] = None) -> JobResult:
+        res = AsyncResult(job_uuid)
+        res.wait(timeout.total_seconds(), interval=0.5)
+        return self.__celery_result_to_job_result(res)
+
+    def post_job(self, name: str, *args, **kwargs) -> PostedJob:
+        ts = datetime.datetime.now()
+        res: AsyncResult = self.celery.send_task(name, args, kwargs)
+        return PostedJob(res.id, ts)

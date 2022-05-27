@@ -217,9 +217,7 @@ class BaseServerAdminImpl(ManagedRelActionsMixin, SortableAdminMixin, HidlFormsM
     def get_icon(cls) -> str:
         return cls.ICON
 
-    def response_add(
-        self, request: HttpRequest, obj: vpn_models.VpnServer, post_url_continue=None
-    ) -> HttpResponse:
+    def response_add(self, request: HttpRequest, obj: vpn_models.VpnServer, post_url_continue=None) -> HttpResponse:
         # We should allow further modification of the user just added i.e. the
         # 'Save' button should behave like the 'Save and continue editing'
         # button except of:
@@ -269,7 +267,7 @@ class BaseServerAdminImpl(ManagedRelActionsMixin, SortableAdminMixin, HidlFormsM
     def action_stop_server(self, request: HttpRequest, server_id: int) -> HttpResponse:
         try:
             obj = vpn_models.VpnServer.objects.get(pk=server_id)
-            obj.stop()
+            obj.do_vpn_server_stop()
             self.message_user(request, _("Server {} is shutting down".format(obj)))
         except HidlNetworkingException as e:
             messages.error(request, _("Error stopping server. Details: {}".format(e)))
@@ -306,13 +304,16 @@ class ServerAdmin(HidlBaseModelAdmin, HidlePolymorphicParentAdmin):
     def vpn_status(self, obj: vpn_models.VpnServer):
         state = obj.status.state
         css_class = "badge-secondary"
+        tooltip = ""
         if state.is_transitioning:
             css_class = "badge-primary"
         elif state == ServerState.FAILED:
             css_class = "badge-danger"
+            if obj.state_change_job_logs:
+                tooltip = obj.state_change_job_logs.replace("\n", " ")
         elif state.is_running:
             css_class = "badge-success"
-        result = f'<span class="server-state badge {css_class}">{state.label}</span>'
+        result = f'<span title="{tooltip}" class="server-state badge {css_class}">{state.label}</span>'
         if obj.has_pending_changes:
             result += f'&nbsp;<span class="server-state badge badge-warning">{_("Changes Pending")}</span>'
         return mark_safe(result)

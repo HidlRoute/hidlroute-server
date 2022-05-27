@@ -36,6 +36,7 @@ BASE_APPS = filter_none(
         # HidlRoute
         "hidlroute.auth",
         "hidlroute.core",
+        if_env_set("hidlroute.worker", "HIDL_WORKERS", False),
         "hidlroute.vpn",
         if_env_set("hidlroute.contrib.wireguard", "ENABLE_WIREGUARD", True),
         if_env_set("hidlroute.contrib.openvpn", "ENABLE_OPENVPN", True),
@@ -51,6 +52,7 @@ LANGUAGES = [
 ]
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = env.str("TIME_ZONE", "UTC")
+CELERY_TIMEZONE = TIME_ZONE
 USE_I18N = True
 USE_L10N = True
 LOCALE_DIRS = BASE_DIR / "locale"
@@ -174,3 +176,5 @@ LOGGING = {
         },
     },
 }
+
+CELERY_BEAT_SCHEDULE = {}

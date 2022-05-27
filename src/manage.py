@@ -29,10 +29,16 @@ try:
 except ImportError:
     pass
 
+WORKER_RELATED_COMMANDS = ("workers", "celery", "scheduler")
+
 
 def main():
     """Run administrative tasks."""
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'hidlroute.settings.dev')
+    for x in sys.argv:
+        if x.lower().strip() in WORKER_RELATED_COMMANDS:
+            os.environ.setdefault('HIDL_WORKERS', 'true')
+            break
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:

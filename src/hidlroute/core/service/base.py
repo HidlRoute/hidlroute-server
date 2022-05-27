@@ -17,15 +17,13 @@
 import abc
 import datetime
 from enum import Enum
-from typing import NamedTuple, TYPE_CHECKING, Any, Optional
-
-from hidlroute.vpn.service.base import ServerState
+from typing import NamedTuple, TYPE_CHECKING, Any, Optional, Dict
 
 if TYPE_CHECKING:
     from hidlroute.core import models
 
 
-class HidlNetworkingException(BaseException):
+class HidlNetworkingException(Exception):
     pass
 
 
@@ -48,26 +46,36 @@ class JobResult(NamedTuple):
 
 
 class WorkerService(abc.ABC):
-    @abc.abstractmethod
-    def start_vpn_server(self, server: "models.VpnServer") -> PostedJob:
-        pass
+    # @abc.abstractmethod
+    # def start_vpn_server(self, server: "models.VpnServer") -> PostedJob:
+    #     pass
+    #
+    # @abc.abstractmethod
+    # def stop_vpn_server(self, server: "models.VpnServer") -> PostedJob:
+    #     pass
+    #
+    # @abc.abstractmethod
+    # def restart_vpn_server(self, server: "models.VpnServer") -> PostedJob:
+    #     pass
+    #
+    # @abc.abstractmethod
+    # def get_server_status(self, server: "models.VpnServer") -> ServerState:
+    #     pass
 
-    @abc.abstractmethod
-    def stop_vpn_server(self, server: "models.VpnServer") -> PostedJob:
-        pass
-
-    @abc.abstractmethod
-    def restart_vpn_server(self, server: "models.VpnServer") -> PostedJob:
-        pass
-
-    @abc.abstractmethod
-    def get_server_status(self, server: "models.VpnServer") -> ServerState:
-        pass
+    def prepare_for_serialization(self, obj: Any) -> Any:
+        if hasattr("to_dict", obj):
+            return obj.to_dict()
+        else:
+            return obj
 
     @abc.abstractmethod
     def get_job_result(self, job_uuid: str) -> JobResult:
         pass
 
     @abc.abstractmethod
-    def wait_for_job(self, job_uuid: str, timeout: Optional[datetime.datetime] = None) -> JobResult:
+    def wait_for_job(self, job_uuid: str, timeout: Optional[datetime.timedelta] = None) -> JobResult:
+        pass
+
+    @abc.abstractmethod
+    def post_job(self, name: str, *args, **kwargs) -> PostedJob:
         pass

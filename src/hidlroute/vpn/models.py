@@ -317,13 +317,14 @@ class VpnServer(NameableIdentifiable, WithComment, polymorphic_models.Polymorphi
         null=False, blank=False, default=ServerState.STOPPED.value, db_column="desired_state"
     )
     state_change_job_id = models.CharField(max_length=100, null=True, blank=True)
-    state_change_job_logs = models.CharField(max_length=100, null=True, blank=True)
+    state_change_job_msg = models.CharField(max_length=100, null=True, blank=True)
+    state_change_job_logs = models.TextField(null=True, blank=True)
     state_change_job_start = models.DateTimeField(null=True, blank=True)
     changes_made_ts = models.DateTimeField(null=True, blank=True)
 
     @cached_property
     def status(self) -> ServerStatus:
-        return self.service_factory.worker_service.get_server_status(self)
+        return self.vpn_service.get_server_status(self)
 
     @property
     def is_running(self) -> bool:
@@ -344,6 +345,16 @@ class VpnServer(NameableIdentifiable, WithComment, polymorphic_models.Polymorphi
     @desired_state.setter
     def desired_state(self, val: Optional[ServerState]):
         self.desired_state_raw = str(val.value) if val is not None else None
+
+    def register_state_change_message(self, msg: str, log: str = None):
+        trimmed_message = msg
+        trim_suffix = "..."
+        max_len = self.__class__.state_change_job_msg.max_length
+        if len(msg) > max_len:
+            trimmed_message = msg[: max_len - len(trim_suffix)] + trim_suffix
+        self.state_change_job_msg = trimmed_message
+        self.state_change_job_logs = log
+        self.save()
 
     def __str__(self):
         return f"{self.name}"
@@ -405,7 +416,7 @@ class VpnServer(NameableIdentifiable, WithComment, polymorphic_models.Polymorphi
         if self.status.state.is_transitioning:
             raise ValueError(f"Server {self} is {self.status.state.label.lower()} now")
         self.desired_state = ServerState.STOPPED
-        job = self.service_factory.worker_service.stop_vpn_server(self)
+        job = self.vpn_service.stop_vpn_server(self)
         self.state_change_job_id = job.uuid
         self.state_change_job_start = job.timestamp
         self.save()
@@ -418,7 +429,7 @@ class VpnServer(NameableIdentifiable, WithComment, polymorphic_models.Polymorphi
             raise ValueError(f"Server {self} is {self.status.state.label.lower()} now")
 
         self.desired_state = ServerState.RUNNING
-        job = self.service_factory.worker_service.start_vpn_server(self)
+        job = self.vpn_service.start_vpn_server(self)
         self.state_change_job_id = job.uuid
         self.state_change_job_start = job.timestamp
         self.save()
@@ -429,7 +440,7 @@ class VpnServer(NameableIdentifiable, WithComment, polymorphic_models.Polymorphi
         self.save()
 
     def restart(self) -> PostedJob:
-        return self.service_factory.worker_service.restart_vpn_server(self)
+        return self.vpn_service.restart_vpn_server(self)
 
     def get_firewall_rules(self) -> QuerySet["VpnFirewallRule"]:
         return self.vpnfirewallrule_set.all()

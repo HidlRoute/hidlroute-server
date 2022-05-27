@@ -15,15 +15,18 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import abc
+import datetime
 import ipaddress
 from enum import Enum
 from typing import TYPE_CHECKING, List
 
 from django.utils.translation import gettext_lazy as _
 
+from hidlroute.core.service.base import WorkerService, JobStatus, PostedJob
 from hidlroute.core.service.networking.base import Route
 from hidlroute.core.types import IpNetwork
 from hidlroute.core.utils import django_enum
+from hidlroute.vpn import const
 
 if TYPE_CHECKING:
     from hidlroute.vpn import models
@@ -67,18 +70,25 @@ class ServerStatus:
     def __init__(self, state: ServerState) -> None:
         self.state = state
 
+    def to_dict(self) -> dict:
+        return dict(state=self.state.name)
+
+    @classmethod
+    def from_dict(cls, obj: dict) -> "ServerStatus":
+        return ServerStatus(state=ServerState[obj["state"]])
+
 
 class VPNService(abc.ABC):
     @abc.abstractmethod
-    def start(self, server: "models.VpnServer"):
+    def do_vpn_server_start(self, server: "models.VpnServer"):
         pass
 
     @abc.abstractmethod
-    def stop(self, server: "models.VpnServer"):
+    def do_vpn_server_stop(self, server: "models.VpnServer"):
         pass
 
     @abc.abstractmethod
-    def get_status(self, server: "models.VpnServer") -> ServerStatus:
+    def do_get_status(self, server: "models.VpnServer") -> ServerStatus:
         pass
 
     def restart(self, server: "models.VpnServer"):
@@ -89,7 +99,7 @@ class VPNService(abc.ABC):
         server.service_factory.worker_service.wait_for_job(job.uuid)
 
     def _server_routing_rule_to_route(
-            self, routing_rule: "models.ServerRoutingRule", server: "models.VpnServer"
+        self, routing_rule: "models.ServerRoutingRule", server: "models.VpnServer"
     ) -> Route:
         return Route(
             network=routing_rule.network.cidr,
@@ -118,10 +128,8 @@ class VPNService(abc.ABC):
         return result
 
     def get_subnets_for_server(self, server: "models.VpnServer") -> List[IpNetwork]:
-        networking_service = server.service_factory.networking_service
         return [r.network for r in server.vpn_service.get_routes_for_server(server)]
 
-    # TODO: Remove me to get_non_server_networks
     def get_non_server_networks(self, server: "models.VpnServer") -> List[IpNetwork]:
         networking_service = server.service_factory.networking_service
         result: List[IpNetwork] = []
@@ -129,3 +137,23 @@ class VPNService(abc.ABC):
             if x.name != server.interface_name:
                 result.append(ipaddress.ip_network(str(x.address)))
         return result
+
+    def get_server_status(self, server: "models.VpnServer") -> ServerStatus:
+        worker_service: WorkerService = server.service_factory.worker_service  # noqa
+        job = worker_service.post_job(const.JOB_ID_GET_VPN_SERVER_STATUS, server.pk)
+        job_result = worker_service.wait_for_job(job.uuid, timeout=datetime.timedelta(seconds=3))
+        if job_result.status == JobStatus.SUCCESS:
+            return ServerStatus.from_dict(job_result.result)
+        raise Exception(f"Unable to get status for {server.name}: {str(job_result.result)}")
+
+    def start_vpn_server(self, server: "models.VpnServer") -> PostedJob:
+        worker_service: WorkerService = server.service_factory.worker_service  # noqa
+        return worker_service.post_job(const.JOB_ID_START_VPN_SERVER, server.pk)
+
+    def stop_vpn_server(self, server: "models.VpnServer") -> PostedJob:
+        worker_service: WorkerService = server.service_factory.worker_service  # noqa
+        return worker_service.post_job(const.JOB_ID_STOP_VPN_SERVER, server.pk)
+
+    def restart_vpn_server(self, server: "models.VpnServer") -> PostedJob:
+        worker_service: WorkerService = server.service_factory.worker_service  # noqa
+        return worker_service.post_job(const.JOB_ID_RESTART_VPN_SERVER, server.pk)

@@ -103,7 +103,8 @@ class ServiceFactory(object):
 
     @cached_service
     def worker_service(self) -> WorkerService:
-        return self._instance_from_str("hidlroute.core.service.worker.SynchronousWorkerService")
+        # return self._instance_from_str("hidlroute.core.service.worker.SynchronousWorkerService")
+        return self._instance_from_str("hidlroute.core.service.worker.CeleryWorkerService")
 
 
 default_service_factory = ServiceFactory()

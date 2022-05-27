@@ -41,6 +41,10 @@ AUTH_PASSWORD_VALIDATORS = []
 
 DATABASES = {"default": env.db_url_config("postgres://hidl:hidl@127.0.0.1:5432/hidl")}
 
+# WORKERS
+CELERY_BROKER_URL = "redis://:w8vfpGTA2KPvvfMbFEnt6@localhost:7279/0"
+CELERY_RESULT_BACKEND = CELERY_BROKER_URL
+
 # 2FA
 TWO_FACTOR_SMS_GATEWAY = "two_factor.gateways.fake.Fake"
 

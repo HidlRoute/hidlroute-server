@@ -39,7 +39,7 @@ class DummyLoggingVPNService(VPNService):
     def _log_firewall_rule(self, rule: "vpn_models.VpnFirewallRule"):
         self.__logger.info(rule.repr)
 
-    def start(self, server: "vpn_models.VpnServer"):
+    def do_vpn_server_start(self, server: "vpn_models.VpnServer"):
         LOGGER.info(f"Setting up VPN server: {server}")
         LOGGER.info(f"Creating network interface {server.interface_name}")
         server.service_factory.networking_service.setup_routes_for_server(server)
@@ -60,13 +60,13 @@ class DummyLoggingVPNService(VPNService):
             self._log_routing_rule(rule, server)
         self.__logger.info("Deleted routes for {}".format(server))
 
-    def stop(self, server: "vpn_models.VpnServer"):
+    def do_vpn_server_stop(self, server: "vpn_models.VpnServer"):
         LOGGER.info(f"Shutting down VPN server: {server}")
         LOGGER.info(f"Destroying network interface {server.interface_name}")
         server.service_factory.firewall_service.destroy_firewall_for_server(server)
         server.service_factory.networking_service.destroy_routes_for_server(server)
         LOGGER.info(f"VPN Server {server} is terminated")
 
-    def get_status(self, server: "vpn_models.VpnServer") -> ServerStatus:
+    def do_get_status(self, server: "vpn_models.VpnServer") -> ServerStatus:
         LOGGER.info(f"Get server status: {server}")
         return ServerStatus(state=ServerState.STOPPED)

@@ -31,6 +31,9 @@ if "postgresql" in DATABASES["default"]["ENGINE"]:
 
 ADMINS = getaddresses([env("ADMINS")])
 
+CELERY_BROKER_URL = env.str("CELERY_BROKER_URL")
+CELERY_RESULT_BACKEND = env.str("CELERY_RESULT_BACKEND", CELERY_BROKER_URL)
+
 try:
     from .config import *  # noqa: F401
 except ImportError:

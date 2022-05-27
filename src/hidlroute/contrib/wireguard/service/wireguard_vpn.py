@@ -13,9 +13,11 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
+import datetime
 import logging
 
+from django.conf import settings
+from django.utils import timezone
 from pr2modules.netlink.generic.wireguard import WireGuard
 
 from hidlroute.contrib.wireguard.models import WireguardServer
@@ -38,7 +40,7 @@ class WireguardVPNService(VPNService):
     def __ensure_wg_server(server: "core_models.VpnServer") -> None:
         assert isinstance(server, WireguardServer), "WireguardVPNService can only take WireguardServer as an argument"
 
-    def start(self, server: "models.WireguardServer"):
+    def do_vpn_server_start(self, server: "models.WireguardServer"):
         self.__ensure_wg_server(server)
         net_service = server.service_factory.networking_service
         firewall_service: FirewallService = server.service_factory.firewall_service  # noqa
@@ -83,7 +85,7 @@ class WireguardVPNService(VPNService):
 
             raise HidlNetworkingException(f"Error starting server: {str(start_exception)}") from start_exception
 
-    def stop(self, server: "models.WireguardServer"):
+    def do_vpn_server_stop(self, server: "models.WireguardServer"):
         self.__ensure_wg_server(server)
         net_service: NetworkingService = server.service_factory.networking_service  # noqa
         firewall_service: FirewallService = server.service_factory.firewall_service  # noqa
@@ -103,7 +105,7 @@ class WireguardVPNService(VPNService):
             LOGGER.error(f"Error stopping interface, see details below: {e}")
             raise HidlNetworkingException(f"Error stopping interface: {str(e)}") from e
 
-    def get_status(self, server: "models.WireguardServer") -> ServerStatus:
+    def do_get_status(self, server: "models.WireguardServer") -> ServerStatus:
         self.__ensure_wg_server(server)
         net_service = server.service_factory.networking_service
         worker_service: WorkerService = server.service_factory.worker_service  # noqa
@@ -119,10 +121,19 @@ class WireguardVPNService(VPNService):
         job_result = worker_service.get_job_result(server.state_change_job_id) if server.state_change_job_id else None
         if job_result is not None:
             if job_result.status == JobStatus.PENDING:
-                if desired_state == ServerState.RUNNING:
-                    state = ServerState.STARTING
-                elif desired_state == ServerState.STOPPED:
-                    state = ServerState.STOPPING
+                tzinfo = timezone.get_current_timezone() if settings.USE_TZ else None
+                timeout = datetime.timedelta(seconds=20)
+                if (
+                    server.state_change_job_start
+                    and datetime.datetime.now(tz=tzinfo) - server.state_change_job_start > timeout
+                ):
+                    # Task is pending for too long. Consider as failed
+                    state = ServerState.FAILED
+                else:
+                    if desired_state == ServerState.RUNNING:
+                        state = ServerState.STARTING
+                    elif desired_state == ServerState.STOPPED:
+                        state = ServerState.STOPPING
             elif job_result.status == JobStatus.FAILED:
                 state = ServerState.FAILED
             elif job_result.status == JobStatus.SUCCESS:
