@@ -432,7 +432,7 @@ class VpnServer(NameableIdentifiable, WithComment, polymorphic_models.Polymorphi
         return self.service_factory.worker_service.restart_vpn_server(self)
 
     def get_firewall_rules(self) -> QuerySet["VpnFirewallRule"]:
-        return self.firewallrule_set.all()
+        return self.vpnfirewallrule_set.all()
 
     def get_routing_rules(self) -> QuerySet["ServerRoutingRule"]:
         return ServerRoutingRule.load_related_to_server(self).select_related("network")

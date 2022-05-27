@@ -36,8 +36,7 @@ from django.utils.translation import gettext_lazy as _
 from django_reverse_admin import ReverseModelAdmin
 from polymorphic.admin import PolymorphicChildModelAdmin
 
-import hidlroute.vpn
-from hidlroute.core import models
+from hidlroute.vpn import models as vpn_models
 from hidlroute.core.admin_commons import (
     HidlePolymorphicChildAdmin,
     HidlBaseModelAdmin,
@@ -56,22 +55,22 @@ class BaseChildDeviceAdmin(HidlePolymorphicChildAdmin):
     pass
 
 
-@admin.register(hidlroute.vpn.models.Device)
+@admin.register(vpn_models.Device)
 class DeviceAdmin(HidlBaseModelAdmin, HidlePolymorphicParentAdmin):
     Impl = BaseChildDeviceAdmin
-    base_model = hidlroute.vpn.models.Device
+    base_model = vpn_models.Device
     child_models = []
 
 
 class ServerToMemberAdmin(ManagedRelActionsMixin, admin.TabularInline):
-    model = hidlroute.vpn.models.ServerToMember
+    model = vpn_models.ServerToMember
     extra = 0
     verbose_name = _("Member")
     verbose_name_plural = _("Members")
 
 
 class ServerToGroupAdmin(GroupSelectAdminMixin, ManagedRelActionsMixin, admin.TabularInline):
-    model = hidlroute.vpn.models.ServerToGroup
+    model = vpn_models.ServerToGroup
     extra = 0
     verbose_name = _("Group")
     verbose_name_plural = _("Groups")
@@ -80,7 +79,7 @@ class ServerToGroupAdmin(GroupSelectAdminMixin, ManagedRelActionsMixin, admin.Ta
 class ServerRelatedAdminMixin:
     def __init__(self, parent_model, admin_site) -> None:
         super().__init__(parent_model, admin_site)
-        self.parent_obj: Optional[hidlroute.vpn.models.VpnServer] = None
+        self.parent_obj: Optional[vpn_models.VpnServer] = None
 
     def get_formset(self, request, obj=None, **kwargs):
         if self.parent_obj is None and obj:
@@ -124,7 +123,7 @@ class ServerRelatedAdminMixin:
 
 
 class ClientRoutingRuleAdmin(GroupSelectAdminMixin, ServerRelatedAdminMixin, admin.TabularInline):
-    model = hidlroute.vpn.models.ClientRoutingRule
+    model = vpn_models.ClientRoutingRule
     extra = 0
     fields = (
         "network",
@@ -138,14 +137,14 @@ class ClientRoutingRuleAdmin(GroupSelectAdminMixin, ServerRelatedAdminMixin, adm
 
 
 class ServerRoutingRulesInlineAdmin(GroupSelectAdminMixin, ServerRelatedAdminMixin, admin.StackedInline):
-    model = hidlroute.vpn.models.ServerRoutingRule
+    model = vpn_models.ServerRoutingRule
     fields = ("network", "gateway", "interface", ("server_group", "server_member"), "comment")
     extra = 0
 
 
 class RelatedFirewallRulesReadonlyInline(SortableInlineAdminMixin, admin.TabularInline):
     ordering = ["order"]
-    model = hidlroute.vpn.models.VpnFirewallRule
+    model = vpn_models.VpnFirewallRule
     fields = [
         "order",
         "description",
@@ -188,7 +187,7 @@ class BaseServerAdminImpl(ManagedRelActionsMixin, SortableAdminMixin, HidlFormsM
     create_inlines = [ServerToGroupAdmin]
 
     def get_inlines(
-        self, request: HttpRequest, obj: Optional[hidlroute.vpn.models.VpnServer] = None
+        self, request: HttpRequest, obj: Optional[vpn_models.VpnServer] = None
     ) -> List[Type[InlineModelAdmin]]:
         is_create = obj is None
         if is_create and self.create_inlines is not None:
@@ -219,7 +218,7 @@ class BaseServerAdminImpl(ManagedRelActionsMixin, SortableAdminMixin, HidlFormsM
         return cls.ICON
 
     def response_add(
-        self, request: HttpRequest, obj: hidlroute.vpn.models.VpnServer, post_url_continue=None
+        self, request: HttpRequest, obj: vpn_models.VpnServer, post_url_continue=None
     ) -> HttpResponse:
         # We should allow further modification of the user just added i.e. the
         # 'Save' button should behave like the 'Save and continue editing'
@@ -230,7 +229,7 @@ class BaseServerAdminImpl(ManagedRelActionsMixin, SortableAdminMixin, HidlFormsM
             request.POST["_continue"] = 1  # noqa
         return super().response_add(request, obj, post_url_continue)
 
-    def response_change(self, request: HttpRequest, obj: hidlroute.vpn.models.VpnServer) -> HttpResponse:
+    def response_change(self, request: HttpRequest, obj: vpn_models.VpnServer) -> HttpResponse:
         # Stay on the edit page unless Add Another button is pressed
         if "_addanother" not in request.POST:
             request.POST = request.POST.copy()  # noqa
@@ -248,18 +247,18 @@ class BaseServerAdminImpl(ManagedRelActionsMixin, SortableAdminMixin, HidlFormsM
         for obj in formset.deleted_objects:
             obj.delete()
         for instance in instances:
-            if isinstance(instance, models.ServerRelated):
+            if isinstance(instance, vpn_models.ServerRelated):
                 if instance.server_group is not None or instance.server_member is not None:
                     instance.server = None
             instance.save()
         formset.save_m2m()
 
     def __get_server_state_change_redirect_url(self, request: HttpRequest) -> str:
-        return reverse("admin:hidl_core_vpnserver_changelist") + "?server-started=1"
+        return reverse("admin:hidl_vpn_vpnserver_changelist") + "?server-started=1"
 
     def action_start_server(self, request: HttpRequest, server_id: int) -> HttpResponse:
         try:
-            obj = hidlroute.vpn.models.VpnServer.objects.get(pk=server_id)
+            obj = vpn_models.VpnServer.objects.get(pk=server_id)
             obj.start()
             self.message_user(request, _("Server {} is starting".format(obj)))
         except HidlNetworkingException as e:
@@ -269,7 +268,7 @@ class BaseServerAdminImpl(ManagedRelActionsMixin, SortableAdminMixin, HidlFormsM
 
     def action_stop_server(self, request: HttpRequest, server_id: int) -> HttpResponse:
         try:
-            obj = hidlroute.vpn.models.VpnServer.objects.get(pk=server_id)
+            obj = vpn_models.VpnServer.objects.get(pk=server_id)
             obj.stop()
             self.message_user(request, _("Server {} is shutting down".format(obj)))
         except HidlNetworkingException as e:
@@ -278,7 +277,7 @@ class BaseServerAdminImpl(ManagedRelActionsMixin, SortableAdminMixin, HidlFormsM
         return HttpResponseRedirect(self.__get_server_state_change_redirect_url(request))
 
     def action_restart_server(self, request: HttpRequest, server_id: int) -> HttpResponse:
-        obj = hidlroute.vpn.models.VpnServer.objects.get(pk=server_id)
+        obj = vpn_models.VpnServer.objects.get(pk=server_id)
         self.message_user(request, _("Server {} is re-starting".format(obj)))
         obj.restart()
         return HttpResponseRedirect(self.__get_server_state_change_redirect_url(request))
@@ -292,10 +291,10 @@ class BaseServerAdminImpl(ManagedRelActionsMixin, SortableAdminMixin, HidlFormsM
         return super(PolymorphicChildModelAdmin, self).get_list_display(request)
 
 
-@admin.register(hidlroute.vpn.models.VpnServer)
+@admin.register(vpn_models.VpnServer)
 class ServerAdmin(HidlBaseModelAdmin, HidlePolymorphicParentAdmin):
     Impl = BaseServerAdminImpl
-    base_model = hidlroute.vpn.models.VpnServer
+    base_model = vpn_models.VpnServer
     child_models = []
     add_type_form = ServerTypeSelectForm
     ordering = ["id"]
@@ -304,7 +303,7 @@ class ServerAdmin(HidlBaseModelAdmin, HidlePolymorphicParentAdmin):
     polymorphic_list = True
     control_buttons_template = loader.get_template("admin/hidl_core/server/server_control_buttons.html")
 
-    def vpn_status(self, obj: hidlroute.vpn.models.VpnServer):
+    def vpn_status(self, obj: vpn_models.VpnServer):
         state = obj.status.state
         css_class = "badge-secondary"
         if state.is_transitioning:
@@ -318,7 +317,7 @@ class ServerAdmin(HidlBaseModelAdmin, HidlePolymorphicParentAdmin):
             result += f'&nbsp;<span class="server-state badge badge-warning">{_("Changes Pending")}</span>'
         return mark_safe(result)
 
-    def control_button(self, obj: hidlroute.vpn.models.VpnServer):
+    def control_button(self, obj: vpn_models.VpnServer):
         return self.control_buttons_template.render(context={"server": obj, "ServerState": ServerState})
 
     control_button.short_description = _("Actions")
@@ -350,7 +349,7 @@ class ServerFirewallRuleForm(forms.ModelForm):
 
 
 class NetworkFilterInline(ManagedRelActionsMixin, admin.TabularInline):
-    model = hidlroute.vpn.models.VpnNetworkFilter
+    model = vpn_models.VpnNetworkFilter
     template = "admin/hidl_core/network_filter/tabular_inline.html"
     extra = 0
     fields = ["server_group", "server_member", "custom", "subnet"]
@@ -358,7 +357,7 @@ class NetworkFilterInline(ManagedRelActionsMixin, admin.TabularInline):
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.parent_instance: Optional[hidlroute.vpn.models.VpnFirewallRule] = None
+        self.parent_instance: Optional[vpn_models.VpnFirewallRule] = None
         self.template = self.__class__.template
         self.can_delete = False
 
@@ -372,14 +371,14 @@ class NetworkFilterInline(ManagedRelActionsMixin, admin.TabularInline):
         if qs is None:
             qs = db_field.remote_field.model._default_manager.using(db)
         if self.parent_instance and db_field.related_model in (
-            hidlroute.vpn.models.ServerToMember,
-            hidlroute.vpn.models.ServerToGroup,
+            vpn_models.ServerToMember,
+            vpn_models.ServerToGroup,
         ):
             qs.filter(server=self.parent_instance.server)
         return qs
 
 
-@admin.register(hidlroute.vpn.models.VpnFirewallRule)
+@admin.register(vpn_models.VpnFirewallRule)
 class ServerFirewallRuleAdmin(SortableAdminMixin, HidlBaseModelAdmin, ReverseModelAdmin):
     ordering = ["order"]
     list_display = ["order", "__str__"]
@@ -411,21 +410,21 @@ class ServerFirewallRuleAdmin(SortableAdminMixin, HidlBaseModelAdmin, ReverseMod
         return instances
 
     def response_add(
-        self, request: HttpRequest, obj: hidlroute.vpn.models.VpnFirewallRule, post_url_continue: Optional[str] = None
+        self, request: HttpRequest, obj: vpn_models.VpnFirewallRule, post_url_continue: Optional[str] = None
     ) -> HttpResponse:
         original_response = super().response_add(request, obj, post_url_continue)
         if "_continue" not in request.POST:
             return HttpResponseRedirect(obj.server.get_admin_url() + "#firewall-rules-tab")
         return original_response
 
-    def response_change(self, request: HttpRequest, obj: hidlroute.vpn.models.VpnFirewallRule) -> HttpResponse:
+    def response_change(self, request: HttpRequest, obj: vpn_models.VpnFirewallRule) -> HttpResponse:
         original_response = super().response_change(request, obj)
         if "_continue" not in request.POST:
             return HttpResponseRedirect(obj.server.get_admin_url() + "#firewall-rules-tab")
         return original_response
 
 
-@admin.register(hidlroute.vpn.models.ServerRoutingRule)
+@admin.register(vpn_models.ServerRoutingRule)
 class ServerRoutingRuleAdmin(HidlBaseModelAdmin):
     fieldsets = (
         (None, {"fields": ["network", "gateway", "interface"]}),

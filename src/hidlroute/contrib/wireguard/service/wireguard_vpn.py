@@ -58,7 +58,7 @@ class WireguardVPNService(VPNService):
                 wg.set(interface.name, peer=peer)
 
             # Start routing
-            net_service.setup_routes_for_server(server)
+            self.setup_routes_for_server(server)
             # Start firewall
             firewall_service.setup_firewall_for_server(server)
         except Exception as start_exception:
@@ -72,7 +72,7 @@ class WireguardVPNService(VPNService):
 
             # Rolling back routing rules
             try:
-                net_service.destroy_routes_for_server(server)
+                self.destroy_routes_for_server(server)
             except Exception as e:
                 LOGGER.exception("Encountered exception while rolling back routes: " + str(e))
 
@@ -93,7 +93,7 @@ class WireguardVPNService(VPNService):
         except Exception as e:
             LOGGER.exception(f"Enable to destroy firewall while terminating server {server}: {e}")
         try:
-            net_service.destroy_routes_for_server(server)
+            self.destroy_routes_for_server(server)
         except Exception as e:
             LOGGER.exception(f"Enable to destroy routes while terminating server {server}: {e}")
 

@@ -312,8 +312,8 @@ class IpTablesFirewallService(FirewallService):
         self._create_default_rules(server)
         network_context = NetworkContext(
             server_ip=server.ip_address,
-            server_networks=server.service_factory.networking_service.get_subnets_for_server(server),
-            host_networks=server.service_factory.networking_service.get_host_networks(server),
+            server_networks=server.vpn_service.get_subnets_for_server(server),
+            host_networks=server.vpn_service.get_non_server_networks(server),
         )
         context = dict(server=server)
         for rule in server.get_firewall_rules():

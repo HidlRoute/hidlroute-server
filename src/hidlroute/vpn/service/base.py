@@ -119,10 +119,10 @@ class VPNService(abc.ABC):
 
     def get_subnets_for_server(self, server: "models.VpnServer") -> List[IpNetwork]:
         networking_service = server.service_factory.networking_service
-        return [r.network for r in networking_service.get_routes_for_server(server)]
+        return [r.network for r in server.vpn_service.get_routes_for_server(server)]
 
     # TODO: Remove me to get_non_server_networks
-    def get_host_networks(self, server: "models.VpnServer") -> List[IpNetwork]:
+    def get_non_server_networks(self, server: "models.VpnServer") -> List[IpNetwork]:
         networking_service = server.service_factory.networking_service
         result: List[IpNetwork] = []
         for x in networking_service.get_interfaces():
