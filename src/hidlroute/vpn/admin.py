@@ -309,10 +309,10 @@ class ServerAdmin(HidlBaseModelAdmin, HidlePolymorphicParentAdmin):
             css_class = "badge-primary"
         elif state == ServerState.FAILED:
             css_class = "badge-danger"
-            if obj.state_change_job_msg:
-                tooltip = obj.state_change_job_msg.replace("\n", " ")
         elif state.is_running:
             css_class = "badge-success"
+        if obj.state_change_job_msg and state in (ServerState.FAILED, ServerState.UNKNOWN):
+            tooltip = obj.state_change_job_msg.replace("\n", " ")
         result = f'<span title="{tooltip}" class="server-state badge {css_class}">{state.label}</span>'
         if obj.has_pending_changes:
             result += f'&nbsp;<span class="server-state badge badge-warning">{_("Changes Pending")}</span>'

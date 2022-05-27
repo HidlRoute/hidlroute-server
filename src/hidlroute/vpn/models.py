@@ -132,7 +132,7 @@ class VpnNetworkFilter(WithReprCache, models.Model):
             return [self.server_group.resolve_subnet().cidr]
         if self.server_member:
             devices = self.server_member.device_set.all()
-            return [ipaddress.ip_network(str(x.ip_address) + "/32") for x in devices]
+            return [ipaddress.ip_network(str(x.ip_address)) for x in devices]
         if self.subnet:
             return [self.subnet.cidr]
         if self.custom:
