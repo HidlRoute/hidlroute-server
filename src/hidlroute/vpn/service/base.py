@@ -77,6 +77,10 @@ class VPNService(abc.ABC):
     def stop(self, server: "models.VpnServer"):
         pass
 
+    @abc.abstractmethod
+    def get_status(self, server: "models.VpnServer") -> ServerStatus:
+        pass
+
     def restart(self, server: "models.VpnServer"):
         job = server.stop()
         server.service_factory.worker_service.wait_for_job(job.uuid)
@@ -84,12 +88,8 @@ class VPNService(abc.ABC):
         job = server.start()
         server.service_factory.worker_service.wait_for_job(job.uuid)
 
-    @abc.abstractmethod
-    def get_status(self, server: "models.VpnServer") -> ServerStatus:
-        pass
-
     def _server_routing_rule_to_route(
-        self, routing_rule: "models.ServerRoutingRule", server: "models.VpnServer"
+            self, routing_rule: "models.ServerRoutingRule", server: "models.VpnServer"
     ) -> Route:
         return Route(
             network=routing_rule.network.cidr,
@@ -103,7 +103,6 @@ class VPNService(abc.ABC):
             route = self._server_routing_rule_to_route(routing_rule, server)
             networking_service.create_route(route)
 
-    @abc.abstractmethod
     def destroy_routes_for_server(self, server: "models.VpnServer"):
         networking_service = server.service_factory.networking_service
         for routing_rule in server.get_routing_rules():
