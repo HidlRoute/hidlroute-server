@@ -1,6 +1,21 @@
+![HidlRoute Cover Picture](https://raw.githubusercontent.com/HidlRoute/hidlroute-server/master/docs/assets/cover-picture.png "HidlRoute Cover Picture")
+
 <h1 align="center">Hidl Route</h1>
+<p align="center">
+<a href="https://pypi.org/project/hidlroute-server/"><img src="https://img.shields.io/pypi/l/hidlroute-server?style=for-the-badge" title="License: MIT"/></a> 
+<a href="https://pypi.org/project/hidlroute-server/"><img src="https://img.shields.io/pypi/pyversions/hidlroute-server?style=for-the-badge" title="Python Versions"/></a> 
+<a href="https://github.com/psf/black/"><img src="https://img.shields.io/badge/Code%20Style-black-black?style=for-the-badge" title="Code style: black"/></a>
+<br>
+<a href="https://github.com/hidlroute/hidlroute-server/actions/workflows/sanity-check.yml"><img src="https://img.shields.io/github/workflow/status/hidlroute/hidlroute-server/Sanity%20Check?style=for-the-badge" title="Build Status"/></a>
+<a href="https://github.com/hidlroute/hidlroute-server/"><img src="https://img.shields.io/github/last-commit/hidlroute/hidlroute-server?style=for-the-badge" title="Last Commit"/></a> 
+<a href="https://github.com/hidlroute/hidlroute-server/releases/"><img src="https://img.shields.io/github/release-date/hidlroute/hidlroute-server?style=for-the-badge" title="Last Release"/></a> 
+</p>
 
 Hidl Route (**hidl** - from the welsh filter) is an open-source VPN management system.
+
+# Features
+
+TBD
 
 # Development environment
 
@@ -18,7 +33,6 @@ Run `make dev-containers` to launch related components e.g. redis, dev mail serv
 # Credits
 
 * Dmitry Berezovsky and Alex Cherednichenko, original authors
-* [CLI Rack](https://github.com/corvis/cli-rack)
 
 # Disclaimer
 
