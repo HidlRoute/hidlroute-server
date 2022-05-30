@@ -1,4 +1,4 @@
-![HidlRoute Cover Picture](https://raw.githubusercontent.com/HidlRoute/hidlroute-server/master/docs/assets/cover-picture.png "HidlRoute Cover Picture")
+![HidlRoute Cover Picture](https://raw.githubusercontent.com/HidlRoute/hidlroute-server/master/docs/assets/cover-picture.svg "HidlRoute Cover Picture")
 
 <h1 align="center">Hidl Route</h1>
 <p align="center">
