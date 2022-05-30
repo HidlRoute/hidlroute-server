@@ -125,8 +125,8 @@ class WireguardVPNService(VPNService):
                 tzinfo = timezone.get_current_timezone() if settings.USE_TZ else None
                 timeout = datetime.timedelta(seconds=20)
                 if (
-                        server.state_change_job_start
-                        and datetime.datetime.now(tz=tzinfo) - server.state_change_job_start > timeout
+                    server.state_change_job_start
+                    and datetime.datetime.now(tz=tzinfo) - server.state_change_job_start > timeout
                 ):
                     # Task is pending for too long. Consider as failed
                     state = ServerState.FAILED

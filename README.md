@@ -2,7 +2,7 @@
 
 <h1 align="center">Hidl Route</h1>
 <p align="center">
-<a href="https://pypi.org/project/hidlroute-server/"><img src="https://img.shields.io/pypi/l/hidlroute-server?style=for-the-badge" title="License: MIT"/></a> 
+<a href="https://github.com/hidlroute/hidlroute-server/"><img src="https://img.shields.io/github/license/hidlroute/hidlroute-server?style=for-the-badge" title="License: GPL3"/></a> 
 <a href="https://pypi.org/project/hidlroute-server/"><img src="https://img.shields.io/pypi/pyversions/hidlroute-server?style=for-the-badge" title="Python Versions"/></a> 
 <a href="https://github.com/psf/black/"><img src="https://img.shields.io/badge/Code%20Style-black-black?style=for-the-badge" title="Code style: black"/></a>
 <br>
