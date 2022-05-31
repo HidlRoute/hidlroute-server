@@ -25,9 +25,6 @@ jobs:
     env:
       GIT_REF: "${{ ((inputs.git_ref) && inputs.git_ref) || github.ref }}"
       GIT_REF_NAME: "${{ ((inputs.git_ref_name) && inputs.git_ref_name) || github.ref_name }}"
-      DOCKER_VERSION_SUFFIX: "${{ ((env.GIT_REF_NAME == 'beta') && '-beta') || ((env.GIT_REF_NAME == 'master') && '-dev') || '' }}"
-      DOCKER_VERSION_ALIAS: "${{ ((env.GIT_REF_NAME == 'beta') && 'beta') || ((env.GIT_REF_NAME == 'master') && 'dev') || 'latest' }}"
-      DOCKER_CHANNEL: "${{ ((env.GIT_REF_NAME == 'beta') && 'beta') || ((env.GIT_REF_NAME == 'master') && 'dev') || 'stable' }}"
     steps:
       - name: Checkout repo
         uses: actions/checkout@v2
@@ -42,6 +39,9 @@ jobs:
           export RELEASE_DATE=`TZ="Europe/Kiev" date +%Y-%m-%d`
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "RELEASE_DATE=$RELEASE_DATE" >> $GITHUB_ENV
+          echo "DOCKER_VERSION_SUFFIX=${{ ((env.GIT_REF_NAME == 'beta') && '-beta') || ((env.GIT_REF_NAME == 'master') && '-dev') || '' }}" >> $GITHUB_ENV
+          echo "DOCKER_VERSION_ALIAS=${{ ((env.GIT_REF_NAME == 'beta') && 'beta') || ((env.GIT_REF_NAME == 'master') && 'dev') || 'latest' }}" >> $GITHUB_ENV
+          echo "DOCKER_CHANNEL=${{ ((env.GIT_REF_NAME == 'beta') && 'beta') || ((env.GIT_REF_NAME == 'master') && 'dev') || 'stable' }}" >> $GITHUB_ENV
 
       - name: Login to DockerHub
         uses: docker/login-action@v1
