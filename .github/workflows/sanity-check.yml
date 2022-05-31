@@ -25,5 +25,5 @@ jobs:
     - name: Lint with flake8
       run: make lint NO_VENV=True
 
-#    - name: Run build to make sure it works
-#      run: make build NO_VENV=True
+    - name: Run build to make sure it works
+      run: make build NO_VENV=True
