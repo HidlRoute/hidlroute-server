@@ -20,9 +20,9 @@ jobs:
       - name: Evaluate build args
         run: |
           VERSION=`make get-version`
-          echo "Version = $JOINTBOX_VERSION"
+          echo "Version = $VERSION"
           export RELEASE_DATE=`TZ="Europe/Kiev" date +%Y-%m-%d`
-          echo "VERSION=$JOINTBOX_VERSION" >> $GITHUB_ENV
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "RELEASE_DATE=$RELEASE_DATE" >> $GITHUB_ENV
 
       - name: Login to DockerHub
