@@ -26,8 +26,9 @@ jobs:
 
       - name: Persist changelog
         run: |
-          ch_log=$(cat << EOF\n ${{ steps.generate_changelog.outputs.changelog }} \nEOF);
-          echo $ch_log > changelog.md
+          cat <<EOF > changelog.md
+          ${{ steps.generate_changelog.outputs.changelog }}
+          EOF
           echo "::group::Changelog";
           cat changelog.md;
           echo "::endgroup::";
