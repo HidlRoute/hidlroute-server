@@ -30,7 +30,6 @@ LOGGER = logging.getLogger("hidl.contrib.dummy")
 
 
 class DummyVPNConfigView(TemplateView, BaseVPNDeviceConfigView):
-
     def __init__(self, *args, **kwargs):
         super().__init__(template_name="hidl_dummy/config_view.html", *args, **kwargs)
 

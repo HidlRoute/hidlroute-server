@@ -91,7 +91,7 @@ def device_edit(request: HttpRequest, device_id: int):
                 device.save(update_fields=["name"])
                 messages.add_message(request, messages.INFO, _("Saved device successfully."))
             except Exception as e:
-                messages.add_message(request, messages.ERROR, _(f"Error saving device: %(error)s." % {"error": e}))
+                messages.add_message(request, messages.ERROR, _("Error saving device: %(error)s." % {"error": e}))
     else:
         form = DeviceForm(instance=device)
 
