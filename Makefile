@@ -8,6 +8,7 @@ PYPI_REPOSITORY_URL :=
 ALPHA_VERSION :=
 SRC_ROOT := ./src/hidlroute
 PYTHON := python3
+PROD_DOCKER_IMAGE :=
 RUN_PSQL := docker-compose -f dev-containers.yaml exec db psql -U hidl fake
 
 .DEFAULT_GOAL := pre_commit
@@ -133,13 +134,19 @@ template:
 	@( \
 		set -e; \
 		if [ -z $(SKIP_VENV) ]; then source $(VIRTUAL_ENV_PATH)/bin/activate; fi; \
+		if [ -z $(VERSION) ]; then \
+			VERSION=`development/get-version.sh`; \
+			echo "Missing VERSION argument defaulting to $$VERSION"; \
+		else \
+			VERSION="$(VERSION)"; \
+	  	fi; \
 		mkdir -p "dist/template/hidlroute"; \
-		cp ".env.dist" "dist/template/hidlroute"; \
-		cp "docker-compose.template.yaml" "dist/template/hidlroute"; \
-		VERSION=`development/get-version.sh`; \
+		cp ".env.dist" "dist/template/hidlroute/.env"; \
+		cp "docker-compose.template.yaml" "dist/template/hidlroute/docker-compose.yaml"; \
+		sed -i s/$(PROD_DOCKER_IMAGE):latest/$(PROD_DOCKER_IMAGE):$$VERSION/ dist/template/hidlroute/docker-compose.yaml; \
 		echo "Setting target version version to: $$VERSION"; \
 		cd dist/template; \
-		zip hidlroute.zip -r hidlroute; \
+		zip hidlroute-template.zip -r hidlroute; \
 	)
 
 db: dev-containers delete-db create-dev-db
