@@ -4,7 +4,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: hidlroute/server
+  IMAGE_NAME: hidlroute/hidlroute-server
 
 jobs:
   run:
