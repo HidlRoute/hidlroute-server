@@ -1,6 +1,11 @@
 name: Build docker image
 on:
   workflow_dispatch:
+  workflow_call:
+    inputs:
+      git_ref:
+        required: true
+        type: string
 
 env:
   REGISTRY: ghcr.io

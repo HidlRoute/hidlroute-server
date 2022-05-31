@@ -1,7 +1,11 @@
 name: Build template
 on:
   workflow_dispatch:
-
+  workflow_call:
+    inputs:
+      git_ref:
+        required: true
+        type: string
 jobs:
   run:
     name: Build template
@@ -10,7 +14,8 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v2
         with:
-          fetch-depth: 1
+          fetch-depth: 0
+          ref: "${{ ((inputs.git_ref) && inputs.git_ref) || github.ref }}"
 
       - name: Make template archive
         run: make template NO_VENV=True
