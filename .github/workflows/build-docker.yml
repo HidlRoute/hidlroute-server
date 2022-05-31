@@ -14,8 +14,6 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: hidlroute/server
-  GIT_REF: "${{ ((inputs.git_ref) && inputs.git_ref) || github.ref }}"
-  GIT_REF_NAME: "${{ ((inputs.git_ref_name) && inputs.git_ref_name) || github.ref_name }}"
 
 jobs:
   run:
@@ -25,6 +23,8 @@ jobs:
       contents: read
       packages: write
     env:
+      GIT_REF: "${{ ((inputs.git_ref) && inputs.git_ref) || github.ref }}"
+      GIT_REF_NAME: "${{ ((inputs.git_ref_name) && inputs.git_ref_name) || github.ref_name }}"
       DOCKER_VERSION_SUFFIX: "${{ ((env.GIT_REF_NAME == 'beta') && '-beta') || ((env.GIT_REF_NAME == 'master') && '-dev') || '' }}"
       DOCKER_VERSION_ALIAS: "${{ ((env.GIT_REF_NAME == 'beta') && 'beta') || ((env.GIT_REF_NAME == 'master') && 'dev') || 'latest' }}"
       DOCKER_CHANNEL: "${{ ((env.GIT_REF_NAME == 'beta') && 'beta') || ((env.GIT_REF_NAME == 'master') && 'dev') || 'stable' }}"

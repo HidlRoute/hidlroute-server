@@ -98,6 +98,7 @@ jobs:
       packages: write
     with:
       git_ref: 'refs/tags/v${{ github.event.inputs.version }}'
+      git_ref_name: '${{ github.event.inputs.version }}'
 
   build-wheel:
     name: Release python package
@@ -105,6 +106,5 @@ jobs:
     uses: ./.github/workflows/build-wheel.yml
     with:
       git_ref: 'refs/tags/v${{ github.event.inputs.version }}'
-      git_ref_name: '${{ github.event.inputs.version }}'
     secrets:
       pypi_password: '${{ secrets.pypi_password }}'
