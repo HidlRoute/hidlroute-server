@@ -23,4 +23,4 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           name: hidlroute-template
-          path: dist/template/hidlroute
+          path: dist/template/hidlroute-template.zip
