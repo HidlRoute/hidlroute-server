@@ -1,18 +1,55 @@
-{% extends "admin/base_site.html" %}
+{% extends "admin/base.html" %}
 {% load i18n %}
+
+{% block content_title %}{% trans "My VPN Connections" %}{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb float-sm-right">
+        <li class="breadcrumb-item"><a href="{% url 'admin:index' %}"><i
+                class="fa fa-tachometer-alt"></i> {% trans 'Home' %}</a></li>
+        <li class="breadcrumb-item active">
+            <a href="{% url "selfservice:devices_list" %}">{% trans "Self-service VPN" %}</a>
+        </li>
+    </ol>
+{% endblock %}
+
 
 {% block content %}
     {% for s in servers_and_devices %}
         <div class="col-12">
-            <h2>{{ s.server.name }}</h2>
-            {% trans "Interface:" %} {{ s.server.interface_name }}
-            <ul>
-                {% for d in s.devices %}
-                    <li><a href="{% url "selfservice:device_edit" d.pk %}">{{ d.name }}</a></li>
-                {% endfor %}
-            </ul>
-            <a href="{% url "selfservice:device_add" %}">{% trans "Add device" %}</a>
-            <hr/>
+            <div class="card card-primary card-outline">
+                <div class="card-header">
+                    <div class="row">
+                        <div class="col-8">
+                            <h5 class="m-0">{% trans "VPN Server:" %} {{ s.server.name }}</h5>
+                        </div>
+                        <div class="col-4">
+                            <a class="btn btn-outline-success float-right" href="{% url "selfservice:device_add" %}">
+                                {% trans "Add device" %}
+                            </a>
+                        </div>
+                    </div>
+
+
+                </div>
+                <div class="card-body">
+                    <div class="card">
+                        <div class="card-body table-response p-0">
+                            <table class="table table-striped">
+                                <tbody>
+                                {% for d in s.devices %}
+                                    <tr role="row" class="{% cycle 'even' 'odd' %}">
+                                        <th>
+                                            <a href="{% url "selfservice:device_edit" d.pk %}">{{ d.name }}</a>
+                                        </th>
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     {% endfor %}
 {% endblock %}

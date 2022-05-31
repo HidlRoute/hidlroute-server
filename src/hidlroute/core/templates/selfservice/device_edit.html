@@ -1,5 +1,5 @@
 {% extends "admin/base_site.html" %}
-{% load crispy_forms_tags static i18n%}
+{% load crispy_forms_tags static i18n %}
 
 {% block extrajs %}
     <script type="text/javascript">
@@ -7,7 +7,6 @@
             revealUrl = "{%  url "selfservice:reveal_config" device.pk %}";
             buttonReveal = $("#reveal-config-button");
             configBlock = $('#config-block');
-            configBlock.hide();
 
             buttonReveal.on("click", function () {
                 buttonReveal.addClass("disabled");
@@ -34,44 +33,57 @@
 {% endblock %}
 
 {% block content %}
-    <div class="col-12">
-        {% if not device.pk %}
-            <h2>{% trans "Create new device" %}</h2>
-        {% else %}
-            <h2>
-                {% blocktrans with device_name=device.name %}
-                    Edit device {{ device_name }} details
-                {% endblocktrans %}
-            </h2>
-        {% endif %}
-    </div>
-
-    <div class="col-12">
-        {% crispy form %}
-    </div>
-
-    <div class="col-12" id="reveal-config-block">
-        <div class="row">
-            <div class="col-12">
-                {% blocktrans with device_name=device.name %}
-                    <strong>Warning!</strong> Since we do not store private keys, revealing a config means it is
-                    re-generated. In turn, this means that device {{ device_name }} will lose its VPN connectivity once
-                    you hit the button below, and you would need to re-setup it with the new config, which will be
-                    displayed below.
-                {% endblocktrans %}
-            </div>
-            <div class="col-12" style="text-align:center">
-                <button id="reveal-config-button" class="btn btn-warning" value="reveal_config">
-                    {% trans "Re-generate & Reveal the VPN Config" %}
-                </button>
-            </div>
+    <div class="col-12 card card-primary card-outline">
+        <div class="card-header">
+            {% if not device.pk %}
+                <h5>{% trans "Create new device" %}</h5>
+            {% else %}
+                <h5>
+                    {% blocktrans with device_name=device.name %}
+                        Edit device {{ device_name }} details
+                    {% endblocktrans %}
+                </h5>
+            {% endif %}
         </div>
 
+        <div class="card-body">
+            <div class="row">
+                <div class="col-12">
+                    {% crispy form %}
+                </div>
+
+            </div>
+        </div>
     </div>
 
-    <div class="col-12" id="config-block">
-
+    <div class="col-12 card card-warning card-outline">
+        <div class="card-header">
+            <h5>{% trans "VPN Config" %}</h5>
+        </div>
+        <div class="card-body">
+            <div class="row" id="config-block">
+                <div class="col-12">
+                    {% blocktrans with device_name=device.name %}
+                        <strong>Warning!</strong> Since we do not store private keys, revealing a config means
+                        it is
+                        re-generated. In turn, this means that device {{ device_name }} will lose its VPN
+                        connectivity
+                        once
+                        you hit the button below, and you would need to re-setup it with the new config, which
+                        will
+                        be
+                        displayed below.
+                    {% endblocktrans %}
+                </div>
+                <div class="col-12 p-4" style="text-align:center">
+                    <button id="reveal-config-button" class="btn btn-warning" value="reveal_config">
+                        {% trans "Re-generate & Reveal the VPN Config" %}
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
+
 
 
 {% endblock %}
