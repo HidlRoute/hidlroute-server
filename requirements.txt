@@ -21,7 +21,7 @@ django-reverse-admin==2.9.6
 django-netfields==1.3.0
 pyroute2==0.6.9
 python-iptables==1.0.0
-git+https://github.com/soynatan/django-easy-audit@51aa1b8bc799e2e59393f98ce83ba3970a3fe1ec
+django-easy-audit @ git+https://github.com/soynatan/django-easy-audit@51aa1b8bc799e2e59393f98ce83ba3970a3fe1ec
 
 --no-binary=python-iptables,pyroute2
 
