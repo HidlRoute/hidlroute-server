@@ -14,14 +14,27 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from django.urls import path
+from django.contrib.auth.mixins import AccessMixin
+from django.views import View
 
-from hidlroute.core import views
+from hidlroute.core.models import Person
 
-app_name = "hidl_core"
-urlpatterns = [
-    path("devices/", views.device_list, name="devices_list"),
-    path("add_device/", views.device_add, name="device_add"),
-    path("edit_device/<int:device_id>/", views.device_edit, name="device_edit"),
-    path("device/<int:device_id>/reveal_config/", views.device_reveal_config, name="reveal_config"),
-]
+
+class OwnDeviceCheckMixin(AccessMixin):
+    """
+    Checks that device which is being edited belongs to the user who edits it.
+    """
+
+    def dispatch(self, request, *args, **kwargs):
+        member = args[0].server_to_member.member.get_real_instance()
+        if not isinstance(member, Person):
+            return self.handle_no_permission()
+        if not member.user == self.request.user:
+            return self.handle_no_permission()
+
+        return super().dispatch(request, *args, **kwargs)
+
+
+class BaseVPNDeviceConfigView(OwnDeviceCheckMixin, View):
+    def post(self, request, device):
+        raise NotImplementedError

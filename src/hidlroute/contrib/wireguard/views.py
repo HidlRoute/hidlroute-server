@@ -14,14 +14,14 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from django.urls import path
+from django.shortcuts import render
 
-from hidlroute.core import views
+from hidlroute.vpn.views import BaseVPNDeviceConfigView
 
-app_name = "hidl_core"
-urlpatterns = [
-    path("devices/", views.device_list, name="devices_list"),
-    path("add_device/", views.device_add, name="device_add"),
-    path("edit_device/<int:device_id>/", views.device_edit, name="device_edit"),
-    path("device/<int:device_id>/reveal_config/", views.device_reveal_config, name="reveal_config"),
-]
+
+class WireguardDeviceVPNConfigView(BaseVPNDeviceConfigView):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def post(self, request, device):
+        return render(request, "hidl_wg/config_view.html", {"device": device})

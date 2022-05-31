@@ -31,7 +31,9 @@ if TYPE_CHECKING:
 
 
 class WireGuardPeerConfig(vpn_models.SimpleTextDeviceConfig):
-    pass
+    def __init__(self, content: str, name: str, public_key: str) -> None:
+        super().__init__(content, name)
+        self.public_key = public_key
 
 
 class WireguardPeer(vpn_models.Device):
@@ -51,7 +53,7 @@ class WireguardPeer(vpn_models.Device):
     def generate_config(self) -> vpn_models.DeviceConfig:
         private_key, public_key = generate_keypair()
         config_name = self.name + ".conf"
-        config = WireGuardPeerConfig(generate_new_peer_config(self, private_key), config_name)
+        config = WireGuardPeerConfig(generate_new_peer_config(self, private_key), config_name, public_key)
         return config
 
 

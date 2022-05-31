@@ -1,0 +1,33 @@
+{% load i18n %}
+{% with config=device.generate_config %}
+    <div class="col-12">
+        {% blocktrans %}
+            Save the config somehow before closing this page.
+            <br/>Once the page is closed, you will not be able to get the old config, and you would have to re-generate
+            it.
+        {% endblocktrans %}
+
+    </div>
+    <div class="row">
+        <div class="col-3">
+            {% trans "For mobile devices scan the QR code below" %}
+        </div>
+        <div class="col-3">
+            {% trans "Download the config file and open it with Wireguard. On Linux, put it under '/etc/wireguard/' folder." %}
+            <button type="button" class="btn btn-primary">{% trans "Download" %} {{ config.name }}</button>
+        </div>
+        <div class="col-6">
+            <pre>
+{{ config.as_str }}
+            </pre>
+            <button type="button" class="btn btn-primary"
+                    id="copyConfigButton">{% trans "Copy config to clipboard" %}</button>
+            <textarea id="configTextarea" class="hidden">{{ config.as_str }}</textarea>
+        </div>
+    </div>
+    <script type="text/javascript">$("#copyConfigButton").on('click',
+        function () {
+            configTextArea = $("#configTextarea");
+            navigator.clipboard.writeText(configTextArea.text());
+        })</script>
+{% endwith %}
