@@ -1,0 +1,41 @@
+name: Release
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to be assigned for this release'
+        required: true
+
+jobs:
+  sanity-check:
+    name: Run sanity check
+    uses: ./.github/workflows/sanity-check.yml
+    with:
+      git_ref: '${{ github.ref }}'
+
+  changelog:
+    name: Generate changelog
+    uses: ./.github/workflows/generate-change-log.yml
+    with:
+      git_ref: '${{ github.ref }}'
+
+  prepare-release:
+    name: Prepare release
+    needs: [ sanity-check, changelog ]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          ref: '${{ github.ref }}'
+
+      - name: Set new version
+        run: |
+          make set-version VERSION="${{ github.event.inputs.version }}"
+
+      - name: Download changelog
+        uses: actions/download-artifact@v3
+        with:
+          name: changelog
+

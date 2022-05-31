@@ -1,0 +1,38 @@
+name: Generate changelog
+on:
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      git_ref:
+        required: true
+        type: string
+
+jobs:
+  run:
+    name: Update Unreleased Changelog
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          ref: "${{ ((inputs.git_ref) && inputs.git_ref) || github.ref }}"
+
+      - name: Changelog
+        id: generate_changelog
+        uses: scottbrenner/generate-changelog-action@v1.3.3
+        with:
+          package-dir: development/package.json
+          to-tag: ${{ github.ref }}
+
+      - name: Persist changelog
+        run: |
+          cat << EOF\n ${{ steps.generate_changelog.outputs.changelog }} \nEOF >> changelog.md;
+          echo "::group::Changelog";
+          cat changelog.md;
+          echo "::endgroup::";
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: changelog
+          path: changelog.md
