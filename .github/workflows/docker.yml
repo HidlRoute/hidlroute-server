@@ -4,12 +4,15 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: hidlroute/hidlroute-server
+  IMAGE_NAME: hidlroute/server
 
 jobs:
   run:
     name: Build and publish docker images
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     steps:
       - name: Checkout repo
         uses: actions/checkout@v2

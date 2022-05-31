@@ -1,0 +1,21 @@
+name: Build template
+on:
+  workflow_dispatch:
+
+jobs:
+  run:
+    name: Build template
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+
+      - name: Make template archive
+        run: make template NO_VENV=True
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: hidlroute-template.zip
+          path: dist/template/hidlroute.zip
