@@ -101,8 +101,8 @@ docker:
        echo "Building docker image hidlroute:$$TAG..."; \
        VERSION=`development/get-version.sh`; \
        RELEASE_DATE=`TZ="Europe/Kiev" date +%Y-%m-%d`; \
-       docker build -t hidlroute:$$TAG --build-arg "VERSION=$$VERSION" --build-arg "RELEASE_DATE=$$RELEASE_DATE" . ; \
-       echo "DONE: Docker Build"; \
+       docker build -t hidlroute:$$TAG --build-arg "VERSION=$$VERSION" --build-arg "RELEASE_DATE=$$RELEASE_DATE" --build-arg="CHANNEL=dev" . ; \
+       echo "DONE: Docker Build: hidlroute:$$TAG"; \
     )
 
 set-version:
@@ -127,6 +127,19 @@ venv:
 	@( \
 		$(PYTHON) -m venv $(VIRTUAL_ENV_PATH); \
 		source ./venv/bin/activate; \
+	)
+
+template:
+	@( \
+		set -e; \
+		if [ -z $(SKIP_VENV) ]; then source $(VIRTUAL_ENV_PATH)/bin/activate; fi; \
+		mkdir -p "dist/template/hidlroute"; \
+		cp ".env.dist" "dist/template/hidlroute"; \
+		cp "docker-compose.template.yaml" "dist/template/hidlroute"; \
+		VERSION=`development/get-version.sh`; \
+		echo "Setting target version version to: $$VERSION"; \
+		cd dist/template; \
+		zip hidlroute.zip -r hidlroute; \
 	)
 
 db: dev-containers delete-db create-dev-db

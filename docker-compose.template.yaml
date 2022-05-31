@@ -1,0 +1,29 @@
+version: '3'
+services:
+  db:
+    image: postgres:14-alpine
+    environment:
+      POSTGRES_USER: hidl
+      POSTGRES_PASSWORD: hidl
+      POSTGRES_DB: hidl
+    ports:
+      - "5432:5432"
+    volumes:
+      - "./dev-data/db-data:/var/lib/postgresql/data"
+      - "./development/init-dev-db.sh:/docker-entrypoint-initdb.d/init-dev-db.sh"
+
+  redis:
+    image: redis:7.0-alpine
+    ports:
+      - '7279:6379'
+    command: redis-server --save 20 1 --loglevel warning --requirepass w8vfpGTA2KPvvfMbFEnt6
+    volumes:
+      - "./dev-data/redis-data:/data"
+
+  flower:
+    image: mher/flower:0.9.7
+    command: flower --port=5555
+    environment:
+      CELERY_BROKER_URL: redis://:w8vfpGTA2KPvvfMbFEnt6@redis:6379/0
+    ports:
+      - "50555:5555"
