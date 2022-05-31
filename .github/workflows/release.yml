@@ -93,6 +93,9 @@ jobs:
     name: Release docker image
     needs: [ prepare-release ]
     uses: ./.github/workflows/build-docker.yml
+    permissions:
+      contents: read
+      packages: write
     with:
       git_ref: 'refs/tags/v${{ github.event.inputs.version }}'
 
@@ -100,8 +103,7 @@ jobs:
     name: Release python package
     needs: [ prepare-release ]
     uses: ./.github/workflows/build-wheel.yml
-    permissions:
-      contents: read
-      packages: write
     with:
       git_ref: 'refs/tags/v${{ github.event.inputs.version }}'
+    secrets:
+      pypi_password: '${{ secrets.pypi_password }}'
