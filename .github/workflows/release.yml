@@ -22,9 +22,15 @@ jobs:
     with:
       git_ref: '${{ github.ref }}'
 
+  build-template:
+    name: Generate bootstrap template
+    uses: ./.github/workflows/build-template.yml
+    with:
+      git_ref: '${{ github.ref }}'
+
   prepare-release:
     name: Prepare release
-    needs: [ sanity-check, changelog ]
+    needs: [ sanity-check, changelog, build-template ]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -43,6 +49,11 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: changelog
+
+      - name: Download bootstrap template
+        uses: actions/download-artifact@v3
+        with:
+          name: hidlroute-template
 
       - name: Read changelog
         id: changelog
@@ -77,5 +88,20 @@ jobs:
           release_name: 'Version ${{ github.event.inputs.version }}'
           body: |
             ${{ steps.changelog.outputs.changelog }}
+          artifacts: hidlroute-template.zip
           draft: false
           prerelease: true
+
+  build-docker:
+    name: Release docker image
+    needs: [ prepare-release ]
+    uses: ./.github/workflows/build-docker.yml
+    with:
+      git_ref: 'refs/tags/${{ env.target_tag }}'
+
+  build-wheel:
+    name: Release python package
+    needs: [ prepare-release ]
+    uses: ./.github/workflows/build-wheel.yml
+    with:
+      git_ref: 'refs/tags/${{ env.target_tag }}'

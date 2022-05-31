@@ -27,3 +27,17 @@ services:
       CELERY_BROKER_URL: redis://:w8vfpGTA2KPvvfMbFEnt6@redis:6379/0
     ports:
       - "50555:5555"
+
+  web:
+    image: ghcr.io/hidlroute/server:latest
+    network_mode: host
+    volumes:
+      - "./extensions:/app/external"
+      - "./config:/app/hidlroute/settings_override"
+
+  worker:
+    image: ghcr.io/hidlroute/server:latest
+    network_mode: host
+    volumes:
+      - "./extensions:/app/external"
+      - "./config:/app/hidlroute/settings_override"

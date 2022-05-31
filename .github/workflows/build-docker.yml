@@ -17,8 +17,8 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v2
         with:
-          fetch-depth: 1
-#          ref: 'refs/tags/v${{ env.VERSION }}'
+          fetch-depth: 0
+          ref: "${{ ((inputs.git_ref) && inputs.git_ref) || github.ref }}"
 
       - name: Evaluate build args
         run: |
