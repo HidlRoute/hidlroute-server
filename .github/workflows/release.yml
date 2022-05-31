@@ -85,9 +85,16 @@ jobs:
           release_name: 'Version ${{ github.event.inputs.version }}'
           body: |
             ${{ steps.changelog.outputs.changelog }}
-          artifacts: hidlroute-template.zip
           draft: false
           prerelease: true
+
+      - name: Attach bootstrap template
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: hidlroute-template.zip
+          asset_name: hidlroute-template.zip
+          asset_content_type: application/zip
 
   build-docker:
     name: Release docker image
@@ -98,6 +105,7 @@ jobs:
       packages: write
     with:
       git_ref: 'refs/tags/v${{ github.event.inputs.version }}'
+      git_ref_name: '${{ github.event.inputs.version }}'
 
   build-wheel:
     name: Release python package
