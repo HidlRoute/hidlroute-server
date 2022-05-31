@@ -1,20 +1,17 @@
 {% extends "admin/base_site.html" %}
+{% load i18n %}
 
 {% block content %}
     {% for s in servers_and_devices %}
-        <div class="col-6">
-            {{ s.server.name }}
-            <br/>
-            {{ s.server.interface_name }}
-            <br/>
+        <div class="col-12">
+            <h2>{{ s.server.name }}</h2>
+            {% trans "Interface:" %} {{ s.server.interface_name }}
             <ul>
                 {% for d in s.devices %}
-
-                    <li>{{ d.name }}</li>
-
+                    <li><a href="{% url "selfservice:device_edit" d.pk %}">{{ d.name }}</a></li>
                 {% endfor %}
             </ul>
-            <a href="add device">Add device</a>
+            <a href="{% url "selfservice:device_add" %}">{% trans "Add device" %}</a>
             <hr/>
         </div>
     {% endfor %}

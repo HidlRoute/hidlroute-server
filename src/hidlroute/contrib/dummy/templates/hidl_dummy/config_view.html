@@ -1,0 +1,4 @@
+{% load i18n %}
+
+<h2>{% trans "This is dummy Server config." %}</h2>
+<h3>{% blocktranslate with device_name=device.name %}Device name: {{ device_name }}{% endblocktranslate %}</h3>

@@ -20,6 +20,7 @@ import ipaddress
 from enum import Enum
 from typing import TYPE_CHECKING, List
 
+from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 
 from hidlroute.core.service.base import WorkerService, JobStatus, PostedJob
@@ -27,6 +28,7 @@ from hidlroute.core.service.networking.base import Route
 from hidlroute.core.types import IpNetwork
 from hidlroute.core.utils import django_enum
 from hidlroute.vpn import const
+from hidlroute.vpn.views import BaseVPNDeviceConfigView
 
 if TYPE_CHECKING:
     from hidlroute.vpn import models
@@ -76,6 +78,12 @@ class ServerStatus:
     @classmethod
     def from_dict(cls, obj: dict) -> "ServerStatus":
         return ServerStatus(state=ServerState[obj["state"]])
+
+
+class VPNServiceViews(object):
+    @cached_property
+    def vpn_details_view(self) -> BaseVPNDeviceConfigView:
+        raise NotImplementedError
 
 
 class VPNService(abc.ABC):
@@ -134,6 +142,11 @@ class VPNService(abc.ABC):
             if x.name != server.interface_name:
                 result.append(ipaddress.ip_network(str(x.address)))
         return result
+
+    @property
+    @abc.abstractmethod
+    def views(self) -> VPNServiceViews:
+        raise NotImplementedError
 
     def get_server_status(self, server: "models.VpnServer") -> ServerStatus:
         worker_service: WorkerService = server.service_factory.worker_service  # noqa
