@@ -15,7 +15,6 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v2
         with:
-          fetch-depth: 0
           ref: "${{ ((inputs.git_ref) && inputs.git_ref) || github.ref }}"
 
       - name: Changelog
@@ -27,7 +26,8 @@ jobs:
 
       - name: Persist changelog
         run: |
-          cat << EOF\n ${{ steps.generate_changelog.outputs.changelog }} \nEOF >> changelog.md;
+          ch_log=$(cat << EOF\n ${{ steps.generate_changelog.outputs.changelog }} \nEOF);
+          echo $ch_log > changelog.md
           echo "::group::Changelog";
           cat changelog.md;
           echo "::endgroup::";
