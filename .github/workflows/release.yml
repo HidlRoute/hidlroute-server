@@ -6,6 +6,9 @@ on:
         description: 'Version to be assigned for this release'
         required: true
 
+env:
+  target_tag: 'v${{ github.event.inputs.version }}'
+
 jobs:
   sanity-check:
     name: Run sanity check
@@ -39,3 +42,38 @@ jobs:
         with:
           name: changelog
 
+      - name: Read changelog
+        id: changelog
+        run: echo "::set-output name=changelog::$(cat changelog.md)"
+
+      - name: Commit bumped version
+        uses: EndBug/add-and-commit@v5
+        with:
+          author_name: Github Bot
+          author_email: github@bot.com
+          message: "Version bump and changelog update. New version is ${{ github.event.inputs.version }}"
+          add: "./src/hidlroute/__version__.py"
+          push: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Merge master -> prod
+        uses: devmasx/merge-branch@v1.3.1
+        with:
+          type: now
+          from_branch: '${{ github.ref }}'
+          target_branch: prod
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Github Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: '${{ env.target_tag }}'
+          release_name: 'Version ${{ github.event.inputs.version }}'
+          body: |
+            ${{ steps.changelog.outputs.changelog }}
+          draft: false
+          prerelease: true
