@@ -6,10 +6,16 @@ on:
       git_ref:
         required: true
         type: string
+      git_ref_name:
+        required: true
+        type: string
+        default: "${{ github.ref_name }}"
 
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: hidlroute/server
+  GIT_REF: "${{ ((inputs.git_ref) && inputs.git_ref) || github.ref }}"
+  GIT_REF_NAME: "${{ ((inputs.git_ref_name) && inputs.git_ref_name) || github.ref_name }}"
 
 jobs:
   run:
@@ -18,12 +24,16 @@ jobs:
     permissions:
       contents: read
       packages: write
+    env:
+      DOCKER_VERSION_SUFFIX: "${{ ((env.GIT_REF_NAME == 'beta') && '-beta') || ((env.GIT_REF_NAME == 'master') && '-dev') || '' }}"
+      DOCKER_VERSION_ALIAS: "${{ ((env.GIT_REF_NAME == 'beta') && 'beta') || ((env.GIT_REF_NAME == 'master') && 'dev') || 'latest' }}"
+      DOCKER_CHANNEL: "${{ ((env.GIT_REF_NAME == 'beta') && 'beta') || ((env.GIT_REF_NAME == 'master') && 'dev') || 'stable' }}"
     steps:
       - name: Checkout repo
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
-          ref: "${{ ((inputs.git_ref) && inputs.git_ref) || github.ref }}"
+          ref: "${{ env.GIT_REF }}"
 
       - name: Evaluate build args
         run: |
@@ -50,7 +60,7 @@ jobs:
           build-args: |
             VERSION=${{ env.VERSION }}
             RELEASE_DATE=${{ env.RELEASE_DATE }}
-            CHANNEL=${{ ((github.ref_name == 'beta') && 'beta') || ((github.ref_name == 'master') && 'dev') || 'stable' }}
+            CHANNEL=${{ env.DOCKER_CHANNEL }}
           tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ ((github.ref_name == 'beta') && 'beta') || ((github.ref_name == 'master') && 'dev') || 'latest' }}
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}${{ ((github.ref_name == 'beta') && '-beta') || ((github.ref_name == 'master') && '-dev') || '' }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.DOCKER_VERSION_ALIAS }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}${{ env.DOCKER_VERSION_SUFFIX }}
