@@ -41,6 +41,7 @@ services:
       - "./config:/app/hidlroute/settings_override"
     networks:
       - default
+    depends_on: [db, redis]
 
   worker:
     image: ${HIDLROUTE_IMAGE}:${HIDLROUTE_VERSION}
@@ -55,6 +56,7 @@ services:
     volumes:
       - "./extensions:/app/external"
       - "./config:/app/hidlroute/settings_override"
+    depends_on: [db, redis]
 
   proxy:
     image: nginxproxy/nginx-proxy:1.0.1-alpine
