@@ -1,0 +1,35 @@
+#!/bin/bash
+
+# Comment out features you do not need with #
+FEATURES=(
+  #"letsencrypt"
+)
+
+DOCKER_COMPOSE_PATHS=("/usr/bin/docker-compose" "/usr/local/bin/docker-compose" "/bin/docker-compose")
+DOCKER_COMPOSE_CMD=""
+
+# Determine the valid docker-compose executable path
+for candidate in "${DOCKER_COMPOSE_PATHS[@]}"; do
+  if [ -n "$(which $candidate)" ]; then
+    DOCKER_COMPOSE_CMD="$candidate"
+    break
+  fi
+done
+if [ -z $DOCKER_COMPOSE_CMD ]; then
+  echo "Unable to locate docker-compose. If it is installed in non-standard location please update DOCKER_COMPOSE_PATHS at the beginning of this file"
+  exit 1
+fi
+
+COMMAND="$DOCKER_COMPOSE_CMD -f main.compose.yaml"
+
+for feature in "${FEATURES[@]}"; do
+  file_name="$feature.compose.yaml"
+  COMMAND="$COMMAND -f $file_name"
+done
+
+COMMAND="$COMMAND $*"
+
+WORK_DIR="$(dirname "$(readlink -f "$0")")/.."
+cd $WORK_DIR
+
+$COMMAND

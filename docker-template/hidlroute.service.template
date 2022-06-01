@@ -1,0 +1,15 @@
+[Unit]
+Description=HidlRoute Server
+Requires=docker.service
+After=docker.service
+
+[Service]
+Restart=always
+WorkingDirectory=-BASE_DIR-
+
+ExecStartPre=/usr/bin/hidlroute-compose stop
+ExecStart=/usr/bin/hidlroute-compose up --no-build
+ExecStop=/usr/bin/hidlroute-compose stop
+
+[Install]
+WantedBy=multi-user.target
