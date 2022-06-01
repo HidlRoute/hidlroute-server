@@ -64,6 +64,7 @@ jobs:
           message: "Version bump and changelog update. New version is ${{ github.event.inputs.version }}"
           add: "./src/hidlroute/__version__.py"
           push: true
+          tag: "v${{ github.event.inputs.version }} --force"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
