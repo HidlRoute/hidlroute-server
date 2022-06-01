@@ -20,7 +20,10 @@ jobs:
       - name: Make template archive
         run: make template NO_VENV=True
 
-      - uses: actions/upload-artifact@v3
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
         with:
           name: hidlroute-template
-          path: dist/template/hidlroute-template.zip
+          path: |
+            dist/template/hidlroute-template.zip
+            deploy/setup.sh

@@ -47,7 +47,7 @@ jobs:
         with:
           name: changelog
 
-      - name: Download bootstrap template
+      - name: Download bootstrap template and setup script
         uses: actions/download-artifact@v3
         with:
           name: hidlroute-template
@@ -98,6 +98,16 @@ jobs:
           asset_path: hidlroute-template.zip
           asset_name: hidlroute-template.zip
           asset_content_type: application/zip
+
+      - name: Attach setup script
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: setup.sh
+          asset_name: setup.sh
+          asset_content_type: text/plain
 
   build-docker:
     name: Release docker image
