@@ -34,9 +34,7 @@ ADMINS = getaddresses([env("ADMINS")])
 CELERY_BROKER_URL = env.str("CELERY_BROKER_URL")
 CELERY_RESULT_BACKEND = env.str("CELERY_RESULT_BACKEND", CELERY_BROKER_URL)
 
-LOGGING["loggers"]["hidl_core.factory"] = {
-    "level": "ERROR"
-}
+LOGGING["loggers"]["hidl_core.factory"] = {"level": "ERROR"}
 
 try:
     from hidlroute.settings_override import *  # noqa: F401
