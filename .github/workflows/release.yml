@@ -95,7 +95,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: hidlroute-template.zip
+          asset_path: dist/template/hidlroute-template.zip
           asset_name: hidlroute-template.zip
           asset_content_type: application/zip
 
@@ -105,7 +105,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: setup.sh
+          asset_path: deploy/setup.sh
           asset_name: setup.sh
           asset_content_type: text/plain
 
