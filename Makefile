@@ -141,9 +141,8 @@ template:
 			VERSION="$(VERSION)"; \
 	  	fi; \
 		mkdir -p "dist/template/hidlroute"; \
-		cp ".env.dist" "dist/template/hidlroute/.env"; \
-		cp "docker-compose.template.yaml" "dist/template/hidlroute/docker-compose.yaml"; \
-		sed -i s/$(PROD_DOCKER_IMAGE):latest/$(PROD_DOCKER_IMAGE):$$VERSION/ dist/template/hidlroute/docker-compose.yaml; \
+		cp -r docker-template/. dist/template/hidlroute; \
+		sed -i s/HIDLROUTE_VERSION=latest/HIDLROUTE_VERSION=$$VERSION/ dist/template/hidlroute/.env; \
 		echo "Setting target version version to: $$VERSION"; \
 		cd dist/template; \
 		zip hidlroute-template.zip -r hidlroute; \
