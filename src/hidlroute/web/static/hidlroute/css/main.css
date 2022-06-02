@@ -1,3 +1,5 @@
+/* LOGIN */
+
 .jazzmin-login-page {
     background: linear-gradient(66.02deg, #254C68 44.85%, #557389 115.05%);
 }
@@ -5,7 +7,18 @@
 .jazzmin-login-page .login-box {
     min-width: 400px;
     margin-top: -100px;
+    width: 500px;
 }
+
+.two-fa-action-btns .next-btn {
+    min-width: 135px;
+}
+
+.login-box .alert-block ul {
+    list-style: none;
+    padding: 0;
+}
+/* END LOGIN*/
 
 .sidebar-logo {
     width: 100%;

@@ -5,7 +5,7 @@
     <p class="login-box-msg">{{ jazzmin_settings.welcome_sign| safe }}</p>
 
     {% if wizard.steps.current == 'auth' %}
-{#        <p>{% blocktrans %}Enter your credentials.{% endblocktrans %}</p>#}
+        {#        <p>{% blocktrans %}Enter your credentials.{% endblocktrans %}</p>#}
     {% elif wizard.steps.current == 'token' %}
         {% if device.method == 'call' %}
             <p>{% blocktrans trimmed %}We are calling your phone right now, please enter the
@@ -23,7 +23,7 @@
             enter one of these backup tokens to login to your account.{% endblocktrans %}</p>
     {% endif %}
 
-    <form action="" method="post" class="{% if form.errors %}is-invalid{% endif %}" novalidate >{% csrf_token %}
+    <form action="" method="post" class="{% if form.errors %}is-invalid{% endif %}" novalidate>{% csrf_token %}
         {% include "two_factor/_wizard_forms.html" %}
 
         {# hidden submit button to enable [enter] key #}
@@ -40,11 +40,16 @@
                 {% endfor %}</p>
         {% endif %}
         {% if backup_tokens %}
-            <p>{% trans "As a last resort, you can use a backup token:" %}</p>
-            <p>
-                <button name="wizard_goto_step" type="submit" value="backup"
-                        class="btn btn-secondary btn-block">{% trans "Use Backup Token" %}</button>
+            <p class="text-right"><a data-toggle="collapse" href="#use-backup-code"
+                  aria-expanded="false" aria-controls="use-backup-code">{% trans "Can't login" %}</a>
             </p>
+            <div class="collapse" id="use-backup-code">
+                <p>{% trans "As a last resort, you can use a backup token:" %}</p>
+                <p>
+                    <button name="wizard_goto_step" type="submit" value="backup"
+                            class="btn btn-secondary btn-block">{% trans "Use Backup Token" %}</button>
+                </p>
+            </div>
         {% endif %}
 
         {% include "two_factor/_wizard_actions.html" %}

@@ -22,6 +22,7 @@ os.environ.setdefault("DEBUG_TOOLBAR", "True")
 os.environ.setdefault("BRUTE_FORCE_PROTECTION", "True")
 
 from .base_server import *
+from django.utils.translation import gettext_lazy as _
 
 SECRET_KEY = "django-insecure-56=tojj)c&&vurqvd=afvhqzxc095cub@hxf7dd$^iqpm=h$_k"
 DEBUG = True
@@ -38,6 +39,7 @@ AUTH_PASSWORD_VALIDATORS = []
 #     }
 # }
 
+JAZZMIN_SETTINGS["welcome_sign"] = _("For demo access use <code>demoadmin</code> : <code>demoadmin</code>")
 
 DATABASES = {"default": env.db_url_config("postgres://hidl:hidl@127.0.0.1:5432/hidl")}
 
