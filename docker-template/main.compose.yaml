@@ -1,4 +1,11 @@
 version: '3'
+x-default-logging: &default-logging-config
+  logging:
+    driver: json-file
+    options:
+      "max-size": ${LOG_FILE_MAX_SIZE}
+      "max-file": ${LOG_KEEP_FILES}
+      "labels": ${LOG_LABEL}
 services:
   db:
     image: postgres:14-alpine
@@ -12,6 +19,7 @@ services:
     volumes:
       - "./data/db:/var/lib/postgresql/data"
     networks: [ default ]
+    <<: *default-logging-config
 
   redis:
     image: redis:7.0-alpine
@@ -22,6 +30,7 @@ services:
     volumes:
       - "./data/redis:/data"
     networks: [ default ]
+    <<: *default-logging-config
 
   web:
     image: ${HIDLROUTE_IMAGE}:${HIDLROUTE_VERSION}
@@ -37,6 +46,7 @@ services:
       - "./config:/app/hidlroute/settings_override"
     networks: [ default ]
     depends_on: [ db, redis ]
+    <<: *default-logging-config
 
   worker:
     image: ${HIDLROUTE_IMAGE}:${HIDLROUTE_VERSION}
@@ -48,10 +58,16 @@ services:
       DATABASE_URL: postgres://${DATABASE_USER}:${DATABASE_PASSWORD}@localhost:${DATABASE_PORT}/${DATABASE_NAME}
       CELERY_BROKER_URL: redis://:${REDIS_PASSWORD}@localhost:${REDIS_PORT}/0
       DEFENDER_REDIS_URL: redis://:${REDIS_PASSWORD}@localhost:${REDIS_PORT}/1
+    labels:
+      - "traefik.http.middlewares.web-compress.compress=true"
+      - "traefik.http.middlewares.web-latency-check.circuitbreaker.expression=LatencyAtQuantileMS(50.0) > 100"
+      # Triggers the circuit breaker when 30% of the requests return a 5XX status code, or when the ratio of network errors reaches 10%.
+      - "traefik.http.middlewares.latency-check.circuitbreaker.expression=ResponseCodeRatio(500, 600, 0, 600) > 0.30 || NetworkErrorRatio() > 0.10"
     volumes:
       - "./extensions:/app/external"
       - "./config:/app/hidlroute/settings_override"
     depends_on: [ db, redis ]
+    <<: *default-logging-config
 
 networks:
   default:

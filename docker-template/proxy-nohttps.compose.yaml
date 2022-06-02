@@ -10,6 +10,7 @@ services:
     restart: unless-stopped
     command:
       - --providers.docker=true
+      - --ping.entryPoint=ping
       - --providers.docker.exposedbydefault=false
       - --entrypoints.web.address=:80
     ports:
