@@ -15,8 +15,8 @@ RUN pip install -r requirements.txt
 COPY ./src/manage.py .
 COPY ./src/hidlroute ./hidlroute
 RUN find . -type d -name "__pycache__" -prune -exec rm -rf "{}" \;
-RUN python manage.py collectstatic --no-input
-RUN find . -type d -name "static" -prune -exec rm -rf "{}" \;
+RUN DEBUG=0 python manage.py collectstatic --no-input
+#RUN find . -type d -name "static" -prune -exec rm -rf "{}" \;
 RUN rm ./hidlroute/settings/dev.py;
 RUN which gunicorn
 

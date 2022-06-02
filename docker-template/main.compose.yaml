@@ -11,8 +11,7 @@ services:
       - "${DATABASE_PORT}:5432"
     volumes:
       - "./data/db:/var/lib/postgresql/data"
-    networks:
-      - default
+    networks: [ default ]
 
   redis:
     image: redis:7.0-alpine
@@ -22,8 +21,7 @@ services:
     command: redis-server --save 20 1 --loglevel warning --requirepass ${REDIS_PASSWORD}
     volumes:
       - "./data/redis:/data"
-    networks:
-      - default
+    networks: [ default ]
 
   web:
     image: ${HIDLROUTE_IMAGE}:${HIDLROUTE_VERSION}
@@ -34,14 +32,11 @@ services:
       DATABASE_URL: postgres://${DATABASE_USER}:${DATABASE_PASSWORD}@db:5432/${DATABASE_NAME}
       CELERY_BROKER_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
       DEFENDER_REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/1
-      VIRTUAL_HOST: ${VIRTUAL_HOSTS}
-      CERT_NAME: ${CERT_FILE}
     volumes:
       - "./extensions:/app/external"
       - "./config:/app/hidlroute/settings_override"
-    networks:
-      - default
-    depends_on: [db, redis]
+    networks: [ default ]
+    depends_on: [ db, redis ]
 
   worker:
     image: ${HIDLROUTE_IMAGE}:${HIDLROUTE_VERSION}
@@ -56,19 +51,7 @@ services:
     volumes:
       - "./extensions:/app/external"
       - "./config:/app/hidlroute/settings_override"
-    depends_on: [db, redis]
-
-  proxy:
-    image: nginxproxy/nginx-proxy:1.0.1-alpine
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-    environment:
-      DEFAULT_HOST: ${VIRTUAL_HOSTS}
-    volumes:
-      - /var/run/docker.sock:/tmp/docker.sock:ro
-      - ./certs:/etc/nginx/certs:ro
+    depends_on: [ db, redis ]
 
 networks:
   default:

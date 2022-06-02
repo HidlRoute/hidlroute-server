@@ -1,0 +1,31 @@
+services:
+  web:
+    labels:
+      - traefik.enable=true
+      - traefik.http.services.web.loadbalancer.server.port=8000
+      - traefik.http.routers.web-http.entrypoints=websecure
+      - traefik.http.routers.web-http.tls.certresolver=certbot
+      - traefik.http.routers.web-http.rule=(Host(`${PRIMARY_DOMAIN}`))
+      - traefik.http.routers.web.tls.domains[0].main=${PRIMARY_DOMAIN}
+#      - traefik.http.routers.web.tls.domains[0].sans=*.alternative-domain.com
+  proxy:
+    image: traefik:2.7
+    restart: unless-stopped
+    command:
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+      - --entrypoints.websecure.address=:443
+      - --certificatesResolvers.certbot.acme.httpChallenge=true
+      - --certificatesResolvers.certbot.acme.httpChallenge.entrypoint=web
+      - --certificatesResolvers.certbot.acme.email=${LETSENCRYPT_EMAIL:?No Let's Encrypt email set}
+      - --certificatesResolvers.certbot.acme.storage=/letsencrypt/acme.json
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./certs:/letsencrypt
+    networks: [ default ]
