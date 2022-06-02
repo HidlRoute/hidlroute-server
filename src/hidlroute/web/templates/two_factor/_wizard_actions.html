@@ -11,17 +11,23 @@
         </div>
     </div>
 {% else %}
-    {% if cancel_url %}
-        <a href="{{ cancel_url }}"
-           class="float-left btn btn-link">{% trans "Cancel" %}</a>
-    {% endif %}
+    <div class="row two-fa-action-btns">
+        <div class="col-6">
+            {% if cancel_url %}
+                <a href="{{ cancel_url }}"
+                   class="float-left btn btn-link">{% trans "Cancel" %}</a>
+            {% endif %}
 
-    {% if wizard.steps.prev %}
-        <button name="wizard_goto_step" type="submit"
-                value="{{ wizard.steps.prev }}"
-                class="btn btn-secondary">{% trans "Back" %}</button>
-    {% else %}
-        {#  <button disabled name="" type="button" class="btn">{% trans "Back" %}</button>#}
-    {% endif %}
-    <button type="submit" class="btn btn-primary">{% trans "Next" %}</button>
+            {% if wizard.steps.prev %}
+                <button name="wizard_goto_step" type="submit"
+                        value="{{ wizard.steps.prev }}"
+                        class="btn btn-link">{% trans "Back" %}</button>
+            {% else %}
+                {#  <button disabled name="" type="button" class="btn">{% trans "Back" %}</button>#}
+            {% endif %}
+        </div>
+        <div class="col-6 text-right">
+            <button type="submit" class="btn btn-primary next-btn" style="min-width: 135px;">{% trans "Next" %}</button>
+        </div>
+    </div>
 {% endif %}

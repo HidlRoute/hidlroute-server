@@ -77,7 +77,8 @@ LOGIN_REDIRECT_URL = "two_factor:profile"
 TWO_FACTOR_FORCE = env.bool("TWO_FACTOR_FORCE", False)
 TWO_FACTOR_PATCH_ADMIN = True
 TWO_FACTOR_REMEMBER_COOKIE_PREFIX = "rmb_2fa_"
-TWO_FACTOR_REMEMBER_COOKIE_AGE = 24 * 3600
+TWO_FACTOR_REMEMBER_COOKIE_AGE = 3 * 24 * 3600
+TWO_FACTOR_REMEMBER_COOKIE_SECURE = True
 TWO_FACTOR_REMEMBER_COOKIE_SAMESITE = "Strict"
 
 # Brute force prevention (by django-defender)
@@ -85,7 +86,7 @@ TWO_FACTOR_REMEMBER_COOKIE_SAMESITE = "Strict"
 DEFENDER_LOGIN_FAILURE_LIMIT = env.int("DEFENDER_LOGIN_FAILURE_LIMIT", 5)
 DEFENDER_COOLOFF_TIME = env.int("DEFENDER_COOLOFF_TIME", 300)
 DEFENDER_BEHIND_REVERSE_PROXY = env.bool("BEHIND_PROXY", False)
-DEFENDER_REDIS_URL = env.bool("DEFENDER_REDIS_URL", False)
+DEFENDER_REDIS_URL = env.str("DEFENDER_REDIS_URL", None)
 DEFENDER_STORE_ACCESS_ATTEMPTS = False
 DEFENDER_LOCKOUT_TEMPLATE = "defender/lockout.html"
 
@@ -113,23 +114,23 @@ WSGI_APPLICATION = "hidlroute.wsgi.application"
 
 JAZZMIN_SETTINGS: Dict[str, Any] = {
     # title of the window (Will default to current_admin_site.site_title if absent or None)
-    "site_title": "Hidl Route",
+    "site_title": env.str("WL_SITE_TITLE", "Hidl Route"),
     # Title on the login screen (19 chars max) (defaults to current_admin_site.site_header if absent or None)
-    "site_header": "Hidl Route",
+    "site_header": env.str("WL_SITE_HEADER", env.str("WL_SITE_TITLE", "Hidl Route")),
     # Title on the brand (19 chars max) (defaults to current_admin_site.site_header if absent or None)
-    "site_brand": "Hidl Route",
+    "site_brand": env.str("WL_SITE_BRAND", env.str("WL_SITE_TITLE", "Hidl Route")),
     # Logo to use for your site, must be present in static files, used for brand on top left
-    "site_logo": "hidlroute/img/logo-color-hor-small.svg",
+    "site_logo": env.str("WL_SITE_LOGO", "hidlroute/img/logo-color-hor-small.svg"),
     # Logo to use for your site, must be present in static files, used for login form logo (defaults to site_logo)
-    "login_logo": "hidlroute/img/logo-color-white-mid.png",
+    "login_logo": env.str("WL_LOGIN_LOGO", "hidlroute/img/logo-color-white-mid.png"),
     # Logo to use for login form in dark themes (defaults to login_logo)
     "login_logo_dark": None,
     # CSS classes that are applied to the logo above
-    "site_logo_classes": "",
+    "site_logo_classes": env.str("WL_SITE_LOGO_CLASS", ""),
     # Relative path to a favicon for your site, will default to site_logo if absent (ideally 32x32 px)
-    "site_icon": "hidlroute/img/favicon-32.png",
+    "site_icon": env.str("WL_FAVICON", "hidlroute/img/favicon-32.png"),
     # Welcome text on the login screen
-    "welcome_sign": _("For demo access use <code>demoadmin</code> : <code>demoadmin</code>"),
+    "welcome_sign": env.str("WL_WELCOME_MSG", ""),
     "copyright": "HidlRoute",
     # The model admin to search from the search bar, search bar omitted if excluded
     "search_model": AUTH_USER_MODEL,
@@ -212,8 +213,8 @@ JAZZMIN_SETTINGS: Dict[str, Any] = {
     # UI Tweaks #
     #############
     # Relative paths to custom CSS/JS scripts (must be present in static files)
-    "custom_css": None,
-    "custom_js": None,
+    "custom_css": env.str("WL_CUSTOM_CSS", None),
+    "custom_js": env.str("WL_CUSTOM_JS", None),
     # Whether to show the UI customizer on the sidebar
     "show_ui_builder": False,
     ###############

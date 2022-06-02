@@ -2,7 +2,7 @@
 
 # Comment out features you do not need with #
 FEATURES=(
-  #"letsencrypt"
+  "@PROXY_MODE"
 )
 
 DOCKER_COMPOSE_PATHS=("/usr/bin/docker-compose" "/usr/local/bin/docker-compose" "/bin/docker-compose")

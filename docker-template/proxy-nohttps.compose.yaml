@@ -1,0 +1,21 @@
+services:
+  web:
+    labels:
+      - traefik.enable=true
+      - traefik.http.services.web.loadbalancer.server.port=8000
+      - traefik.http.routers.web-http.entrypoints=web
+      - traefik.http.routers.web-http.rule=(Host(`${PRIMARY_DOMAIN}`))
+  proxy:
+    image: traefik:2.7
+    restart: unless-stopped
+    command:
+      - --providers.docker=true
+      - --ping.entryPoint=ping
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+    ports:
+      - "80:80"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./certs:/etc/nginx/certs:ro
+    networks: [ default ]
