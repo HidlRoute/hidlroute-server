@@ -15,8 +15,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#TEMPLATE_URL="https://github.com/HidlRoute/hidlroute-server/releases/latest/download/hidlroute-template.zip"
-TEMPLATE_URL="file:///srv/projects/HidlRoute/hidlroute-server/dist/template/hidlroute-template.zip"
+TEMPLATE_URL="https://github.com/HidlRoute/hidlroute-server/releases/latest/download/hidlroute-template.zip"
 BASE_DIR=$(readlink -f "$(pwd)")
 PROJECT_DIR_NAME="hidlroute"
 
@@ -85,7 +84,7 @@ print_warn() {
 
 if [[ $EUID -ne 0 ]]; then
   print_error "This script must be run as root"
-#  exit 2
+  exit 2
 fi
 
 set -e
@@ -135,8 +134,6 @@ fi
 set_primary_domain $primary_domain $BASE_DIR/.env
 set_primary_domain $primary_domain $BASE_DIR/.hidl.env
 echo
-
-exit 0
 
 echo "Registering executables..."
 ln -s $BASE_DIR/bin/hidlroute-compose /usr/bin/hidlroute-compose
