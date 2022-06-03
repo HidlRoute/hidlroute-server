@@ -136,3 +136,13 @@ jobs:
           asset_path: deploy/setup.sh
           asset_name: setup.sh
           asset_content_type: text/plain
+
+      - name: Attach Ubuntu deployment script
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.prepare-release.outputs.release_url }}
+          asset_path: deploy/ubuntu-vm.sh
+          asset_name: deploy-ubuntu.sh
+          asset_content_type: text/plain
