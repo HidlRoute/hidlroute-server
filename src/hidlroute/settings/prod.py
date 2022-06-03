@@ -20,7 +20,7 @@ from email.utils import getaddresses
 SECRET_KEY = env.str("SECRET_KEY")
 DEBUG = env.bool("DEBUG")
 ALLOWED_HOSTS = env.tuple("ALLOWED_HOSTS")
-CSRF_TRUSTED_ORIGINS = env.tuple("CSRF_TRUSTED_ORIGINS", ["https://".format(x) for x in ALLOWED_HOSTS])
+CSRF_TRUSTED_ORIGINS = env.tuple("CSRF_TRUSTED_ORIGINS", ["https://{}".format(x) for x in ALLOWED_HOSTS])
 SERVER_EMAIL = env.str("SERVER_EMAIL", "webmaster@yoursite.org")
 X_FRAME_OPTIONS = "ALLOW-FROM " + " ".join(ALLOWED_HOSTS)
 
