@@ -20,6 +20,14 @@
 }
 /* END LOGIN*/
 
+#recent-actions-module .timeline div > i {
+    padding-left: 1px;
+}
+
+.main-sidebar {
+    position: fixed !important;
+}
+
 .sidebar-logo {
     width: 100%;
 }

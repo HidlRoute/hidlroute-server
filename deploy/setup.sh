@@ -57,7 +57,7 @@ set_primary_domain() {
 }
 
 ensure_dependencies_installed() {
-  DEPS=("docker" "docker-compose" "curl" "sed")
+  DEPS=("docker" "docker-compose" "curl" "sed" "unzip")
   for d in "${DEPS[@]}"; do
     if [ -n "$(which "$d")" ]; then
       printf "   %-25s: installed\n" $d
@@ -146,7 +146,8 @@ echo
 if [ -n "$(which systemd)" ]; then
   echo "Registering systemd service"
   cp $BASE_DIR/hidlroute.service.template /etc/systemd/system/hidlroute.service
-  sed -i s/@BASE_DIR/$BASE_DIR/ /etc/systemd/system/hidlroute.service
+
+  sed -i "s|@BASE_DIR|$BASE_DIR|" /etc/systemd/system/hidlroute.service
   systemctl daemon-reload
   echo "Systemd service registered"
   echo ""
