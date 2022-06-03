@@ -38,6 +38,7 @@ echo "Bootstrapping docker containers"
 hidlroute-compose up -d
 echo ""
 echo "DONE: Docker containers bootstrapped and launched"
+sleep 3
 
 # Apply migrations
 echo "Applying migrations"
@@ -58,3 +59,12 @@ else
   fi
   hidlmng createsuperuser --username="$HIDL_SUPERUSER_LOGIN" --email="$HIDL_SUPERUSER_EMAIL" --no-input
 fi
+
+echo "Shutting down HidlRoute stack"
+hidlroute-compose stop
+echo "Starting HidlRoute service"
+systemctl start hidlroute
+
+echo
+echo "DEPLOYMENT IS COMPLETED SUCCESSFULLY"
+echo

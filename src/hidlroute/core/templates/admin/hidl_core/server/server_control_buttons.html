@@ -4,7 +4,7 @@
     {% if server.is_running %}
         <a class="btn {{ jazzmin_ui.button_classes.success }}"
            href="{% url "admin:restartserver_url" server_id=server.pk %}">
-             <i class="fas fa-sync"></i>
+            <i class="fas fa-sync"></i>
             {% trans "Restart" %}
         </a>
         <a class="btn {{ jazzmin_ui.button_classes.danger }}"
@@ -12,7 +12,7 @@
             <i class="fa fa-stop-circle"></i>
             {% trans "Stop" %}
         </a>
-    {% elif server.status.state == ServerState.UNKNOWN or server.status.state == Server.FAILED %}
+        {% elif server.status.state == ServerState.UNKNOWN or server.status.state == Server.FAILED %}
         <a class="btn {{ jazzmin_ui.button_classes.success }}"
            href="{% url "admin:restartserver_url" server_id=server.pk %}">
             <i class="fas fa-sync"></i>
