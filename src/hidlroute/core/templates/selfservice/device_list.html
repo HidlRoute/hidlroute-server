@@ -15,16 +15,17 @@
 
 
 {% block content %}
-    {% for s in servers_and_devices %}
+    {% for pair in servers_and_devices %}
         <div class="col-12">
             <div class="card card-primary card-outline">
                 <div class="card-header">
                     <div class="row">
                         <div class="col-8">
-                            <h5 class="m-0">{% trans "VPN Server:" %} {{ s.server.name }}</h5>
+                            <h5 class="m-0">{% trans "VPN Server:" %} {{ pair.server.name }}</h5>
                         </div>
                         <div class="col-4">
-                            <a class="btn btn-outline-success float-right" href="{% url "selfservice:device_add" %}">
+                            <a class="btn btn-outline-success float-right"
+                               href="{% url "selfservice:device_add" pair.server.pk %}">
                                 {% trans "Add device" %}
                             </a>
                         </div>
@@ -33,22 +34,24 @@
 
                 </div>
                 <div class="card-body">
-                    <div class="card">
-                        <div class="card-body table-response p-0">
-                            <table class="table table-striped">
-                                <tbody>
-                                {% for d in s.devices %}
-                                    <tr role="row" class="{% cycle 'even' 'odd' %}">
-                                        <th>
-                                            <a href="{% url "selfservice:device_edit" d.pk %}">{{ d.name }}</a>
-                                        </th>
-                                    </tr>
-                                {% endfor %}
-                                </tbody>
-                            </table>
+                    {% if pair.devices %}
+                        <div class="card">
+                            <div class="card-body table-response p-0">
+                                <table class="table table-striped">
+                                    <tbody>
+                                    {% for d in pair.devices %}
+                                        <tr role="row" class="{% cycle 'even' 'odd' %}">
+                                            <th>
+                                                <a href="{% url "selfservice:device_edit" d.pk %}">{{ d.name }}</a>
+                                            </th>
+                                        </tr>
+                                    {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
-                    </div>
-                </div>
+                        </div>
+                    {% endif %}
             </div>
         </div>
     {% endfor %}

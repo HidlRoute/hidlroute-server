@@ -16,12 +16,12 @@
 
 from django.urls import path
 
-from hidlroute.core import views
+from hidlroute.vpn import views
 
 app_name = "hidl_core"
 urlpatterns = [
-    path("devices/", views.device_list, name="devices_list"),
-    path("add_device/", views.device_add, name="device_add"),
+    path("devices/", views.DeviceVPNListView.as_view(), name="devices_list"),
+    path("server/<int:server_id>/add_device/", views.device_add, name="device_add"),
     path("edit_device/<int:device_id>/", views.device_edit, name="device_edit"),
     path("device/<int:device_id>/reveal_config/", views.device_reveal_config, name="reveal_config"),
 ]

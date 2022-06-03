@@ -18,8 +18,10 @@ import abc
 import ipaddress
 import logging
 from io import BytesIO
+from typing import io, List, Optional, Type
 
 import netfields
+from django.contrib.auth.models import AbstractUser as DjangoUser
 from django.contrib.postgres.indexes import GistIndex
 from django.core.exceptions import PermissionDenied
 from django.db import models, transaction
@@ -27,20 +29,16 @@ from django.db.models import QuerySet
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
-from typing import io, List, Optional, Type
-
+from polymorphic import models as polymorphic_models
 from social_core.utils import slugify
 
+from hidlroute.core import models as core_models
 from hidlroute.core.base_models import WithReprCache, WithComment, NameableIdentifiable
 from hidlroute.core.models import BaseRoutingRule
-from hidlroute.vpn.base_models import ServerRelated
-from hidlroute.core import models as core_models
-
+from hidlroute.core.service.base import PostedJob, JobResult
 from hidlroute.core.service.networking.base import NetVar
 from hidlroute.core.types import NetworkDef, IpAddress
-from polymorphic import models as polymorphic_models
-from django.contrib.auth.models import AbstractUser as DjangoUser
-from hidlroute.core.service.base import PostedJob, JobResult
+from hidlroute.vpn.base_models import ServerRelated
 from hidlroute.vpn.factory import default_vpn_service_factory, VPNServiceFactory
 from hidlroute.vpn.service.base import ServerState, ServerStatus, VPNService
 
@@ -221,6 +219,12 @@ class ClientRoutingRule(ClientRule):
 class Device(NameableIdentifiable, WithComment, polymorphic_models.PolymorphicModel):
     class Meta:
         indexes = (GistIndex(fields=("ip_address",), opclasses=("inet_ops",), name="hidl_device_ipaddress_idx"),)
+        permissions = [
+            ("create_vpndevice_selfservice", "Create new VPN-accessing devices via self-service interface"),
+            ("delete_vpndevioce_selfservice", "Delete own VPN-accessing devices via self-service interface"),
+            ("change_vpndevice_selfservice", "Edit own VPN-accessing devices via self-service interface"),
+            ("resetconfig-vpndevice_selfservice", "Reset own device VPN config via self-service interface"),
+        ]
 
     server_to_member = models.ForeignKey("ServerToMember", on_delete=models.CASCADE, null=False, blank=True)
     ip_address = netfields.InetAddressField(null=False, blank=True, unique=True)
@@ -249,6 +253,13 @@ class Device(NameableIdentifiable, WithComment, polymorphic_models.PolymorphicMo
             return Device.objects.filter(server_to_member__member=person).select_related("server_to_member__server")
         except core_models.Person.DoesNotExist:
             return []
+
+    @transaction.atomic
+    def update_fields(self, **kwargs):
+        """Update given Device object with the fields from kwargs."""
+        for k, v in kwargs.items():
+            setattr(self, k, v)
+        self.save()
 
     def generate_config(self) -> DeviceConfig:
         raise NotImplementedError
@@ -384,8 +395,8 @@ class VpnServer(NameableIdentifiable, WithComment, polymorphic_models.Polymorphi
     def get_or_create_member(self, member: "core_models.Member") -> "ServerToMember":
         return ServerToMember.get_or_create(self, member)
 
-    def allocate_ip_for_member(self, member: "core_models.Member") -> str:
-        self.service_factory.ip_allocation_service.allocate_ip(self, member)
+    def allocate_ip_for_member(self, member: "core_models.Member") -> IpAddress:
+        return self.service_factory.ip_allocation_service.allocate_ip(self, member)
 
     def get_ip_allocation_meta(self, subnet: core_models.Subnet) -> "IpAllocationMeta":
         return IpAllocationMeta.objects.get_or_create(server=self, subnet=subnet)[0]

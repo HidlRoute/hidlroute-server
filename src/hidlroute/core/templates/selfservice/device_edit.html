@@ -2,34 +2,37 @@
 {% load crispy_forms_tags static i18n %}
 
 {% block extrajs %}
-    <script type="text/javascript">
-        $(document).ready(function () {
-            revealUrl = "{%  url "selfservice:reveal_config" device.pk %}";
-            buttonReveal = $("#reveal-config-button");
-            configBlock = $('#config-block');
+    {% if device %}
 
-            buttonReveal.on("click", function () {
-                buttonReveal.addClass("disabled");
-                buttonReveal.attr("disabled", "true");
-                $.ajax(revealUrl, {
-                    "method": "post",
-                    "data": {
-                        "csrfmiddlewaretoken": "{{ csrf_token }}"
-                    },
-                    "success": function (data, status) {
-                        buttonReveal.hide();
-                        configBlock.show();
-                        configBlock.html(data);
-                    },
-                    "error": function (xhr, status, message) {
-                        buttonReveal.removeClass("disabled");
-                        buttonReveal.attr("disabled", "false");
-                        configBlock.html("{% trans "Failed to fetch VPN config." %}");
-                    }
+        <script type="text/javascript">
+            $(document).ready(function () {
+                revealUrl = "{%  url "selfservice:reveal_config" device.pk %}";
+                buttonReveal = $("#reveal-config-button");
+                configBlock = $('#config-block');
+
+                buttonReveal.on("click", function () {
+                    buttonReveal.addClass("disabled");
+                    buttonReveal.attr("disabled", "true");
+                    $.ajax(revealUrl, {
+                        "method": "post",
+                        "data": {
+                            "csrfmiddlewaretoken": "{{ csrf_token }}"
+                        },
+                        "success": function (data, status) {
+                            buttonReveal.hide();
+                            configBlock.show();
+                            configBlock.html(data);
+                        },
+                        "error": function (xhr, status, message) {
+                            buttonReveal.removeClass("disabled");
+                            buttonReveal.attr("disabled", "false");
+                            configBlock.html("{% trans "Failed to fetch VPN config." %}");
+                        }
+                    })
                 })
             })
-        })
-    </script>
+        </script>
+    {% endif %}
 {% endblock %}
 
 {% block content %}
@@ -47,42 +50,47 @@
         </div>
 
         <div class="card-body">
-            <div class="row">
-                <div class="col-12">
-                    {% crispy form %}
+            {% block form-body %}
+                <div class="row">
+                    <div class="col-12">
+                        {% crispy form %}
+                    </div>
                 </div>
-
-            </div>
+            {% endblock %}
         </div>
     </div>
 
-    <div class="col-12 card card-warning card-outline">
-        <div class="card-header">
-            <h5>{% trans "VPN Config" %}</h5>
-        </div>
-        <div class="card-body">
-            <div class="row" id="config-block">
-                <div class="col-12">
-                    {% blocktrans with device_name=device.name %}
-                        <strong>Warning!</strong> Since we do not store private keys, revealing a config means
-                        it is
-                        re-generated. In turn, this means that device {{ device_name }} will lose its VPN
-                        connectivity
-                        once
-                        you hit the button below, and you would need to re-setup it with the new config, which
-                        will
-                        be
-                        displayed below.
-                    {% endblocktrans %}
-                </div>
-                <div class="col-12 p-4" style="text-align:center">
-                    <button id="reveal-config-button" class="btn btn-warning" value="reveal_config">
-                        {% trans "Re-generate & Reveal the VPN Config" %}
-                    </button>
-                </div>
+    {% if device %}
+        <div class="col-12 card card-warning card-outline">
+            <div class="card-header">
+                <h5>{% trans "VPN Config" %}</h5>
+            </div>
+            <div class="card-body">
+                {% block reveal-vpn-config %}
+                    <div class="row" id="config-block">
+                        <div class="col-12">
+                            {% blocktrans with device_name=device.name %}
+                                <strong>Warning!</strong> Since we do not store private keys, revealing a config means
+                                it is
+                                re-generated. In turn, this means that device {{ device_name }} will lose its VPN
+                                connectivity
+                                once
+                                you hit the button below, and you would need to re-setup it with the new config, which
+                                will
+                                be
+                                displayed below.
+                            {% endblocktrans %}
+                        </div>
+                        <div class="col-12 p-4" style="text-align:center">
+                            <button id="reveal-config-button" class="btn btn-warning" value="reveal_config">
+                                {% trans "Re-generate & Reveal the VPN Config" %}
+                            </button>
+                        </div>
+                    </div>
+                {% endblock %}
             </div>
         </div>
-    </div>
+    {% endif %}
 
 
 

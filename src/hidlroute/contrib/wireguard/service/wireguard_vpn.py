@@ -19,11 +19,12 @@ import logging
 
 from django.conf import settings
 from django.utils import timezone
+
 from django.utils.functional import cached_property
 from pr2modules.netlink.generic.wireguard import WireGuard
 
 from hidlroute.contrib.wireguard.models import WireguardServer
-from hidlroute.contrib.wireguard.views import WireguardDeviceVPNConfigView
+from hidlroute.contrib.wireguard.views import WireguardVPNViews
 from hidlroute.core import models as core_models
 from hidlroute.contrib.wireguard import models
 from hidlroute.core.service.base import (
@@ -31,17 +32,12 @@ from hidlroute.core.service.base import (
     WorkerService,
     JobStatus,
 )
-from hidlroute.vpn.service.base import ServerState, ServerStatus, VPNService, VPNServiceViews
+from hidlroute.vpn.service.base import ServerState, ServerStatus, VPNService
 from hidlroute.core.service.firewall.base import FirewallService
 from hidlroute.core.service.networking.base import NetInterfaceState, InterfaceKind, NetworkingService
+from hidlroute.vpn.views import VPNServiceViews
 
 LOGGER = logging.getLogger("hidl_wireguard.WireguardVPNService")
-
-
-class WireguardVPNViews(VPNServiceViews):
-    @cached_property
-    def vpn_details_view(self):
-        return WireguardDeviceVPNConfigView.as_view()
 
 
 class WireguardVPNService(VPNService):
