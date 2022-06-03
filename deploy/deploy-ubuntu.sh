@@ -26,11 +26,23 @@ cd "/opt" || exit
 curl -fsSL https://get.hidlroute.org > /tmp/hidlroute-install.sh
 chmod +x /tmp/hidlroute-install.sh
 /tmp/hidlroute-install.sh
+sleep 2
+
+# Add hidlroute to autostart
+echo "Registering HidlRoute in autostart"
+systemctl enable hidlroute
+echo "  DONE"
 
 # Start hidlroute stack
+echo "Bootstrapping docker containers"
 hidlroute-compose up -d
+echo ""
+echo "DONE: Docker containers bootstrapped and launched"
+
 # Apply migrations
+echo "Applying migrations"
 hidlmng migrate
+echo "DONE: Docker containers bootstrapped and launched"
 
 # Create superuser
 hidlmng createsuperuser
