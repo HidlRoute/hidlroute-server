@@ -25,6 +25,7 @@ from django.contrib import admin, messages
 from django.contrib.admin.options import InlineModelAdmin
 from django.contrib.admin.widgets import AdminTextInputWidget
 from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import PermissionDenied
 from django.db.models import QuerySet, TextField
 from django.db.models.fields.related import RelatedField
 from django.forms import BaseModelFormSet
@@ -255,6 +256,8 @@ class BaseServerAdminImpl(ManagedRelActionsMixin, SortableAdminMixin, HidlFormsM
         return reverse("admin:hidl_vpn_vpnserver_changelist") + "?server-started=1"
 
     def action_start_server(self, request: HttpRequest, server_id: int) -> HttpResponse:
+        if not request.user.has_perm("hidl_vpn.startstop_vpnserver"):
+            raise PermissionDenied  # Django Admin does same, os we should be fine too.
         try:
             obj = vpn_models.VpnServer.objects.get(pk=server_id)
             obj.start()
@@ -265,6 +268,8 @@ class BaseServerAdminImpl(ManagedRelActionsMixin, SortableAdminMixin, HidlFormsM
         return HttpResponseRedirect(self.__get_server_state_change_redirect_url(request))
 
     def action_stop_server(self, request: HttpRequest, server_id: int) -> HttpResponse:
+        if not request.user.has_perm("hidl_vpn.startstop_vpnserver"):
+            raise PermissionDenied  # Django Admin does same, os we should be fine too.
         try:
             obj = vpn_models.VpnServer.objects.get(pk=server_id)
             obj.stop()
@@ -317,6 +322,14 @@ class ServerAdmin(HidlBaseModelAdmin, HidlePolymorphicParentAdmin):
         if obj.has_pending_changes:
             result += f'&nbsp;<span class="server-state badge badge-warning">{_("Changes Pending")}</span>'
         return mark_safe(result)
+
+    def get_list_display(self, request):
+        fields = super().get_list_display(request)
+        if not request.user.has_perm("hidl_vpn.startstop_vpnserver"):
+            fields = fields.copy()
+            fields.remove("control_button")
+
+        return fields
 
     def control_button(self, obj: vpn_models.VpnServer):
         return self.control_buttons_template.render(context={"server": obj, "ServerState": ServerState})

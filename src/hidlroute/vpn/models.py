@@ -320,6 +320,7 @@ class VpnServer(NameableIdentifiable, WithComment, polymorphic_models.Polymorphi
     class Meta:
         verbose_name = _("VPN Server")
         verbose_name_plural = _("VPN Servers")
+        permissions = [("startstop_vpnserver", "Can start and stop VPN server")]
 
     interface_name = models.CharField(max_length=16)
     ip_address = netfields.InetAddressField(null=False, blank=False)
