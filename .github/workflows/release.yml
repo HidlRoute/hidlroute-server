@@ -45,6 +45,11 @@ jobs:
         run: |
           make set-version VERSION="${{ github.event.inputs.version }}"
 
+      - name: Download changelog
+        uses: actions/download-artifact@v3
+        with:
+          name: changelog
+
       - name: Read changelog
         id: changelog
         run: echo "::set-output name=changelog::$(cat changelog.md)"
@@ -109,11 +114,6 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Download changelog
-        uses: actions/download-artifact@v3
-        with:
-          name: changelog
-
       - name: Download bootstrap template and setup script
         uses: actions/download-artifact@v3
         with:
@@ -145,6 +145,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ needs.prepare-release.outputs.release_url }}
-          asset_path: deploy/ubuntu-vm.sh
+          asset_path: deploy/deploy-ubuntu.sh
           asset_name: deploy-ubuntu.sh
           asset_content_type: text/plain
