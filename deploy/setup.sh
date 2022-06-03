@@ -113,26 +113,32 @@ echo
 echo "Configuring HTTPS for HidlRoute web interface."
 echo "The default and recommended approach is to use Let's Encrypt certificates.
 Please type in the email to be associated with generated certificates."
-read -p "Let's Encrypt Email [empty - to disable https]: " letsencrypt_email
+if [ -z "$LETSENCRYPT_EMAIL" ]; then
+  read -p "Let's Encrypt Email [empty - to disable https]: " LETSENCRYPT_EMAIL
+fi
 
-if [ -z "$letsencrypt_email" ]; then
+if [ -z "$LETSENCRYPT_EMAIL" ]; then
   echo "Let's encrypt email is not set. HTTPS will be disabled, you have to configure static certificates manually."
   set_proxy_mode "proxy-nohttps" $BASE_DIR/bin/hidlroute-compose
 else
-  set_letsencrypt_email $letsencrypt_email $BASE_DIR/.env
+  set_letsencrypt_email $LETSENCRYPT_EMAIL $BASE_DIR/.env
   set_proxy_mode "proxy-letsencrypt" $BASE_DIR/bin/hidlroute-compose
+  echo "Let's encrypt certificate configured."
 fi
 echo
 
 echo
 echo "Configuring access to the web interface"
-read -p "Primary public domain (e.g. vpn.mysite.com): " primary_domain
-if [ -z "$primary_domain" ]; then
-  print_warn "Primary domain is set to localhost. This effectively prevents normal access to the web interface from Internet."
-  primary_domain=localhost
+if [ -z "$PRIMARY_DOMAIN" ]; then
+  read -p "Primary public domain (e.g. vpn.mysite.com): " PRIMARY_DOMAIN
 fi
-set_primary_domain $primary_domain $BASE_DIR/.env
-set_primary_domain $primary_domain $BASE_DIR/.hidl.env
+
+if [ -z "$PRIMARY_DOMAIN" ]; then
+  print_warn "Primary domain is set to localhost. This effectively prevents normal access to the web interface from Internet."
+  PRIMARY_DOMAIN=localhost
+fi
+set_primary_domain $PRIMARY_DOMAIN $BASE_DIR/.env
+set_primary_domain $PRIMARY_DOMAIN $BASE_DIR/.hidl.env
 echo
 
 echo "Registering executables..."

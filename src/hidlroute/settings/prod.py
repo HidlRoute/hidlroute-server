@@ -24,6 +24,8 @@ CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=["https://{}".fo
 SERVER_EMAIL = env.str("SERVER_EMAIL", "webmaster@yoursite.org")
 X_FRAME_OPTIONS = "ALLOW-FROM " + " ".join(ALLOWED_HOSTS)
 
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+
 # Database
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
 DATABASES = {"default": env.db_url()}
