@@ -27,3 +27,4 @@ jobs:
           path: |
             dist/template/hidlroute-template.zip
             deploy/setup.sh
+            deploy/deploy-ubuntu.sh

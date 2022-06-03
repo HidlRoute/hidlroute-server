@@ -106,6 +106,15 @@ docker:
        echo "DONE: Docker Build: hidlroute:$$TAG"; \
     )
 
+build-dev-app:
+	@( \
+       set -e; \
+       if [ -z $(SKIP_VENV) ]; then source $(VIRTUAL_ENV_PATH)/bin/activate; fi; \
+       echo "Building docker image for dev app..."; \
+       docker-compose -f dev-app.yaml build; \
+       echo "DONE: Docker Dev APP"; \
+    )
+
 set-version:
 	@( \
 		if [ -z $(VERSION) ]; then echo "Missing VERSION argument"; exit 1; fi; \

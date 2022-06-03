@@ -21,16 +21,19 @@ jobs:
 
   build-template:
     name: Generate bootstrap template
+    needs: [ prepare-release ]
     uses: ./.github/workflows/build-template.yml
     with:
       git_ref: '${{ github.ref }}'
 
   prepare-release:
     name: Prepare release
-    needs: [ sanity-check, changelog, build-template ]
+    needs: [ sanity-check, changelog ]
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    outputs:
+      release_url: ${{ steps.create_release.outputs.upload_url }}
     steps:
       - name: Checkout repo
         uses: actions/checkout@v2
@@ -41,16 +44,6 @@ jobs:
       - name: Set new version
         run: |
           make set-version VERSION="${{ github.event.inputs.version }}"
-
-      - name: Download changelog
-        uses: actions/download-artifact@v3
-        with:
-          name: changelog
-
-      - name: Download bootstrap template and setup script
-        uses: actions/download-artifact@v3
-        with:
-          name: hidlroute-template
 
       - name: Read changelog
         id: changelog
@@ -89,26 +82,6 @@ jobs:
           draft: false
           prerelease: true
 
-      - name: Attach bootstrap template
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: dist/template/hidlroute-template.zip
-          asset_name: hidlroute-template.zip
-          asset_content_type: application/zip
-
-      - name: Attach setup script
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: deploy/setup.sh
-          asset_name: setup.sh
-          asset_content_type: text/plain
-
   build-docker:
     name: Release docker image
     needs: [ prepare-release ]
@@ -128,3 +101,48 @@ jobs:
       git_ref: 'refs/tags/v${{ github.event.inputs.version }}'
     secrets:
       pypi_password: '${{ secrets.pypi_password }}'
+
+  attach-assets:
+    name: Attach release assets
+    needs: [ build-template, prepare-release ]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download changelog
+        uses: actions/download-artifact@v3
+        with:
+          name: changelog
+
+      - name: Download bootstrap template and setup script
+        uses: actions/download-artifact@v3
+        with:
+          name: hidlroute-template
+
+      - name: Attach bootstrap template
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.prepare-release.outputs.release_url }}
+          asset_path: dist/template/hidlroute-template.zip
+          asset_name: hidlroute-template.zip
+          asset_content_type: application/zip
+
+      - name: Attach setup script
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.prepare-release.outputs.release_url }}
+          asset_path: deploy/setup.sh
+          asset_name: setup.sh
+          asset_content_type: text/plain
+
+      - name: Attach Ubuntu deployment script
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.prepare-release.outputs.release_url }}
+          asset_path: deploy/ubuntu-vm.sh
+          asset_name: deploy-ubuntu.sh
+          asset_content_type: text/plain
