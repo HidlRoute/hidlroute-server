@@ -14,7 +14,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Type, TYPE_CHECKING
+from typing import Type, TYPE_CHECKING, Optional
 
 from django.db import models
 from django.db.models import QuerySet
@@ -40,10 +40,12 @@ class WireguardPeer(vpn_models.Device):
     public_key = models.CharField(max_length=1024)
 
     @classmethod
-    def create_default(cls, server_to_member: vpn_models.ServerToMember, ip_address: IpAddress) -> "WireguardPeer":
+    def create_default(
+        cls, server_to_member: vpn_models.ServerToMember, ip_address: IpAddress, name: Optional[str] = None
+    ) -> "WireguardPeer":
         private_key, public_key = generate_keypair()
         peer = WireguardPeer.objects.create(
-            name=cls.generate_name(server_to_member.server, server_to_member.member),
+            name=name or cls.generate_name(server_to_member.server, server_to_member.member),
             server_to_member=server_to_member,
             ip_address=ip_address,
             public_key=public_key,

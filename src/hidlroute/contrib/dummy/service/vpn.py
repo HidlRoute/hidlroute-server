@@ -18,29 +18,13 @@ import logging
 from typing import TYPE_CHECKING
 
 from django.utils.functional import cached_property
-from django.views.generic import TemplateView
-
-from hidlroute.vpn.service.base import ServerState, ServerStatus, VPNService, VPNServiceViews
-from hidlroute.vpn.views import BaseVPNDeviceConfigView
+from hidlroute.contrib.dummy.views import DummyVPNViews
+from hidlroute.vpn.service.base import ServerState, ServerStatus, VPNService
 
 if TYPE_CHECKING:
     from hidlroute.vpn import models as vpn_models
 
 LOGGER = logging.getLogger("hidl.contrib.dummy")
-
-
-class DummyVPNConfigView(TemplateView, BaseVPNDeviceConfigView):
-    def __init__(self, *args, **kwargs):
-        super().__init__(template_name="hidl_dummy/config_view.html", *args, **kwargs)
-
-    def post(self, request, device):
-        return self.get(request, device=device)
-
-
-class DummyVPNViews(VPNServiceViews):
-    @cached_property
-    def vpn_details_view(self):
-        return DummyVPNConfigView.as_view()
 
 
 class DummyLoggingVPNService(VPNService):

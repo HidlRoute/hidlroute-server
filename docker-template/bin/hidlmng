@@ -4,4 +4,4 @@ set -e;
 
 COMPOSE_CMD="$(dirname "$(readlink -f "$0")")/hidlroute-compose"
 
-$COMPOSE_CMD run --rm web python manage.py $@
+$COMPOSE_CMD run --rm -e "HIDLMNG=1" -e "DJANGO_SUPERUSER_PASSWORD=$HIDL_SUPERUSER_PASSWORD" web python manage.py $@

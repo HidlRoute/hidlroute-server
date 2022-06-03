@@ -14,11 +14,16 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from typing import TYPE_CHECKING
+
 from hidlroute.core.factory import cached_service
 
 from hidlroute.core.service.firewall.base import FirewallService
 from hidlroute.core.service.networking.base import NetworkingService
 from hidlroute.vpn.factory import VPNServiceFactory, default_vpn_service_factory
+
+if TYPE_CHECKING:
+    from hidlroute.contrib.dummy.service.vpn import DummyLoggingVPNService
 
 
 class DummyServiceFactory(VPNServiceFactory):
@@ -29,6 +34,10 @@ class DummyServiceFactory(VPNServiceFactory):
     @cached_service
     def firewall_service(self) -> FirewallService:
         return self._instance_from_str("hidlroute.contrib.dummy.service.network.DummyFirewallService")
+
+    @cached_service
+    def dummy_vpn_service(self) -> "DummyLoggingVPNService":
+        return self._instance_from_str("hidlroute.contrib.dummy.service.vpn.DummyLoggingVPNService")
 
 
 dummy_service_factory = DummyServiceFactory(default_vpn_service_factory)

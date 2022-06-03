@@ -16,11 +16,77 @@
 
 from io import BytesIO
 
+from django.utils.translation import gettext_lazy as _
+
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Submit
+from django import forms
 from django.shortcuts import render
+from django.utils.functional import cached_property
 from qrcode import QRCode
 import base64
 
-from hidlroute.vpn.views import BaseVPNDeviceConfigView
+from hidlroute.contrib.wireguard.models import WireguardPeer, WireGuardPeerConfig
+from hidlroute.vpn.models import Device
+from hidlroute.vpn.views import (
+    BaseVPNDeviceConfigView,
+    DefaultVPNDeviceEditView,
+    VPNServiceViews,
+    DefaultVPNDeviceAddView,
+    DeviceEditForm,
+)
+
+
+class WireguardPeerEditForm(DeviceEditForm):
+    ALLOW_EDIT_FIELDS = ("name",)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    class Meta:
+        model = WireguardPeer
+        fields = ["name", "ip_address"]
+
+    def validate_unique(self):
+        pass
+
+
+class WireguardPeerAddForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper(self)
+        self.helper.add_input(Submit("submit", _("Save Details")))
+
+    class Meta:
+        model = WireguardPeer
+        fields = ["name"]
+
+
+class WireguardVPNDeviceEditView(DefaultVPNDeviceEditView):
+    _FORM_CLASS = WireguardPeerEditForm
+
+
+class WireguardVPNDeviceAddView(DefaultVPNDeviceAddView):
+    _FORM_CLASS = WireguardPeerAddForm
+
+    def create_device_instance(self, server_to_member, **kwargs) -> Device:
+        return WireguardPeer.create_default(
+            server_to_member, server_to_member.server.allocate_ip_for_member(server_to_member.member), kwargs["name"]
+        )
+
+
+class WireguardVPNViews(VPNServiceViews):
+    @cached_property
+    def vpn_details_view(self):
+        return WireguardDeviceVPNConfigView.as_view()
+
+    @cached_property
+    def vpn_device_edit_view(self) -> DefaultVPNDeviceEditView:
+        return WireguardVPNDeviceEditView.as_view()
+
+    @cached_property
+    def vpn_device_add_view(self) -> DefaultVPNDeviceEditView:
+        return WireguardVPNDeviceAddView.as_view()
 
 
 class WireguardDeviceVPNConfigView(BaseVPNDeviceConfigView):
@@ -31,7 +97,8 @@ class WireguardDeviceVPNConfigView(BaseVPNDeviceConfigView):
 
     def post(self, request, device):
         with BytesIO() as buffer:
-            config = device.generate_config()
+            config: WireGuardPeerConfig = device.generate_config()
+            device.update_fields(public_key=config.public_key)
 
             qrcode = QRCode()
             qrcode.add_data(config.as_str())

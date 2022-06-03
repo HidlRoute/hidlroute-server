@@ -70,7 +70,7 @@ class Person(Member):
         return f"{self.user.username} ({self.user.get_full_name()})"
 
     def get_name(self) -> str:
-        return self.user.name
+        return self.user.username
 
 
 class Host(Member):

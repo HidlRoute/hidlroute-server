@@ -19,25 +19,23 @@ from typing import Type
 from django.utils.translation import gettext_lazy as _
 
 import hidlroute.vpn.models
-from hidlroute.contrib.dummy.factory import dummy_service_factory
-from hidlroute.contrib.dummy.service.vpn import DummyLoggingVPNService
+from hidlroute.contrib.dummy.factory import dummy_service_factory, DummyServiceFactory
 from hidlroute.vpn import models as models_vpn
-from hidlroute.core.factory import ServiceFactory
 from hidlroute.vpn.service.base import VPNService
 from hidlroute.core.types import IpAddress
-
-_dummy_logging_VPN_service = DummyLoggingVPNService()
 
 
 class DummyDevice(hidlroute.vpn.models.Device):
     @classmethod
-    def create_default(cls, server_to_member: models_vpn.ServerToMember, ip_address: IpAddress) -> "DummyDevice":
-        peer = cls.objects.create(
-            name=cls.generate_name(server_to_member.server, server_to_member.member),
+    def create_default(
+        cls, server_to_member: models_vpn.ServerToMember, ip_address: IpAddress, name=None
+    ) -> "DummyDevice":
+        device = cls.objects.create(
+            name=name or cls.generate_name(server_to_member.server, server_to_member.member),
             server_to_member=server_to_member,
             ip_address=ip_address,
         )
-        return peer
+        return device
 
 
 class DummyVpnServer(models_vpn.VpnServer):
@@ -49,9 +47,9 @@ class DummyVpnServer(models_vpn.VpnServer):
         return DummyDevice
 
     @property
-    def service_factory(self) -> ServiceFactory:
+    def service_factory(self) -> DummyServiceFactory:
         return dummy_service_factory
 
     @property
     def vpn_service(self) -> VPNService:
-        return _dummy_logging_VPN_service
+        return self.service_factory.dummy_vpn_service
