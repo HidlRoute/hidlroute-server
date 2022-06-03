@@ -106,6 +106,8 @@ jobs:
     name: Attach release assets
     needs: [ build-template, prepare-release ]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Download changelog
         uses: actions/download-artifact@v3
