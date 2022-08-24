@@ -19,7 +19,9 @@ jobs:
 
       - name: Changelog
         id: generate_changelog
-        uses: scottbrenner/generate-changelog-action@v1.3.3
+        uses: mikepenz/release-changelog-builder-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           package-dir: development/package.json
           to-tag: ${{ github.ref }}
