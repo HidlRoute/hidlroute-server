@@ -14,16 +14,22 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import List, Dict, Optional, Union, Callable
+from typing import Callable, Dict, List, Optional, Union
 
+import jazzmin.settings
 from django.contrib.auth.models import AbstractUser
 from django.template import Library
 from django.templatetags.static import static
-import jazzmin.settings
 
 from hidlroute.vpn import models as models_vpn
 
 register = Library()
+
+SERVER_COLOR_CLASSES = (
+    "yellow",
+    "aqua",
+    "green",
+)
 
 
 @register.filter
@@ -42,7 +48,17 @@ def filter_child_models(apps: List[Dict]) -> List[Dict]:
 @register.inclusion_tag("tags/current_servers.html", takes_context=True)
 def current_servers(context):
     request = context["request"]
-    return {"servers": models_vpn.VpnServer.get_servers_for_user(request.user)}
+    servers = models_vpn.VpnServer.get_servers_for_user(request.user).select_related("subnet")
+    devices = models_vpn.Device.get_devices_for_user(request.user)
+    servers_and_devices = [
+        {
+            "server": server,
+            "color_class": SERVER_COLOR_CLASSES[server.pk % len(SERVER_COLOR_CLASSES)],
+            "devices": list(filter(lambda d: d.server_to_member.server_id == server.id, devices)),
+        }
+        for server in servers
+    ]
+    return {"servers": servers, "devices": devices, "servers_and_devices": servers_and_devices}
 
 
 @register.simple_tag

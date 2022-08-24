@@ -1,12 +1,59 @@
 {% load i18n %}
-<div class="card card-primary">
-    <div class="card-header">{% trans "My Servers" %}</div>
-    <div class="card-body" style="display:flex; flex-direction: row;">
-        {% for s in servers %}
-            <div style="background:yellow; width: 200px; margin: 0 15px;">
-                {{ s.name }}{{ s.interface_name }}
-                <a href="{% url "selfservice:devices_list" %} ">Edit devices</a>
+{#<div class="card card-primary">#}
+{#    <div class="card-header">{% trans "My Servers" %}</div>#}
+{#    <div class="card-body" style="display:flex; flex-direction: row;">#}
+{#        {% for s in servers %}#}
+{#            <div style="background:yellow; width: 200px; margin: 0 15px;">#}
+{#                {{ s.name }}{{ s.interface_name }}#}
+{#                <a href="{% url "selfservice:devices_list" %} ">Edit devices</a>#}
+{#            </div>#}
+{#        {% endfor %}#}
+{#    </div>#}
+{#</div>#}
+<div class="row mb-3 mt-2">
+    {% for pair in servers_and_devices %}
+        <div class="col-md-4">
+            <div class="card card-widget widget-server-with-devices">
+                <div class="card-header color-{{ pair.color_class }}">
+                    <div class="icon">
+                        <i class="fas fa-server" aria-hidden="true"></i>
+                    </div>
+                    {% if pair.server.status.state.name != "RUNNING" %}
+                        <div class="offline-badge badge badge-danger">Offline</div>
+                    {% endif %}
+                    <h3 class="server-name">{{ pair.server.name }}</h3>
+                    <h5 class="server-description">{{ pair.server.subnet.cidr }}</h5>
+                </div>
+                <div class="card-footer no-padding">
+                    {% if pair.devices %}
+                        <ul class="nav nav-stacked">
+                            {% for d in pair.devices %}
+                                <li>
+                                    <a href="{% url "selfservice:device_edit" d.pk %}">{{ d.name }}
+                                        <span class="mt-1 pull-right text-muted badge">{{ d.ip_address.ip }}</span>
+                                        {#                                    <span class="pull-right badge bg-red">Blocked</span>#}
+                                    </a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <div class="mt-2 mb-2 text-center">
+                            <div class="m-2 font-italic text-muted">
+                                {% trans "You do not have any devices" %}
+                            </div>
+                            <a class="btn btn-sm btn-link text-success"
+                               href="{% url "selfservice:device_add" pair.server.pk %}">
+                                <i class="fa fa-plus"></i>
+                                {% trans "Add device" %}
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
             </div>
-        {% endfor %}
-    </div>
+        </div>
+    {% empty %}
+        <div class="text-muted text-center">
+            {% trans "You don't have access to any servers" %}
+        </div>
+    {% endfor %}
 </div>
