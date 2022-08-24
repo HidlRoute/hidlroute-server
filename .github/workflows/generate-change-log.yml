@@ -23,8 +23,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          package-dir: development/package.json
-          to-tag: ${{ github.ref }}
+          toTag: ${{ github.ref }}
 
       - name: Persist changelog
         run: |
