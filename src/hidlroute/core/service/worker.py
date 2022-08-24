@@ -85,7 +85,7 @@ class CeleryWorkerService(WorkerService):
         self.__celery_status_to_job_status = {
             "FAILURE": JobStatus.FAILED,
             "SUCCESS": JobStatus.SUCCESS,
-            "PENDING": JobStatus.PENDING,
+            "SENT": JobStatus.PENDING,
             "RETRY": JobStatus.FAILED,
         }
 
@@ -97,8 +97,10 @@ class CeleryWorkerService(WorkerService):
             result=celery_result.result,
         )
 
-    def get_job_result(self, job_uuid: str) -> JobResult:
+    def get_job_result(self, job_uuid: str) -> Optional[JobResult]:
         res = AsyncResult(job_uuid)
+        if res.status == "PENDING":
+            return None
         return self.__celery_result_to_job_result(res)
 
     def wait_for_job(self, job_uuid: str, timeout: Optional[datetime.timedelta] = None) -> JobResult:
@@ -109,4 +111,5 @@ class CeleryWorkerService(WorkerService):
     def post_job(self, name: str, *args, **kwargs) -> PostedJob:
         ts = datetime.datetime.now()
         res: AsyncResult = self.celery.send_task(name, args, kwargs)
+        res.backend.store_result(res.task_id, None, "SENT")
         return PostedJob(res.id, ts)

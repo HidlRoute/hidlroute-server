@@ -50,7 +50,7 @@ class WorkerService(abc.ABC):
             return obj
 
     @abc.abstractmethod
-    def get_job_result(self, job_uuid: str) -> JobResult:
+    def get_job_result(self, job_uuid: str) -> Optional[JobResult]:
         pass
 
     @abc.abstractmethod
