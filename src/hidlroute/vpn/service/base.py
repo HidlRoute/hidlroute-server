@@ -132,7 +132,7 @@ class VPNService(abc.ABC):
         networking_service = server.service_factory.networking_service
         result: List[IpNetwork] = []
         for x in networking_service.get_interfaces():
-            if x.name != server.interface_name:
+            if x.name != server.interface_name and x.address:
                 result.append(ipaddress.ip_network(str(x.address)))
         return result
 

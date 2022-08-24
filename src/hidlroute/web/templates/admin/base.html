@@ -271,6 +271,7 @@
                                                 {% for model in app.models %}
                                                     <li class="nav-item">
                                                         <a href="
+
                                                                 {% if model.url %}{{ model.url }}{% else %}javascript:void(0){% endif %}"
                                                            class="nav-link">
                                                             <i class="nav-icon {{ model.icon }}"></i>
@@ -293,19 +294,21 @@
     <div class="content-wrapper" {% if is_popup %}style="margin-left:0px; padding-top: 20px;"{% endif %}>
         {% block page_content %}
             {% if not is_popup %}
-                <div class="content-header">
-                    <div class="container-fluid">
-                        <div class="row mb-2">
-                            <div class="col-auto col-sm-3">
-                                <h1 class="m-0">{% block content_title %}{% endblock %}</h1>
-                                {% block content_description %}{% endblock %}
-                            </div>
-                            <div class="col-auto col-sm-9">
-                                {% block breadcrumbs %}{% endblock %}
+                {% block context_header %}
+                    <div class="content-header">
+                        <div class="container-fluid">
+                            <div class="row mb-2">
+                                <div class="col-auto col-sm-3">
+                                    <h1 class="m-0">{% block content_title %}{% endblock %}</h1>
+                                    {% block content_description %}{% endblock %}
+                                </div>
+                                <div class="col-auto col-sm-9">
+                                    {% block breadcrumbs %}{% endblock %}
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                {% endblock %}
             {% endif %}
 
             <div class="content">

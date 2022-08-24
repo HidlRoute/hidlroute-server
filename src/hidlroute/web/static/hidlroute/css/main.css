@@ -18,6 +18,7 @@
     list-style: none;
     padding: 0;
 }
+
 /* END LOGIN*/
 
 #recent-actions-module .timeline div > i {
@@ -48,6 +49,24 @@
 
 .profile-nav-item .image img {
     width: 100%;
+}
+
+.pull-right {
+    float: right;
+}
+
+.nav-stacked > li {
+    float: none;
+    width: 100%;
+    display: block;
+    padding: 5px 8px;
+}
+
+.nav-stacked > li > a {
+    border-radius: 0;
+    border-top: 0;
+    border-left: 3px solid transparent;
+    color: #444 !important;
 }
 
 /*  ======================= COMMON FORMS ========================= */
@@ -125,3 +144,68 @@
 }
 
 /* ======================= END AUTH USER ADMIN ========================= */
+
+
+/* ======================= COMMON WIDGETS ============================ */
+
+/* widget-server-with-devices */
+
+.widget-server-with-devices {
+    height: 100%;
+}
+
+.widget-server-with-devices .card-header .icon {
+    float: left;
+    font-size: 48px;
+    color: rgba(0, 0, 0, .15);
+}
+
+.widget-server-with-devices .card-header {
+    color: white;
+}
+
+.widget-server-with-devices .card-header .offline-badge {
+    position: absolute;
+    right: 10px;
+    top: 10px;
+}
+
+.widget-server-with-devices .color-yellow { background-color: #f39c12; }
+.widget-server-with-devices .color-aqua { background-color: #00a7d0; }
+.widget-server-with-devices .color-green { background-color: #00a65a; }
+
+.widget-server-with-devices .card-header a {
+    color: white !important;
+}
+
+.widget-server-with-devices .card-header a:hover {
+    color: white !important;
+}
+
+.widget-server-with-devices .server-name {
+    margin-left: 75px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    font-size: 1.7em;
+    font-weight: 300;
+}
+
+.widget-server-with-devices .server-description {
+    margin-left: 75px;
+    margin-top: 0;
+    font-size: 1em;
+}
+
+.widget-server-with-devices .card-footer {
+    border-radius: 0 0 3px 3px;
+    border-top: 1px solid #f4f4f4;
+    padding: 0;
+    background-color: #fff;
+}
+
+.widget-server-with-devices .card-footer .nav-stacked > li {
+    border-bottom: 1px solid #f4f4f4;
+    margin: 0;
+}
+
+/* ======================= END COMMON WIDGETS ============================ */
